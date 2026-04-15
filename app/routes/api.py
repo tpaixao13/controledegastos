@@ -178,6 +178,55 @@ def pending_vs_paid():
     })
 
 
+@api_bp.route('/cdi-rate')
+def cdi_rate():
+    """Retorna taxa Selic atual do BCB e sugestões por tipo de investimento."""
+    data = _fetch_json(
+        'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json',
+        'selic'
+    )
+    selic = 14.75  # fallback
+    if data and len(data) > 0:
+        try:
+            selic = float(data[0]['valor'].replace(',', '.'))
+        except Exception:
+            pass
+
+    suggestions = {
+        'Tesouro Selic': round(selic, 2),
+        'CDB': round(selic, 2),
+        'LCI': round(selic * 0.87, 2),
+        'LCA': round(selic * 0.87, 2),
+        'CRI/CRA': round(selic * 0.95, 2),
+        'Debêntures': round(selic * 1.05, 2),
+        'COE': round(selic * 0.90, 2),
+        'Fundo de Renda Fixa': round(selic * 0.95, 2),
+        'Fundo Multimercado': round(selic * 1.10, 2),
+        'Tesouro IPCA+': round(selic * 0.60, 2),
+        'Tesouro Prefixado': round(selic * 0.95, 2),
+        'Poupança': round(selic * 0.70, 2),
+        'Ações': 0,
+        'FIIs': 0,
+        'Criptomoedas': 0,
+        'Outros': 0,
+    }
+    return jsonify({'selic': selic, 'suggestions': suggestions})
+
+
+@api_bp.route('/crypto-price')
+def crypto_price():
+    """Retorna cotação atual de uma ou mais criptomoedas em BRL via CoinGecko."""
+    coins = request.args.get('coins', 'bitcoin')
+    data = _fetch_json(
+        f'https://api.coingecko.com/api/v3/simple/price?ids={coins}&vs_currencies=brl&include_24hr_change=true',
+        f'crypto_{coins}',
+        ttl=300  # 5 minutos
+    )
+    if not data:
+        return jsonify({'error': 'Não foi possível obter cotação'}), 503
+    return jsonify(data)
+
+
 @api_bp.route('/investments')
 def investments_chart():
     """Retorna projeção de crescimento da carteira para os próximos 12 meses."""
