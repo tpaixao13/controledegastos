@@ -1,7 +1,9 @@
+import csv
+import io
 from decimal import Decimal, ROUND_HALF_UP
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from app import db
-from app.models import User, Expense, InstallmentGroup
+from app.models import User, Expense, InstallmentGroup, RecurringGroup
 from app.forms import ExpenseForm
 from datetime import datetime
 
@@ -15,7 +17,6 @@ def list():
     users = User.query.order_by(User.name).all()
     now = datetime.now()
 
-    # Filtros via query string
     user_id = request.args.get('user_id', type=int)
     month = request.args.get('month', now.month, type=int)
     year = request.args.get('year', now.year, type=int)
@@ -46,6 +47,56 @@ def list():
                            filters={'user_id': user_id, 'month': month, 'year': year, 'category': category})
 
 
+@expenses_bp.route('/export')
+def export_csv():
+    now = datetime.now()
+    user_id = request.args.get('user_id', type=int)
+    month = request.args.get('month', now.month, type=int)
+    year = request.args.get('year', now.year, type=int)
+    category = request.args.get('category', '')
+
+    query = Expense.query.filter_by(year=year, month=month)
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+    if category:
+        query = query.filter_by(category=category)
+    query = query.order_by(Expense.day.asc(), Expense.created_at.asc())
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Pessoa', 'Dia', 'Mês', 'Ano', 'Descrição', 'Categoria',
+                     'Forma de Pagamento', 'Banco', 'Valor (R$)', 'Parcela', 'Recorrente'])
+
+    for e in query.all():
+        parcela = ''
+        if e.installment_group_id:
+            parcela = f'{e.installment_number}/{e.installment_group.num_installments}'
+        elif e.recurring_group_id:
+            parcela = f'Recorrente {e.recurring_number}/{e.recurring_group.num_recurrences}'
+
+        writer.writerow([
+            e.user.name,
+            e.day,
+            e.month,
+            e.year,
+            e.description,
+            e.category,
+            e.payment_method,
+            e.bank or '',
+            f'{float(e.amount):.2f}'.replace('.', ','),
+            parcela,
+            'Sim' if e.recurring_group_id else 'Não',
+        ])
+
+    output.seek(0)
+    filename = f'despesas_{year}_{month:02d}.csv'
+    return Response(
+        '\ufeff' + output.getvalue(),  # BOM para Excel reconhecer UTF-8
+        mimetype='text/csv; charset=utf-8',
+        headers={'Content-Disposition': f'attachment; filename={filename}'}
+    )
+
+
 @expenses_bp.route('/add', methods=['GET', 'POST'])
 def add():
     users = User.query.order_by(User.name).all()
@@ -58,15 +109,20 @@ def add():
         form.month.data = now.month
         form.day.data = now.day
         form.num_installments.data = 2
+        form.recurring_times.data = 2
 
     if form.validate_on_submit():
         payment = form.payment_method.data
         bank = form.bank.data if payment in ('Cartão de Débito', 'Cartão de Crédito') else None
+
         is_parcelado = (payment == 'Cartão de Crédito' and
                         form.credit_type.data == 'parcelado')
+        is_recurring = form.is_recurring.data
 
         if is_parcelado:
             _create_installments(form, bank)
+        elif is_recurring:
+            _create_recurring(form, bank, payment)
         else:
             expense = Expense(
                 user_id=form.user_id.data,
@@ -135,6 +191,16 @@ def delete_group(group_id):
     return redirect(url_for('expenses.list'))
 
 
+@expenses_bp.route('/delete-recurring/<int:group_id>', methods=['POST'])
+def delete_recurring(group_id):
+    group = RecurringGroup.query.get_or_404(group_id)
+    count = group.recurrences.count()
+    db.session.delete(group)
+    db.session.commit()
+    flash(f'Todas as {count} recorrências foram eliminadas.', 'warning')
+    return redirect(url_for('expenses.list'))
+
+
 def _create_installments(form, bank):
     n = form.num_installments.data
     total = Decimal(str(form.amount.data))
@@ -149,7 +215,7 @@ def _create_installments(form, bank):
         bank=bank or '',
     )
     db.session.add(group)
-    db.session.flush()  # garante group.id antes do loop
+    db.session.flush()
 
     mes_inicio = form.month.data
     ano_inicio = form.year.data
@@ -183,6 +249,54 @@ def _create_installments(form, bank):
     parcela_fmt = f'R$ {float(parcela):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
     flash(
         f'{n} parcelas criadas de {parcela_fmt} cada '
+        f'({meses[mes_inicio-1]}/{ano_inicio} → {meses[mes_fim-1]}/{ano_fim})',
+        'success'
+    )
+
+
+def _create_recurring(form, bank, payment):
+    n = form.recurring_times.data
+    amount = Decimal(str(form.amount.data))
+
+    group = RecurringGroup(
+        user_id=form.user_id.data,
+        description=form.description.data,
+        amount=amount,
+        num_recurrences=n,
+    )
+    db.session.add(group)
+    db.session.flush()
+
+    mes_inicio = form.month.data
+    ano_inicio = form.year.data
+
+    for i in range(n):
+        mes_atual = (mes_inicio - 1 + i) % 12 + 1
+        ano_atual = ano_inicio + ((mes_inicio - 1 + i) // 12)
+
+        expense = Expense(
+            user_id=form.user_id.data,
+            description=form.description.data,
+            amount=amount,
+            category=form.category.data,
+            payment_method=payment,
+            bank=bank,
+            year=ano_atual,
+            month=mes_atual,
+            day=form.day.data,
+            recurring_group_id=group.id,
+            recurring_number=i + 1,
+        )
+        db.session.add(expense)
+
+    db.session.commit()
+
+    meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+             'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    mes_fim = (mes_inicio - 1 + n - 1) % 12 + 1
+    ano_fim = ano_inicio + ((mes_inicio - 1 + n - 1) // 12)
+    flash(
+        f'Despesa recorrente criada por {n} meses '
         f'({meses[mes_inicio-1]}/{ano_inicio} → {meses[mes_fim-1]}/{ano_fim})',
         'success'
     )

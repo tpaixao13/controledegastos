@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}Investimentos — Controle de Gastos{% endblock %}
+
+{% block content %}
+<div class="row mb-3 align-items-center">
+  <div class="col">
+    <h2 class="fw-bold"><i class="bi bi-graph-up-arrow text-success"></i> Investimentos</h2>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Formulário -->
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header bg-success text-white fw-semibold">
+        <i class="bi bi-plus-circle"></i> Novo Investimento
+      </div>
+      <div class="card-body">
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+
+            <div class="col-12">
+              {{ form.user_id.label(class='form-label fw-semibold') }}
+              {{ form.user_id(class='form-select' + (' is-invalid' if form.user_id.errors else '')) }}
+            </div>
+
+            <div class="col-12">
+              {{ form.investment_type.label(class='form-label fw-semibold') }}
+              {{ form.investment_type(class='form-select' + (' is-invalid' if form.investment_type.errors else '')) }}
+              {% for e in form.investment_type.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-12">
+              {{ form.description.label(class='form-label fw-semibold') }}
+              {{ form.description(class='form-control', placeholder='Ex: CDB Nubank 110% CDI') }}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.amount.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                {{ form.amount(class='form-control' + (' is-invalid' if form.amount.errors else ''), placeholder='0,00') }}
+              </div>
+              {% for e in form.amount.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.annual_rate.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                {{ form.annual_rate(class='form-control' + (' is-invalid' if form.annual_rate.errors else '')) }}
+                <span class="input-group-text">% a.a.</span>
+              </div>
+              <div class="form-text">Taxa Selic atual: ~14,75%</div>
+              {% for e in form.annual_rate.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              {{ form.month.label(class='form-label fw-semibold') }}
+              {{ form.month(class='form-select') }}
+            </div>
+            <div class="col-md-6">
+              {{ form.year.label(class='form-label fw-semibold') }}
+              {{ form.year(class='form-control') }}
+            </div>
+
+          </div>
+          <div class="mt-3">
+            {{ form.submit(class='btn btn-success fw-semibold w-100') }}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfico e lista -->
+  <div class="col-lg-7">
+
+    <!-- Gráfico de projeção -->
+    <div class="card mb-4">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-graph-up text-success"></i> Projeção de Rendimento (12 meses)
+      </div>
+      <div class="card-body">
+        {% if investments %}
+        <div style="position:relative; height:260px;">
+          <canvas id="chartInvestments"></canvas>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-graph-up fs-1"></i>
+          <p class="mt-2">Registre seu primeiro investimento para ver a projeção.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Resumo -->
+    {% if investments %}
+    <div class="row g-3 mb-4">
+      <div class="col-sm-4">
+        <div class="card text-center border-0" style="background:#f0fdf4;">
+          <div class="card-body py-3">
+            <div class="small text-muted">Total Investido</div>
+            <div class="fw-bold text-success fs-5">
+              {{ investments | sum(attribute='amount') | float | round(2) | string | replace('.', ',') }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4">
+        <div class="card text-center border-0" style="background:#f0fdf4;">
+          <div class="card-body py-3">
+            <div class="small text-muted">Nº de Posições</div>
+            <div class="fw-bold text-success fs-5">{{ investments | length }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4">
+        <div class="card text-center border-0" style="background:#f0fdf4;">
+          <div class="card-body py-3">
+            <div class="small text-muted">Taxa Média a.a.</div>
+            <div class="fw-bold text-success fs-5">
+              {% if investments %}
+                {{ (investments | sum(attribute='annual_rate') | float / investments | length) | round(2) }}%
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de investimentos -->
+    <div class="card">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-list-ul"></i> Carteira
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Pessoa</th>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Data</th>
+                <th>Taxa</th>
+                <th class="text-end">Valor</th>
+                <th class="text-center">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inv in investments %}
+              <tr>
+                <td>
+                  <span class="badge {{ 'bg-primary' if inv.user.name == 'Tiago' else 'bg-danger' }}">
+                    {{ inv.user.name }}
+                  </span>
+                </td>
+                <td><span class="badge bg-success">{{ inv.investment_type }}</span></td>
+                <td class="text-muted small">{{ inv.description or '—' }}</td>
+                <td class="text-muted small">{{ '%02d'|format(inv.month) }}/{{ inv.year }}</td>
+                <td class="text-muted small">{{ inv.annual_rate }}% a.a.</td>
+                <td class="text-end fw-semibold text-success">{{ inv.amount|brl }}</td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                          data-bs-target="#modalDelInv{{ inv.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+
+              <!-- Modal delete -->
+              <div class="modal fade" id="modalDelInv{{ inv.id }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h6 class="modal-title">Confirmar remoção</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body small">
+                      Remover investimento "{{ inv.investment_type }}" de {{ inv.amount|brl }}?
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <form method="POST" action="{{ url_for('investments.delete', inv_id=inv.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-danger">Remover</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if investments %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function brl(v) {
+    return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+
+  fetch('/api/chart/investments')
+    .then(r => r.json())
+    .then(d => {
+      const ctx = document.getElementById('chartInvestments');
+      if (!ctx || !d.labels.length) return;
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: d.labels,
+          datasets: [
+            {
+              label: 'Valor Projetado',
+              data: d.projected,
+              borderColor: '#198754',
+              backgroundColor: 'rgba(25,135,84,0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              borderWidth: 2,
+            },
+            {
+              label: 'Total Investido',
+              data: d.invested,
+              borderColor: '#0d6efd',
+              backgroundColor: 'transparent',
+              borderDash: [5, 5],
+              pointRadius: 0,
+              borderWidth: 1.5,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${brl(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: v => brl(v)
+              }
+            }
+          }
+        }
+      });
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

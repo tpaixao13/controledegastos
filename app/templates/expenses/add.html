@@ -62,17 +62,18 @@
             <!-- Forma de Pagamento -->
             <div class="col-12">
               {{ form.payment_method.label(class='form-label fw-semibold') }}
-              {{ form.payment_method(class='form-select', id='payment_method') }}
+              {{ form.payment_method(class='form-select' + (' is-invalid' if form.payment_method.errors else ''), id='payment_method') }}
+              {% for e in form.payment_method.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
             </div>
 
             <!-- Banco (condicional) -->
-            <div class="col-12" id="bank-row">
+            <div class="col-12" id="bank-row" style="display:none">
               {{ form.bank.label(class='form-label fw-semibold') }}
               {{ form.bank(class='form-select' + (' is-invalid' if form.bank.errors else '')) }}
             </div>
 
-            <!-- Parcelas (condicional) -->
-            <div class="col-12" id="installment-section">
+            <!-- Parcelas (condicional - só Cartão de Crédito) -->
+            <div class="col-12" id="installment-section" style="display:none">
               <label class="form-label fw-semibold">Modalidade</label>
               <div class="d-flex gap-4">
                 {% for subfield in form.credit_type %}
@@ -84,9 +85,23 @@
               </div>
             </div>
 
-            <div class="col-md-4" id="num-installments-row">
+            <div class="col-md-4" id="num-installments-row" style="display:none">
               {{ form.num_installments.label(class='form-label fw-semibold') }}
               {{ form.num_installments(class='form-select') }}
+            </div>
+
+            <!-- Recorrente -->
+            <div class="col-12">
+              <div class="form-check form-switch">
+                {{ form.is_recurring(class='form-check-input', id='is_recurring') }}
+                {{ form.is_recurring.label(class='form-check-label fw-semibold') }}
+              </div>
+            </div>
+
+            <div class="col-md-5" id="recurring-times-row" style="display:none">
+              {{ form.recurring_times.label(class='form-label fw-semibold') }}
+              {{ form.recurring_times(class='form-select') }}
+              <div class="form-text">O valor total se repete a cada mês.</div>
             </div>
 
           </div>

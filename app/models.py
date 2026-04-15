@@ -1,5 +1,6 @@
 from datetime import datetime
 from app import db
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class User(db.Model):
@@ -7,10 +8,21 @@ class User(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, nullable=False, unique=True)
+    password_hash = db.Column(db.Text, nullable=True)
 
     salaries = db.relationship('Salary', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     expenses = db.relationship('Expense', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     installment_groups = db.relationship('InstallmentGroup', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    recurring_groups = db.relationship('RecurringGroup', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    investments = db.relationship('Investment', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        if not self.password_hash:
+            return False
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f'<User {self.name}>'
@@ -45,10 +57,29 @@ class InstallmentGroup(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     installments = db.relationship('Expense', backref='installment_group', lazy='dynamic',
-                                   cascade='all, delete-orphan')
+                                   cascade='all, delete-orphan',
+                                   foreign_keys='Expense.installment_group_id')
 
     def __repr__(self):
         return f'<InstallmentGroup {self.description} {self.num_installments}x>'
+
+
+class RecurringGroup(db.Model):
+    __tablename__ = 'recurring_groups'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    num_recurrences = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    recurrences = db.relationship('Expense', backref='recurring_group', lazy='dynamic',
+                                  cascade='all, delete-orphan',
+                                  foreign_keys='Expense.recurring_group_id')
+
+    def __repr__(self):
+        return f'<RecurringGroup {self.description} {self.num_recurrences}x>'
 
 
 class Expense(db.Model):
@@ -66,7 +97,26 @@ class Expense(db.Model):
     day = db.Column(db.Integer, nullable=False)
     installment_group_id = db.Column(db.Integer, db.ForeignKey('installment_groups.id'), nullable=True)
     installment_number = db.Column(db.Integer, nullable=True)
+    recurring_group_id = db.Column(db.Integer, db.ForeignKey('recurring_groups.id'), nullable=True)
+    recurring_number = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f'<Expense {self.description} R${self.amount} {self.month}/{self.year}>'
+
+
+class Investment(db.Model):
+    __tablename__ = 'investments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    investment_type = db.Column(db.Text, nullable=False)
+    annual_rate = db.Column(db.Numeric(6, 2), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    month = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Investment {self.investment_type} R${self.amount} {self.month}/{self.year}>'

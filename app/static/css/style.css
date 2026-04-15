@@ -32,6 +32,14 @@ body {
   padding: 1px 5px;
 }
 
+.recurring-badge {
+  font-size: 0.7rem;
+  background-color: #d1ecf1;
+  color: #0c5460;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
 .table th {
   font-weight: 600;
   font-size: 0.85rem;

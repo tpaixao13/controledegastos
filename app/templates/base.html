@@ -23,7 +23,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
+      <ul class="navbar-nav me-auto">
         <li class="nav-item">
           <a class="nav-link {{ 'active' if request.endpoint == 'main.index' }}" href="{{ url_for('main.index') }}">
             <i class="bi bi-speedometer2"></i> Dashboard
@@ -39,11 +39,32 @@
             <i class="bi bi-cash-coin"></i> Salários
           </a>
         </li>
-        <li class="nav-item ms-2">
-          <a class="btn btn-warning btn-sm mt-1" href="{{ url_for('expenses.add') }}">
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.blueprint == 'investments' }}" href="{{ url_for('investments.manage') }}">
+            <i class="bi bi-graph-up-arrow"></i> Investimentos
+          </a>
+        </li>
+      </ul>
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+        <li class="nav-item">
+          <a class="btn btn-warning btn-sm" href="{{ url_for('expenses.add') }}">
             <i class="bi bi-plus-lg"></i> Nova Despesa
           </a>
         </li>
+        {% if session.get('user_name') %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i> {{ session.user_name }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                <i class="bi bi-box-arrow-right"></i> Sair
+              </a>
+            </li>
+          </ul>
+        </li>
+        {% endif %}
       </ul>
     </div>
   </div>

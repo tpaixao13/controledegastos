@@ -1,19 +1,22 @@
 from flask_wtf import FlaskForm
 from wtforms import (StringField, DecimalField, SelectField, IntegerField,
                      BooleanField, RadioField, SubmitField)
-from wtforms.validators import DataRequired, Length, NumberRange, Optional
+from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
 
 CATEGORIES = [
     ('Alimentação', 'Alimentação'),
-    ('Transporte', 'Transporte'),
+    ('Beleza', 'Beleza'),
     ('Educação', 'Educação'),
-    ('Saúde', 'Saúde'),
-    ('Moradia', 'Moradia'),
     ('Lazer', 'Lazer'),
+    ('Moradia', 'Moradia'),
+    ('Saúde', 'Saúde'),
+    ('Telefone', 'Telefone'),
+    ('Transporte', 'Transporte'),
     ('Outros', 'Outros'),
 ]
 
 PAYMENT_METHODS = [
+    ('', '— Forma de pagamento —'),
     ('PIX', 'PIX'),
     ('Cartão de Débito', 'Cartão de Débito'),
     ('Cartão de Crédito', 'Cartão de Crédito'),
@@ -48,6 +51,32 @@ MONTHS = [
 ]
 
 INSTALLMENTS = [(i, f'{i}x') for i in range(2, 13)]
+RECURRENCES = [(i, f'{i}x') for i in range(2, 25)]
+
+INVESTMENT_TYPES = [
+    ('', '— Selecione o tipo —'),
+    ('Tesouro Selic', 'Tesouro Selic'),
+    ('Tesouro IPCA+', 'Tesouro IPCA+'),
+    ('Tesouro Prefixado', 'Tesouro Prefixado'),
+    ('CDB', 'CDB'),
+    ('LCI', 'LCI'),
+    ('LCA', 'LCA'),
+    ('CRI/CRA', 'CRI/CRA'),
+    ('Poupança', 'Poupança'),
+    ('Fundo de Renda Fixa', 'Fundo de Renda Fixa'),
+    ('Fundo Multimercado', 'Fundo Multimercado'),
+    ('Ações', 'Ações'),
+    ('FIIs', 'FIIs (Fundos Imobiliários)'),
+    ('Debêntures', 'Debêntures'),
+    ('COE', 'COE'),
+    ('Criptomoedas', 'Criptomoedas'),
+    ('Outros', 'Outros'),
+]
+
+
+def validate_payment_method(form, field):
+    if not field.data:
+        raise ValidationError('Selecione a forma de pagamento.')
 
 
 class ExpenseForm(FlaskForm):
@@ -55,11 +84,15 @@ class ExpenseForm(FlaskForm):
     description = StringField('Descrição', validators=[DataRequired(), Length(max=200)])
     amount = DecimalField('Valor Total (R$)', places=2, validators=[DataRequired(), NumberRange(min=0.01)])
     category = SelectField('Categoria', choices=CATEGORIES, validators=[DataRequired()])
-    payment_method = SelectField('Forma de Pagamento', choices=PAYMENT_METHODS, validators=[DataRequired()])
+    payment_method = SelectField('Forma de Pagamento', choices=PAYMENT_METHODS,
+                                  validators=[validate_payment_method])
     bank = SelectField('Banco / Cartão', choices=BANKS, validators=[Optional()])
     credit_type = RadioField('Tipo', choices=[('avista', 'À vista'), ('parcelado', 'Parcelado')],
                              default='avista', validators=[Optional()])
     num_installments = SelectField('Nº de Parcelas', choices=INSTALLMENTS, coerce=int, validators=[Optional()])
+    is_recurring = BooleanField('Despesa Recorrente?', validators=[Optional()])
+    recurring_times = SelectField('Repetir por quantos meses', choices=RECURRENCES, coerce=int,
+                                   validators=[Optional()])
     year = IntegerField('Ano', validators=[DataRequired(), NumberRange(min=2000, max=2100)])
     month = SelectField('Mês', choices=MONTHS, coerce=int, validators=[DataRequired()])
     day = IntegerField('Dia', validators=[DataRequired(), NumberRange(min=1, max=31)])
@@ -72,3 +105,23 @@ class SalaryForm(FlaskForm):
     month = SelectField('Mês', choices=MONTHS, coerce=int, validators=[DataRequired()])
     amount = DecimalField('Salário (R$)', places=2, validators=[DataRequired(), NumberRange(min=0.01)])
     submit = SubmitField('Salvar Salário')
+
+
+class InvestmentForm(FlaskForm):
+    user_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
+    description = StringField('Descrição / Nome', validators=[Optional(), Length(max=200)])
+    amount = DecimalField('Valor Investido (R$)', places=2, validators=[DataRequired(), NumberRange(min=0.01)])
+    investment_type = SelectField('Tipo de Investimento', choices=INVESTMENT_TYPES,
+                                   validators=[DataRequired()])
+    annual_rate = DecimalField('Taxa a.a. (%)', places=2,
+                                validators=[DataRequired(), NumberRange(min=0.01, max=999)],
+                                default=14.75)
+    year = IntegerField('Ano', validators=[DataRequired(), NumberRange(min=2000, max=2100)])
+    month = SelectField('Mês', choices=MONTHS, coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Registrar Investimento')
+
+
+class LoginForm(FlaskForm):
+    user_id = SelectField('Usuário', coerce=int, validators=[DataRequired()])
+    password = StringField('Senha', validators=[DataRequired()])
+    submit = SubmitField('Entrar')

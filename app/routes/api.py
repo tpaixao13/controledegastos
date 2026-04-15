@@ -1,18 +1,20 @@
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 from app import db
-from app.models import Expense, Salary, User
+from app.models import Expense, Salary, User, Investment
 from datetime import datetime
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/chart')
 
 CATEGORY_COLORS = {
     'Alimentação': '#FF6384',
-    'Transporte': '#36A2EB',
+    'Beleza': '#f72585',
     'Educação': '#FFCE56',
-    'Saúde': '#4BC0C0',
-    'Moradia': '#9966FF',
     'Lazer': '#FF9F40',
+    'Moradia': '#9966FF',
+    'Saúde': '#4BC0C0',
+    'Telefone': '#43aa8b',
+    'Transporte': '#36A2EB',
     'Outros': '#C9CBCF',
 }
 
@@ -136,3 +138,44 @@ def payment_methods():
         })
 
     return jsonify({'labels': labels, 'datasets': datasets})
+
+
+@api_bp.route('/investments')
+def investments_chart():
+    """Retorna projeção de crescimento da carteira para os próximos 12 meses."""
+    now = datetime.now()
+    all_investments = Investment.query.all()
+
+    if not all_investments:
+        return jsonify({'labels': [], 'invested': [], 'projected': []})
+
+    # Gera os próximos 12 meses a partir do mês atual
+    future_months = []
+    for i in range(12):
+        m = (now.month - 1 + i) % 12 + 1
+        y = now.year + ((now.month - 1 + i) // 12)
+        future_months.append((m, y))
+
+    labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in future_months]
+    total_invested = sum(float(inv.amount) for inv in all_investments)
+    invested_line = [round(total_invested, 2)] * 12
+
+    projected = []
+    for i, (fm, fy) in enumerate(future_months):
+        total_value = 0.0
+        for inv in all_investments:
+            annual = float(inv.annual_rate) / 100.0
+            monthly_rate = (1 + annual) ** (1 / 12) - 1
+            # meses desde o investimento até este ponto
+            months_elapsed = (fy - inv.year) * 12 + (fm - inv.month)
+            if months_elapsed < 0:
+                months_elapsed = 0
+            value = float(inv.amount) * ((1 + monthly_rate) ** months_elapsed)
+            total_value += value
+        projected.append(round(total_value, 2))
+
+    return jsonify({
+        'labels': labels,
+        'invested': invested_line,
+        'projected': projected,
+    })
