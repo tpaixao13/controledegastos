@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import (StringField, DecimalField, SelectField, IntegerField,
-                     BooleanField, RadioField, SubmitField, PasswordField)
+                     BooleanField, RadioField, SubmitField, PasswordField, HiddenField)
 from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError, EqualTo
 
 CATEGORIES = [
