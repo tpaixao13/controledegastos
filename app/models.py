@@ -37,10 +37,7 @@ class Salary(db.Model):
     year = db.Column(db.Integer, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
-
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'year', 'month', name='uq_salary_user_year_month'),
-    )
+    company = db.Column(db.Text, nullable=True)
 
     def __repr__(self):
         return f'<Salary user={self.user_id} {self.month}/{self.year} R${self.amount}>'
