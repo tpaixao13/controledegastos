@@ -191,6 +191,15 @@ def delete_group(group_id):
     return redirect(url_for('expenses.list'))
 
 
+@expenses_bp.route('/toggle-paid/<int:expense_id>', methods=['POST'])
+def toggle_paid(expense_id):
+    expense = Expense.query.get_or_404(expense_id)
+    expense.paid = not bool(expense.paid)
+    db.session.commit()
+    next_url = request.form.get('next') or url_for('expenses.list')
+    return redirect(next_url)
+
+
 @expenses_bp.route('/delete-recurring/<int:group_id>', methods=['POST'])
 def delete_recurring(group_id):
     group = RecurringGroup.query.get_or_404(group_id)
