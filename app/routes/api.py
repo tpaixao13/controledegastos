@@ -3,6 +3,27 @@ from sqlalchemy import func
 from app import db
 from app.models import Expense, Salary, User, Investment
 from datetime import datetime
+import urllib.request
+import json
+import time
+
+# Cache simples em memória
+_cache = {}
+
+
+def _fetch_json(url, cache_key, ttl=3600):
+    """Busca JSON de URL externa com cache em memória."""
+    now = time.time()
+    if cache_key in _cache and now - _cache[cache_key]['ts'] < ttl:
+        return _cache[cache_key]['data']
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'ControleGastos/1.0'})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+        _cache[cache_key] = {'data': data, 'ts': now}
+        return data
+    except Exception:
+        return None
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/chart')
 
