@@ -21,10 +21,10 @@
 <!-- Filtros -->
 <div class="card mb-4">
   <div class="card-body">
-    <form method="GET" class="row g-2 align-items-end">
+    <form method="GET" id="filterForm" class="row g-2 align-items-end">
       <div class="col-md-2">
         <label class="form-label small fw-semibold">Pessoa</label>
-        <select name="user_id" class="form-select form-select-sm">
+        <select name="user_id" class="form-select form-select-sm auto-filter">
           <option value="">Todos</option>
           {% for u in users %}
           <option value="{{ u.id }}" {{ 'selected' if filters.user_id == u.id }}>{{ u.name }}</option>
@@ -33,7 +33,7 @@
       </div>
       <div class="col-md-2">
         <label class="form-label small fw-semibold">Mês</label>
-        <select name="month" class="form-select form-select-sm">
+        <select name="month" class="form-select form-select-sm auto-filter">
           <option value="0" {{ 'selected' if filters.month == 0 }}>Todos</option>
           {% for num, nome in [
             (1,'Janeiro'),(2,'Fevereiro'),(3,'Março'),(4,'Abril'),
@@ -46,11 +46,12 @@
       </div>
       <div class="col-md-2">
         <label class="form-label small fw-semibold">Ano</label>
-        <input type="number" name="year" value="{{ filters.year }}" class="form-control form-control-sm">
+        <input type="number" name="year" value="{{ filters.year }}"
+               class="form-control form-control-sm auto-filter">
       </div>
       <div class="col-md-2">
         <label class="form-label small fw-semibold">Categoria</label>
-        <select name="category" class="form-select form-select-sm">
+        <select name="category" class="form-select form-select-sm auto-filter">
           <option value="">Todas</option>
           {% for cat in categories %}
           <option value="{{ cat }}" {{ 'selected' if filters.category == cat }}>{{ cat }}</option>
@@ -58,12 +59,16 @@
         </select>
       </div>
       <div class="col-auto">
-        <button type="submit" class="btn btn-primary btn-sm">
-          <i class="bi bi-funnel"></i> Filtrar
-        </button>
-        <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary btn-sm">Limpar</a>
+        <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x-lg"></i> Limpar
+        </a>
       </div>
     </form>
+    <script>
+      document.querySelectorAll('.auto-filter').forEach(el => {
+        el.addEventListener('change', () => document.getElementById('filterForm').submit());
+      });
+    </script>
   </div>
 </div>
 
