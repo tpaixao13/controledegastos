@@ -3,8 +3,29 @@ from app import db
 from app.models import User, Investment
 from app.forms import InvestmentForm
 from datetime import datetime
+import urllib.request
+import json
+import ssl
 
 investments_bp = Blueprint('investments', __name__, url_prefix='/investments')
+
+_ssl_ctx = ssl.create_default_context()
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
+
+
+def _fetch_crypto_price(coin):
+    """Busca preço atual de uma crypto em BRL via CoinGecko."""
+    try:
+        url = f'https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=brl'
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json'
+        })
+        with urllib.request.urlopen(req, timeout=8, context=_ssl_ctx) as resp:
+            data = json.loads(resp.read().decode())
+        return float(data[coin]['brl'])
+    except Exception:
+        return None
 
 
 @investments_bp.route('/', methods=['GET', 'POST'])
