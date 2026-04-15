@@ -88,7 +88,9 @@ def doughnut():
     data = [float(r[1]) for r in rows]
     colors = [CATEGORY_COLORS.get(lbl, '#C9CBCF') for lbl in labels]
 
-    return jsonify({'labels': labels, 'data': data, 'colors': colors})
+    total_salary = db.session.query(func.sum(Salary.amount)).filter_by(year=year, month=month).scalar() or 0
+
+    return jsonify({'labels': labels, 'data': data, 'colors': colors, 'total_salary': float(total_salary)})
 
 
 @api_bp.route('/monthly-vs-salary')
