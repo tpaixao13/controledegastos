@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       });
   }
-  loadChartPayments(6);
+  loadChartPayments(1);
   document.querySelectorAll('#paymentsPeriod button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#paymentsPeriod button').forEach(b => b.classList.remove('active'));
