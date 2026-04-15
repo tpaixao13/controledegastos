@@ -99,7 +99,8 @@ def doughnut():
 def monthly_vs_salary():
     n = request.args.get('months', 6, type=int)
     n = max(1, min(n, 24))
-    months = _last_n_months(n)
+    end_month, end_year = _get_month_year()
+    months = _last_n_months(n, end_month, end_year)
     labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in months]
     gastos = []
     salarios = []
