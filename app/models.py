@@ -114,6 +114,7 @@ class Investment(db.Model):
     investment_type = db.Column(db.Text, nullable=False)
     annual_rate = db.Column(db.Numeric(6, 2), nullable=False)
     crypto_coin = db.Column(db.Text, nullable=True)
+    crypto_buy_price = db.Column(db.Numeric(18, 8), nullable=True)
     year = db.Column(db.Integer, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
