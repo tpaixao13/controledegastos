@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function () {
       thCurrent.style.display = '';
       document.querySelectorAll('.crypto-current-cell').forEach(el => el.style.display = '');
 
-      fetch(`/api/crypto-price?coins=${coins.join(',')}`)
+      fetch(`/api/chart/crypto-price?coins=${coins.join(',')}`)
         .then(r => r.json())
         .then(prices => {
           cryptoCells.forEach(el => {
