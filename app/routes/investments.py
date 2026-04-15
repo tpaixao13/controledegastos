@@ -40,14 +40,29 @@ def manage():
         form.month.data = now.month
 
     if form.validate_on_submit():
+        is_crypto = form.investment_type.data == 'Criptomoedas'
+        coin = form.crypto_coin.data if is_crypto else None
+
+        # Preço de compra: usa o enviado pelo JS, ou busca no servidor como fallback
+        buy_price = None
+        if is_crypto and coin:
+            raw = form.crypto_buy_price.data
+            if raw:
+                try:
+                    buy_price = float(raw)
+                except (ValueError, TypeError):
+                    pass
+            if not buy_price:
+                buy_price = _fetch_crypto_price(coin)
+
         inv = Investment(
             user_id=form.user_id.data,
             description=form.description.data or None,
             amount=form.amount.data,
             investment_type=form.investment_type.data,
             annual_rate=form.annual_rate.data or 0,
-            crypto_coin=form.crypto_coin.data if form.investment_type.data == 'Criptomoedas' else None,
-            crypto_buy_price=float(form.crypto_buy_price.data) if form.investment_type.data == 'Criptomoedas' and form.crypto_buy_price.data else None,
+            crypto_coin=coin,
+            crypto_buy_price=buy_price,
             year=form.year.data,
             month=form.month.data,
         )
