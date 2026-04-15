@@ -18,7 +18,7 @@
         <i class="bi bi-plus-circle"></i> Novo Investimento
       </div>
       <div class="card-body">
-        <form method="POST" novalidate>
+        <form method="POST" novalidate id="invForm">
           {{ form.hidden_tag() }}
           <div class="row g-3">
 
@@ -29,31 +29,53 @@
 
             <div class="col-12">
               {{ form.investment_type.label(class='form-label fw-semibold') }}
-              {{ form.investment_type(class='form-select' + (' is-invalid' if form.investment_type.errors else '')) }}
+              {{ form.investment_type(class='form-select' + (' is-invalid' if form.investment_type.errors else ''), id='invType') }}
               {% for e in form.investment_type.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+
+            <!-- Seletor de criptomoeda (visível só quando Criptomoedas selecionado) -->
+            <div class="col-12" id="cryptoRow" style="display:none">
+              {{ form.crypto_coin.label(class='form-label fw-semibold') }}
+              {{ form.crypto_coin(class='form-select', id='cryptoCoin') }}
+              <!-- Cotação ao vivo -->
+              <div id="cryptoQuote" class="mt-2" style="display:none">
+                <div class="card border-warning">
+                  <div class="card-body py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <span class="small fw-semibold" id="quoteCoinName">—</span>
+                      <span class="small text-muted" id="quoteChange"></span>
+                    </div>
+                    <div class="fw-bold text-warning fs-6" id="quotePrice">—</div>
+                    <div class="small text-muted mt-1" id="quoteQty"></div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div class="col-12">
               {{ form.description.label(class='form-label fw-semibold') }}
-              {{ form.description(class='form-control', placeholder='Ex: CDB Nubank 110% CDI') }}
+              {{ form.description(class='form-control', placeholder='Ex: CDB Nubank 110% CDI', id='invDesc') }}
             </div>
 
             <div class="col-md-6">
               {{ form.amount.label(class='form-label fw-semibold') }}
               <div class="input-group">
                 <span class="input-group-text">R$</span>
-                {{ form.amount(class='form-control' + (' is-invalid' if form.amount.errors else ''), placeholder='0,00') }}
+                {{ form.amount(class='form-control' + (' is-invalid' if form.amount.errors else ''), placeholder='0,00', id='invAmount') }}
               </div>
               {% for e in form.amount.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-6" id="rateRow">
               {{ form.annual_rate.label(class='form-label fw-semibold') }}
               <div class="input-group">
-                {{ form.annual_rate(class='form-control' + (' is-invalid' if form.annual_rate.errors else '')) }}
+                {{ form.annual_rate(class='form-control' + (' is-invalid' if form.annual_rate.errors else ''), id='invRate') }}
                 <span class="input-group-text">% a.a.</span>
               </div>
-              <div class="form-text">Taxa Selic atual: ~14,75%</div>
+              <div class="form-text" id="rateHint">
+                <span class="spinner-border spinner-border-sm text-success" role="status"></span>
+                Buscando CDI...
+              </div>
               {% for e in form.annual_rate.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
             </div>
 
@@ -104,9 +126,7 @@
         <div class="card text-center border-0" style="background:#f0fdf4;">
           <div class="card-body py-3">
             <div class="small text-muted">Total Investido</div>
-            <div class="fw-bold text-success fs-5">
-              {{ investments | sum(attribute='amount') | float | round(2) | string | replace('.', ',') }}
-            </div>
+            <div class="fw-bold text-success fs-5">{{ investments | sum(attribute='amount') | float | round(2) | brl }}</div>
           </div>
         </div>
       </div>
@@ -123,9 +143,10 @@
           <div class="card-body py-3">
             <div class="small text-muted">Taxa Média a.a.</div>
             <div class="fw-bold text-success fs-5">
-              {% if investments %}
-                {{ (investments | sum(attribute='annual_rate') | float / investments | length) | round(2) }}%
-              {% endif %}
+              {% set inv_with_rate = investments | selectattr('annual_rate') | list %}
+              {% if inv_with_rate %}
+                {{ (inv_with_rate | sum(attribute='annual_rate') | float / inv_with_rate | length) | round(2) }}%
+              {% else %}—{% endif %}
             </div>
           </div>
         </div>
@@ -134,8 +155,14 @@
 
     <!-- Tabela de investimentos -->
     <div class="card">
-      <div class="card-header fw-semibold">
-        <i class="bi bi-list-ul"></i> Carteira
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-list-ul"></i> Carteira</span>
+        {% set has_crypto = investments | selectattr('crypto_coin') | list %}
+        {% if has_crypto %}
+        <button class="btn btn-sm btn-outline-warning" id="btnRefreshCrypto">
+          <i class="bi bi-arrow-repeat"></i> Atualizar cotações
+        </button>
+        {% endif %}
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
@@ -146,14 +173,15 @@
                 <th>Tipo</th>
                 <th>Descrição</th>
                 <th>Data</th>
-                <th>Taxa</th>
+                <th>Taxa / Moeda</th>
                 <th class="text-end">Valor</th>
+                <th class="text-end" id="thCurrent" style="display:none">Cotação Atual</th>
                 <th class="text-center">Ação</th>
               </tr>
             </thead>
             <tbody>
               {% for inv in investments %}
-              <tr>
+              <tr data-coin="{{ inv.crypto_coin or '' }}" data-amount="{{ inv.amount | float }}">
                 <td>
                   <span class="badge {{ 'bg-primary' if inv.user.name == 'Tiago' else 'bg-danger' }}">
                     {{ inv.user.name }}
@@ -162,8 +190,19 @@
                 <td><span class="badge bg-success">{{ inv.investment_type }}</span></td>
                 <td class="text-muted small">{{ inv.description or '—' }}</td>
                 <td class="text-muted small">{{ '%02d'|format(inv.month) }}/{{ inv.year }}</td>
-                <td class="text-muted small">{{ inv.annual_rate }}% a.a.</td>
+                <td class="text-muted small">
+                  {% if inv.crypto_coin %}
+                    <span class="badge bg-warning text-dark coin-badge" data-coin="{{ inv.crypto_coin }}">{{ inv.crypto_coin }}</span>
+                  {% elif inv.annual_rate %}
+                    {{ inv.annual_rate }}% a.a.
+                  {% else %}—{% endif %}
+                </td>
                 <td class="text-end fw-semibold text-success">{{ inv.amount|brl }}</td>
+                <td class="text-end crypto-current-cell" style="display:none">
+                  {% if inv.crypto_coin %}
+                    <span class="crypto-val" data-coin="{{ inv.crypto_coin }}" data-amount="{{ inv.amount | float }}">—</span>
+                  {% endif %}
+                </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
                           data-bs-target="#modalDelInv{{ inv.id }}">
@@ -205,13 +244,14 @@
 {% endblock %}
 
 {% block scripts %}
-{% if investments %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   function brl(v) {
     return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   }
 
+  // ── Gráfico de projeção ──────────────────────────────────────
+  {% if investments %}
   fetch('/api/chart/investments')
     .then(r => r.json())
     .then(d => {
@@ -247,23 +287,163 @@ document.addEventListener('DOMContentLoaded', function () {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            tooltip: {
-              callbacks: {
-                label: ctx => `${ctx.dataset.label}: ${brl(ctx.parsed.y)}`
-              }
-            }
+            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${brl(ctx.parsed.y)}` } }
           },
-          scales: {
-            y: {
-              ticks: {
-                callback: v => brl(v)
-              }
-            }
-          }
+          scales: { y: { ticks: { callback: v => brl(v) } } }
         }
       });
     });
+  {% endif %}
+
+  // ── CDI: busca e sugere taxa ─────────────────────────────────
+  let selicRate = 14.75;
+  let suggestions = {};
+  const invType = document.getElementById('invType');
+  const invRate = document.getElementById('invRate');
+  const rateHint = document.getElementById('rateHint');
+  const rateRow = document.getElementById('rateRow');
+
+  fetch('/api/cdi-rate')
+    .then(r => r.json())
+    .then(d => {
+      selicRate = d.selic;
+      suggestions = d.suggestions;
+      rateHint.innerHTML = `<i class="bi bi-info-circle text-success"></i> CDI/Selic atual: <strong>${selicRate.toFixed(2)}% a.a.</strong>`;
+      applySuggestion();
+    })
+    .catch(() => {
+      rateHint.innerHTML = `<small class="text-muted">Selic atual: ~14,75% a.a.</small>`;
+    });
+
+  function applySuggestion() {
+    const type = invType ? invType.value : '';
+    const suggested = suggestions[type];
+    if (suggested !== undefined && suggested > 0) {
+      invRate.value = suggested.toFixed(2);
+      rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Taxa sugerida para <strong>${type}</strong>: ${suggested.toFixed(2)}% a.a.`;
+    }
+  }
+
+  if (invType) invType.addEventListener('change', function () {
+    applySuggestion();
+    toggleCryptoRow();
+  });
+
+  // ── Criptomoedas ─────────────────────────────────────────────
+  const cryptoRow = document.getElementById('cryptoRow');
+  const cryptoCoin = document.getElementById('cryptoCoin');
+  const cryptoQuote = document.getElementById('cryptoQuote');
+  const quoteCoinName = document.getElementById('quoteCoinName');
+  const quotePrice = document.getElementById('quotePrice');
+  const quoteChange = document.getElementById('quoteChange');
+  const quoteQty = document.getElementById('quoteQty');
+  const invAmount = document.getElementById('invAmount');
+
+  const COIN_LABELS = {
+    'bitcoin': 'Bitcoin (BTC)', 'ethereum': 'Ethereum (ETH)',
+    'binancecoin': 'BNB (BNB)', 'solana': 'Solana (SOL)',
+    'ripple': 'XRP (XRP)', 'cardano': 'Cardano (ADA)',
+    'dogecoin': 'Dogecoin (DOGE)', 'polkadot': 'Polkadot (DOT)',
+    'avalanche-2': 'Avalanche (AVAX)', 'chainlink': 'Chainlink (LINK)',
+    'litecoin': 'Litecoin (LTC)', 'matic-network': 'Polygon (MATIC)',
+  };
+
+  function toggleCryptoRow() {
+    const isCrypto = invType && invType.value === 'Criptomoedas';
+    cryptoRow.style.display = isCrypto ? '' : 'none';
+    rateRow.style.display = isCrypto ? 'none' : '';
+    if (!isCrypto) {
+      cryptoQuote.style.display = 'none';
+    }
+  }
+  toggleCryptoRow();
+
+  let currentCoinPrice = 0;
+
+  function fetchCryptoQuote() {
+    const coin = cryptoCoin ? cryptoCoin.value : '';
+    if (!coin) { cryptoQuote.style.display = 'none'; return; }
+
+    quoteCoinName.textContent = COIN_LABELS[coin] || coin;
+    quotePrice.textContent = 'Buscando...';
+    cryptoQuote.style.display = '';
+
+    fetch(`/api/crypto-price?coins=${coin}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error || !d[coin]) {
+          quotePrice.textContent = 'Indisponível';
+          return;
+        }
+        const price = d[coin].brl;
+        const change = d[coin].brl_24h_change;
+        currentCoinPrice = price;
+        quotePrice.textContent = brl(price);
+
+        if (change !== undefined) {
+          const sign = change >= 0 ? '+' : '';
+          quoteChange.innerHTML = `<span class="${change >= 0 ? 'text-success' : 'text-danger'}">${sign}${change.toFixed(2)}% 24h</span>`;
+        }
+        updateQty();
+      })
+      .catch(() => { quotePrice.textContent = 'Erro ao buscar cotação'; });
+  }
+
+  function updateQty() {
+    const amount = parseFloat(invAmount ? invAmount.value : 0);
+    if (amount > 0 && currentCoinPrice > 0) {
+      const qty = amount / currentCoinPrice;
+      const coin = cryptoCoin ? cryptoCoin.value : '';
+      quoteQty.textContent = `Com R$ ${amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})} você compraria ≈ ${qty.toFixed(8)} ${COIN_LABELS[coin] || coin}`;
+    } else {
+      quoteQty.textContent = '';
+    }
+  }
+
+  if (cryptoCoin) cryptoCoin.addEventListener('change', fetchCryptoQuote);
+  if (invAmount) invAmount.addEventListener('input', updateQty);
+
+  // ── Cotações na tabela ────────────────────────────────────────
+  const cryptoCells = document.querySelectorAll('.crypto-val');
+  const thCurrent = document.getElementById('thCurrent');
+
+  if (cryptoCells.length > 0) {
+    // Coleta todas as moedas únicas
+    const coins = [...new Set([...cryptoCells].map(el => el.dataset.coin).filter(Boolean))];
+    if (coins.length > 0) {
+      thCurrent.style.display = '';
+      document.querySelectorAll('.crypto-current-cell').forEach(el => el.style.display = '');
+
+      fetch(`/api/crypto-price?coins=${coins.join(',')}`)
+        .then(r => r.json())
+        .then(prices => {
+          cryptoCells.forEach(el => {
+            const coin = el.dataset.coin;
+            const amount = parseFloat(el.dataset.amount);
+            if (prices[coin] && prices[coin].brl) {
+              const price = prices[coin].brl;
+              const change = prices[coin].brl_24h_change || 0;
+              const sign = change >= 0 ? '+' : '';
+              const color = change >= 0 ? 'text-success' : 'text-danger';
+              el.innerHTML = `
+                <div class="fw-semibold">${brl(price)}<small class="ms-1 ${color}">${sign}${change.toFixed(1)}%</small></div>
+                <small class="text-muted">por unidade</small>`;
+            } else {
+              el.textContent = '—';
+            }
+          });
+
+          // Atualiza badges com nome amigável
+          document.querySelectorAll('.coin-badge').forEach(badge => {
+            badge.textContent = COIN_LABELS[badge.dataset.coin] || badge.dataset.coin;
+          });
+        })
+        .catch(() => {});
+    }
+  }
+
+  const btnRefresh = document.getElementById('btnRefreshCrypto');
+  if (btnRefresh) btnRefresh.addEventListener('click', () => location.reload());
 });
 </script>
-{% endif %}
 {% endblock %}
