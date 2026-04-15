@@ -235,6 +235,31 @@ def crypto_price():
     return jsonify(data)
 
 
+@api_bp.route('/crypto-history')
+def crypto_history():
+    """Retorna histórico de preço de uma crypto em BRL (últimos 30 dias)."""
+    coin = request.args.get('coin', 'bitcoin')
+    days = request.args.get('days', 30, type=int)
+    data = _fetch_json(
+        f'https://api.coingecko.com/api/v3/coins/{coin}/market_chart?vs_currency=brl&days={days}',
+        f'history_{coin}_{days}',
+        ttl=3600
+    )
+    if not data or 'prices' not in data:
+        return jsonify({'error': 'Indisponível'}), 503
+
+    prices = data['prices']  # [[timestamp_ms, price], ...]
+    labels = []
+    values = []
+    for ts, price in prices:
+        from datetime import timezone
+        dt = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
+        labels.append(dt.strftime('%d/%m'))
+        values.append(round(price, 2))
+
+    return jsonify({'labels': labels, 'values': values})
+
+
 @api_bp.route('/investments')
 def investments_chart():
     """Retorna projeção de crescimento da carteira para os próximos 12 meses."""
