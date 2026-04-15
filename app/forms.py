@@ -91,6 +91,7 @@ class ExpenseForm(FlaskForm):
     credit_type = RadioField('Tipo', choices=[('avista', 'À vista'), ('parcelado', 'Parcelado')],
                              default='avista', validators=[Optional()])
     num_installments = SelectField('Nº de Parcelas', choices=INSTALLMENTS, coerce=int, validators=[Optional()])
+    paid = BooleanField('Marcar como Pago', validators=[Optional()])
     is_recurring = BooleanField('Despesa Recorrente?', validators=[Optional()])
     recurring_times = SelectField('Repetir por quantos meses', choices=RECURRENCES, coerce=int,
                                    validators=[Optional()])
