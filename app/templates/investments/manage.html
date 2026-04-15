@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const rateHint = document.getElementById('rateHint');
   const rateRow = document.getElementById('rateRow');
 
-  fetch('/api/cdi-rate')
+  fetch('/api/chart/cdi-rate')
     .then(r => r.json())
     .then(d => {
       selicRate = d.selic;
