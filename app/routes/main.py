@@ -61,6 +61,7 @@ def index():
                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
     return render_template('index.html',
+                           today=now.date(),
                            user_summaries=user_summaries,
                            total_salario=total_salario,
                            total_gasto=total_gasto,
