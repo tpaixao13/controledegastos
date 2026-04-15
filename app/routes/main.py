@@ -43,6 +43,14 @@ def index():
               .order_by(Expense.day.desc(), Expense.created_at.desc())
               .limit(10).all())
 
+    # Despesas pendentes do mês
+    pending = (Expense.query
+               .filter_by(year=year, month=month)
+               .filter(Expense.paid.isnot(True))
+               .order_by(Expense.day.asc(), Expense.created_at.asc())
+               .all())
+    total_pendente = sum(float(e.amount) for e in pending)
+
     # Navegação de meses
     prev_month = month - 1 if month > 1 else 12
     prev_year = year if month > 1 else year - 1
@@ -58,6 +66,8 @@ def index():
                            total_gasto=total_gasto,
                            saldo_combinado=saldo_combinado,
                            recent=recent,
+                           pending=pending,
+                           total_pendente=total_pendente,
                            month=month,
                            year=year,
                            month_name=month_names[month - 1],
