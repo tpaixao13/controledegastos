@@ -44,13 +44,18 @@ def list():
     categories = db.session.query(Expense.category).distinct().order_by(Expense.category).all()
     categories = [c[0] for c in categories]
 
+    payment_methods = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'Dinheiro']
+
     return render_template('expenses/list.html',
                            expenses=expenses,
                            pagination=pagination,
                            users=users,
                            categories=categories,
+                           payment_methods=payment_methods,
                            total_mes=total_mes,
-                           filters={'user_id': user_id, 'month': month, 'year': year, 'category': category})
+                           today=now.date(),
+                           filters={'user_id': user_id, 'month': month, 'year': year,
+                                    'category': category, 'payment_method': payment_method})
 
 
 @expenses_bp.route('/export')
