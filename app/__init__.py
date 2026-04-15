@@ -82,13 +82,27 @@ def _run_migrations():
 
         # Remove unique constraint on salaries (SQLite requires table recreation)
         try:
-            conn.execute(text("SELECT sql FROM sqlite_master WHERE type='table' AND name='salaries'"))
-            result = conn.execute(text(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND tbl_name='salaries' "
-                "AND name='ix_salaries_unique'"
-            )).scalar()
-            if result:
-                conn.execute(text('DROP INDEX IF EXISTS ix_salaries_unique'))
+            # Check if the unique constraint still exists in the table definition
+            row = conn.execute(text(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='salaries'"
+            )).fetchone()
+            if row and 'UNIQUE' in row[0].upper():
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS salaries_new (
+                        id INTEGER PRIMARY KEY,
+                        user_id INTEGER NOT NULL REFERENCES users(id),
+                        year INTEGER NOT NULL,
+                        month INTEGER NOT NULL,
+                        amount NUMERIC(12,2) NOT NULL,
+                        company TEXT
+                    )
+                """))
+                conn.execute(text(
+                    "INSERT INTO salaries_new (id, user_id, year, month, amount, company) "
+                    "SELECT id, user_id, year, month, amount, company FROM salaries"
+                ))
+                conn.execute(text("DROP TABLE salaries"))
+                conn.execute(text("ALTER TABLE salaries_new RENAME TO salaries"))
                 conn.commit()
         except Exception:
             pass
