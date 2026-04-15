@@ -117,8 +117,13 @@
 
   <div class="col-md-8 chart-card" data-id="monthly">
     <div class="card h-100">
-      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
-        <i class="bi bi-bar-chart text-success"></i> Gastos vs Salário (últimos 6 meses)
+      <div class="card-header fw-semibold chart-drag-handle d-flex justify-content-between align-items-center" style="cursor:grab">
+        <span><i class="bi bi-bar-chart text-success"></i> Gastos vs Salário</span>
+        <div class="btn-group btn-group-sm" onclick="event.stopPropagation()" id="monthlyPeriod">
+          <button class="btn btn-outline-secondary" data-months="1">1m</button>
+          <button class="btn btn-outline-secondary active" data-months="6">6m</button>
+          <button class="btn btn-outline-secondary" data-months="12">12m</button>
+        </div>
       </div>
       <div class="card-body">
         <div class="chart-container"><canvas id="chartMonthly"></canvas></div>
