@@ -9,6 +9,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Text, nullable=False, unique=True)
     password_hash = db.Column(db.Text, nullable=True)
+    avatar = db.Column(db.Text, nullable=True)
 
     salaries = db.relationship('Salary', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     expenses = db.relationship('Expense', backref='user', lazy='dynamic', cascade='all, delete-orphan')

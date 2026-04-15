@@ -53,10 +53,24 @@
         </li>
         {% if session.get('user_name') %}
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle text-white" href="#" data-bs-toggle="dropdown">
-            <i class="bi bi-person-circle"></i> {{ session.user_name }}
+          <a class="nav-link dropdown-toggle text-white d-flex align-items-center gap-2"
+             href="#" data-bs-toggle="dropdown">
+            {% if session.get('user_avatar') %}
+            <img src="{{ session.user_avatar }}" alt="avatar"
+                 class="rounded-circle border border-2 border-white"
+                 style="width:30px; height:30px; object-fit:cover;">
+            {% else %}
+            <i class="bi bi-person-circle fs-5"></i>
+            {% endif %}
+            {{ session.user_name }}
           </a>
           <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                <i class="bi bi-person-gear"></i> Perfil
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
             <li>
               <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
                 <i class="bi bi-box-arrow-right"></i> Sair

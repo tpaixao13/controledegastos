@@ -68,6 +68,7 @@ def _run_migrations():
         'ALTER TABLE users ADD COLUMN password_hash TEXT',
         'ALTER TABLE expenses ADD COLUMN recurring_group_id INTEGER REFERENCES recurring_groups(id)',
         'ALTER TABLE expenses ADD COLUMN recurring_number INTEGER',
+        'ALTER TABLE users ADD COLUMN avatar TEXT',
     ]
     with db.engine.connect() as conn:
         for sql in migrations:

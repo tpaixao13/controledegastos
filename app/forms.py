@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed
 from wtforms import (StringField, DecimalField, SelectField, IntegerField,
-                     BooleanField, RadioField, SubmitField)
-from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError
+                     BooleanField, RadioField, SubmitField, PasswordField)
+from wtforms.validators import DataRequired, Length, NumberRange, Optional, ValidationError, EqualTo
 
 CATEGORIES = [
     ('Alimentação', 'Alimentação'),
@@ -125,3 +126,21 @@ class LoginForm(FlaskForm):
     user_id = SelectField('Usuário', coerce=int, validators=[DataRequired()])
     password = StringField('Senha', validators=[DataRequired()])
     submit = SubmitField('Entrar')
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Senha Atual', validators=[DataRequired()])
+    new_password = PasswordField('Nova Senha', validators=[
+        DataRequired(), Length(min=4, message='Mínimo de 4 caracteres.')
+    ])
+    confirm_password = PasswordField('Confirmar Nova Senha', validators=[
+        DataRequired(), EqualTo('new_password', message='As senhas não coincidem.')
+    ])
+    submit_pwd = SubmitField('Alterar Senha')
+
+
+class AvatarForm(FlaskForm):
+    avatar = FileField('Foto de Perfil', validators=[
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Apenas imagens (jpg, png, gif, webp).')
+    ])
+    submit_avatar = SubmitField('Salvar Foto')

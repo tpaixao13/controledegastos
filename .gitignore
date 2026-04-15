@@ -6,3 +6,8 @@ __pycache__/
 .env
 *.db
 .DS_Store
+app/static/uploads/avatars/*.jpg
+app/static/uploads/avatars/*.jpeg
+app/static/uploads/avatars/*.png
+app/static/uploads/avatars/*.gif
+app/static/uploads/avatars/*.webp

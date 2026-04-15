@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil — Controle de Gastos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <h2 class="fw-bold mb-4"><i class="bi bi-person-circle text-primary"></i> Meu Perfil</h2>
+
+    <div class="row g-4">
+
+      <!-- Foto de perfil -->
+      <div class="col-md-5">
+        <div class="card">
+          <div class="card-header fw-semibold">
+            <i class="bi bi-camera"></i> Foto de Perfil
+          </div>
+          <div class="card-body text-center">
+
+            <!-- Avatar atual -->
+            <div class="mb-3">
+              {% if user.avatar %}
+              <img src="{{ url_for('static', filename='uploads/avatars/' + user.avatar) }}"
+                   alt="Avatar" id="avatarPreview"
+                   class="rounded-circle shadow"
+                   style="width:120px; height:120px; object-fit:cover;">
+              {% else %}
+              <img src="" alt="Avatar" id="avatarPreview"
+                   class="rounded-circle shadow d-none"
+                   style="width:120px; height:120px; object-fit:cover;">
+              <div id="avatarPlaceholder"
+                   class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center shadow"
+                   style="width:120px; height:120px;">
+                <i class="bi bi-person-fill text-white" style="font-size:3rem;"></i>
+              </div>
+              {% endif %}
+            </div>
+
+            <p class="fw-semibold mb-1 fs-5">{{ user.name }}</p>
+
+            <form method="POST" enctype="multipart/form-data" novalidate>
+              {{ avatar_form.hidden_tag() }}
+
+              <div class="mb-3">
+                <label class="btn btn-outline-primary btn-sm w-100" for="{{ avatar_form.avatar.id }}">
+                  <i class="bi bi-upload"></i> Escolher imagem
+                  {{ avatar_form.avatar(class='d-none', id=avatar_form.avatar.id, accept='image/*') }}
+                </label>
+                <div class="form-text">JPG, PNG, GIF ou WebP — máx. 2 MB</div>
+                {% for e in avatar_form.avatar.errors %}
+                <div class="text-danger small">{{ e }}</div>
+                {% endfor %}
+              </div>
+
+              {{ avatar_form.submit_avatar(class='btn btn-primary w-100 fw-semibold') }}
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alterar senha -->
+      <div class="col-md-7">
+        <div class="card">
+          <div class="card-header fw-semibold">
+            <i class="bi bi-lock"></i> Alterar Senha
+          </div>
+          <div class="card-body">
+            <form method="POST" novalidate>
+              {{ pwd_form.hidden_tag() }}
+
+              <div class="mb-3">
+                {{ pwd_form.current_password.label(class='form-label fw-semibold') }}
+                <div class="input-group">
+                  {{ pwd_form.current_password(class='form-control' + (' is-invalid' if pwd_form.current_password.errors else ''),
+                                               id='currentPwd', type='password', placeholder='••••••••') }}
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePwd('currentPwd', 'eye1')">
+                    <i class="bi bi-eye" id="eye1"></i>
+                  </button>
+                </div>
+                {% for e in pwd_form.current_password.errors %}
+                <div class="text-danger small mt-1">{{ e }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="mb-3">
+                {{ pwd_form.new_password.label(class='form-label fw-semibold') }}
+                <div class="input-group">
+                  {{ pwd_form.new_password(class='form-control' + (' is-invalid' if pwd_form.new_password.errors else ''),
+                                           id='newPwd', type='password', placeholder='••••••••') }}
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePwd('newPwd', 'eye2')">
+                    <i class="bi bi-eye" id="eye2"></i>
+                  </button>
+                </div>
+                {% for e in pwd_form.new_password.errors %}
+                <div class="text-danger small mt-1">{{ e }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="mb-4">
+                {{ pwd_form.confirm_password.label(class='form-label fw-semibold') }}
+                <div class="input-group">
+                  {{ pwd_form.confirm_password(class='form-control' + (' is-invalid' if pwd_form.confirm_password.errors else ''),
+                                               id='confirmPwd', type='password', placeholder='••••••••') }}
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePwd('confirmPwd', 'eye3')">
+                    <i class="bi bi-eye" id="eye3"></i>
+                  </button>
+                </div>
+                {% for e in pwd_form.confirm_password.errors %}
+                <div class="text-danger small mt-1">{{ e }}</div>
+                {% endfor %}
+              </div>
+
+              {{ pwd_form.submit_pwd(class='btn btn-warning fw-semibold px-4') }}
+              <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary ms-2">Voltar</a>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePwd(inputId, iconId) {
+  const input = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'bi bi-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'bi bi-eye';
+  }
+}
+
+// Pré-visualização da imagem antes de enviar
+document.getElementById('{{ avatar_form.avatar.id }}').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const preview = document.getElementById('avatarPreview');
+    const placeholder = document.getElementById('avatarPlaceholder');
+    preview.src = e.target.result;
+    preview.classList.remove('d-none');
+    if (placeholder) placeholder.classList.add('d-none');
+  };
+  reader.readAsDataURL(file);
+});
+</script>
+{% endblock %}
