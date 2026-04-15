@@ -11,6 +11,7 @@ CATEGORIES = [
     ('Lazer', 'Lazer'),
     ('Moradia', 'Moradia'),
     ('Saúde', 'Saúde'),
+    ('Internet', 'Internet'),
     ('Telefone', 'Telefone'),
     ('Transporte', 'Transporte'),
     ('Outros', 'Outros'),
