@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 2 — Barras: gastos vs salário (período dinâmico)
   let chartMonthlyInst = null;
   function loadChartMonthly(months) {
-    fetch(`/api/chart/monthly-vs-salary?months=${months}`)
+    fetch(`/api/chart/monthly-vs-salary?months=${months}&month=${month}&year=${year}`)
       .then(r => r.json())
       .then(d => {
         const ctx = document.getElementById('chartMonthly');
