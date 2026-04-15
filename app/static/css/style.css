@@ -40,6 +40,9 @@ body {
   padding: 1px 5px;
 }
 
+.badge-pago { background-color: #198754; color: #fff; }
+.badge-pendente { background-color: #ffc107; color: #212529; }
+
 .table th {
   font-weight: 600;
   font-size: 0.85rem;
