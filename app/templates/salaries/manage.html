@@ -6,7 +6,7 @@
 <div class="row mb-4">
   <div class="col">
     <h2 class="fw-bold"><i class="bi bi-cash-coin text-primary"></i> Gestão de Salários</h2>
-    <p class="text-muted">Defina o salário mensal de cada pessoa.</p>
+    <p class="text-muted">Adicione entradas de salário por empresa para cada pessoa.</p>
   </div>
 </div>
 
@@ -15,7 +15,7 @@
   <div class="col-lg-4">
     <div class="card">
       <div class="card-header bg-primary text-white fw-semibold">
-        <i class="bi bi-pencil-square"></i> Registar / Atualizar Salário
+        <i class="bi bi-plus-circle"></i> Adicionar Salário
       </div>
       <div class="card-body">
         <form method="POST" novalidate>
@@ -51,6 +51,14 @@
             {% endfor %}
           </div>
 
+          <div class="mb-3">
+            {{ form.company.label(class='form-label fw-semibold') }}
+            {{ form.company(class='form-control' + (' is-invalid' if form.company.errors else ''), placeholder='Ex: Empresa ABC') }}
+            {% for e in form.company.errors %}
+              <div class="invalid-feedback">{{ e }}</div>
+            {% endfor %}
+          </div>
+
           {{ form.submit(class='btn btn-primary w-100') }}
         </form>
       </div>
@@ -71,20 +79,42 @@
               <tr>
                 <th>Pessoa</th>
                 <th>Mês / Ano</th>
-                <th class="text-end">Salário</th>
+                <th>Empresa / Fonte</th>
+                <th class="text-end">Valor</th>
+                <th class="text-end">Total do Mês</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
+              {% set ns = namespace(prev_key=None) %}
               {% for s in salaries %}
-              <tr>
-                <td>
-                  <span class="badge {{ 'bg-primary' if s.user.name == 'Tiago' else 'bg-danger' }}">
-                    {{ s.user.name }}
-                  </span>
-                </td>
-                <td>{{ s.month|mes_nome }}/{{ s.year }}</td>
-                <td class="text-end fw-semibold">{{ s.amount|brl }}</td>
-              </tr>
+                {% set key = (s.user_id, s.year, s.month) %}
+                {% set is_first = (key != ns.prev_key) %}
+                {% set ns.prev_key = key %}
+                <tr>
+                  <td>
+                    <span class="badge {{ 'bg-primary' if s.user.name == 'Tiago' else 'bg-danger' }}">
+                      {{ s.user.name }}
+                    </span>
+                  </td>
+                  <td>{{ s.month|mes_nome }}/{{ s.year }}</td>
+                  <td class="text-muted small">{{ s.company or '—' }}</td>
+                  <td class="text-end fw-semibold">{{ s.amount|brl }}</td>
+                  <td class="text-end">
+                    {% if is_first %}
+                      <span class="badge bg-success">{{ totals_map[(s.user_id, s.year, s.month)]|brl }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-center">
+                    <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}"
+                          onsubmit="return confirm('Remover este salário?')" style="display:inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Remover">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </td>
+                </tr>
               {% endfor %}
             </tbody>
           </table>
