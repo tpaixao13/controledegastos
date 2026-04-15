@@ -14,6 +14,18 @@ _ssl_ctx.check_hostname = False
 _ssl_ctx.verify_mode = ssl.CERT_NONE
 
 
+def _fetch_selic():
+    """Busca taxa Selic atual do BCB. Retorna float (ex: 14.75)."""
+    try:
+        url = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json'
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json'})
+        with urllib.request.urlopen(req, timeout=5, context=_ssl_ctx) as resp:
+            data = json.loads(resp.read().decode())
+        return float(data[0]['valor'].replace(',', '.'))
+    except Exception:
+        return 14.75  # fallback
+
+
 def _fetch_crypto_price(coin):
     """Busca preço atual de uma crypto em BRL via CoinGecko."""
     try:
