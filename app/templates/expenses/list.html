@@ -34,6 +34,7 @@
       <div class="col-md-2">
         <label class="form-label small fw-semibold">Mês</label>
         <select name="month" class="form-select form-select-sm">
+          <option value="0" {{ 'selected' if filters.month == 0 }}>Todos</option>
           {% for num, nome in [
             (1,'Janeiro'),(2,'Fevereiro'),(3,'Março'),(4,'Abril'),
             (5,'Maio'),(6,'Junho'),(7,'Julho'),(8,'Agosto'),
