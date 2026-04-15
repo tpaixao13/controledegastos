@@ -141,6 +141,22 @@ def payment_methods():
     return jsonify({'labels': labels, 'datasets': datasets})
 
 
+@api_bp.route('/pending-vs-paid')
+def pending_vs_paid():
+    month, year = _get_month_year()
+    paid_total = (db.session.query(func.sum(Expense.amount))
+                  .filter(Expense.year == year, Expense.month == month,
+                          Expense.paid == True).scalar() or 0)
+    pending_total = (db.session.query(func.sum(Expense.amount))
+                     .filter(Expense.year == year, Expense.month == month,
+                             Expense.paid.isnot(True)).scalar() or 0)
+    return jsonify({
+        'labels': ['Pago', 'Pendente'],
+        'data': [float(paid_total), float(pending_total)],
+        'colors': ['#198754', '#ffc107'],
+    })
+
+
 @api_bp.route('/investments')
 def investments_chart():
     """Retorna projeção de crescimento da carteira para os próximos 12 meses."""
