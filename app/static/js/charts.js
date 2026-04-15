@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 6 — Barras empilhadas: forma de pagamento (período dinâmico)
   let chartPaymentsInst = null;
   function loadChartPayments(months) {
-    fetch(`/api/chart/payment-methods?months=${months}`)
+    fetch(`/api/chart/payment-methods?months=${months}&month=${month}&year=${year}`)
       .then(r => r.json())
       .then(d => {
         const ctx = document.getElementById('chartPayments');
