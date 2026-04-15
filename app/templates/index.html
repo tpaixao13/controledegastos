@@ -24,7 +24,7 @@
 <input type="hidden" id="chart-month" value="{{ month }}">
 <input type="hidden" id="chart-year" value="{{ year }}">
 
-<!-- Cards de resumo -->
+<!-- 1. Cards de resumo -->
 <div class="row g-3 mb-4">
   {% for s in user_summaries %}
   <div class="col-md-3">
@@ -95,21 +95,21 @@
   </div>
 </div>
 
-<!-- Gráficos linha 1 -->
+<!-- 2. Pago vs Pendente (segundo item) -->
 <div class="row g-4 mb-4">
-  <div class="col-md-5">
+  <div class="col-md-4">
     <div class="card h-100">
       <div class="card-header fw-semibold">
-        <i class="bi bi-pie-chart text-primary"></i> Gastos por Categoria
+        <i class="bi bi-hourglass-split text-warning"></i> Pago vs Pendente no Mês
       </div>
       <div class="card-body">
         <div class="chart-container">
-          <canvas id="chartDoughnut"></canvas>
+          <canvas id="chartPending"></canvas>
         </div>
       </div>
     </div>
   </div>
-  <div class="col-md-7">
+  <div class="col-md-8">
     <div class="card h-100">
       <div class="card-header fw-semibold">
         <i class="bi bi-bar-chart text-success"></i> Gastos vs Salário (últimos 6 meses)
@@ -123,16 +123,16 @@
   </div>
 </div>
 
-<!-- Gráficos linha 2 -->
+<!-- 3. Gráficos linha 2 -->
 <div class="row g-4 mb-4">
-  <div class="col-md-4">
+  <div class="col-md-5">
     <div class="card h-100">
       <div class="card-header fw-semibold">
-        <i class="bi bi-people text-danger"></i> Tiago vs Greyce
+        <i class="bi bi-pie-chart text-primary"></i> Gastos por Categoria
       </div>
       <div class="card-body">
         <div class="chart-container">
-          <canvas id="chartUsers"></canvas>
+          <canvas id="chartDoughnut"></canvas>
         </div>
       </div>
     </div>
@@ -149,10 +149,26 @@
       </div>
     </div>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-3">
     <div class="card h-100">
       <div class="card-header fw-semibold">
-        <i class="bi bi-credit-card text-info"></i> Formas de Pagamento
+        <i class="bi bi-people text-danger"></i> Tiago vs Greyce
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="chartUsers"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Formas de pagamento -->
+<div class="row g-4 mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-credit-card text-info"></i> Formas de Pagamento (últimos 6 meses)
       </div>
       <div class="card-body">
         <div class="chart-container">
@@ -163,23 +179,7 @@
   </div>
 </div>
 
-<!-- Gráfico pendente vs pago -->
-<div class="row g-4 mb-4">
-  <div class="col-md-4">
-    <div class="card h-100">
-      <div class="card-header fw-semibold">
-        <i class="bi bi-hourglass-split text-warning"></i> Pago vs Pendente no Mês
-      </div>
-      <div class="card-body">
-        <div class="chart-container">
-          <canvas id="chartPending"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Despesas Pendentes -->
+<!-- 5. Despesas Pendentes -->
 {% if pending %}
 <div class="card mb-4 border-warning">
   <div class="card-header fw-semibold d-flex justify-content-between align-items-center bg-warning bg-opacity-10">
@@ -191,14 +191,14 @@
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0 sortable-table" id="tablePending">
         <thead class="table-light">
           <tr>
-            <th>Pessoa</th>
-            <th>Dia</th>
-            <th>Descrição</th>
-            <th>Categoria</th>
-            <th class="text-end">Valor</th>
+            <th class="sortable">Pessoa <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable">Dia <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable">Descrição <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable">Categoria <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable text-end">Valor <span class="sort-icon text-muted">⇅</span></th>
             <th class="text-center">Ação</th>
           </tr>
         </thead>
@@ -242,7 +242,7 @@
 </div>
 {% endif %}
 
-<!-- Últimas despesas -->
+<!-- 6. Últimas despesas -->
 <div class="card">
   <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
     <span><i class="bi bi-clock-history"></i> Últimas Despesas do Mês</span>
@@ -253,15 +253,15 @@
   <div class="card-body p-0">
     {% if recent %}
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
+      <table class="table table-hover align-middle mb-0 sortable-table" id="tableRecent">
         <thead class="table-light">
           <tr>
-            <th>Pessoa</th>
-            <th>Dia</th>
-            <th>Descrição</th>
-            <th>Categoria</th>
-            <th>Pagamento</th>
-            <th class="text-end">Valor</th>
+            <th class="sortable">Pessoa <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable">Dia <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable">Descrição <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable">Categoria <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable">Pagamento <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable text-end">Valor <span class="sort-icon text-muted">⇅</span></th>
           </tr>
         </thead>
         <tbody>
@@ -313,4 +313,49 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+// Ordenação de tabelas
+document.querySelectorAll('.sortable-table').forEach(table => {
+  const headers = table.querySelectorAll('th.sortable');
+  let lastCol = -1, asc = true;
+
+  headers.forEach((th, colIdx) => {
+    th.style.cursor = 'pointer';
+    th.title = 'Clique para ordenar';
+
+    th.addEventListener('click', () => {
+      asc = (lastCol === colIdx) ? !asc : true;
+      lastCol = colIdx;
+
+      // Reset ícones
+      headers.forEach(h => {
+        h.querySelector('.sort-icon').textContent = '⇅';
+        h.querySelector('.sort-icon').className = 'sort-icon text-muted';
+      });
+      const icon = th.querySelector('.sort-icon');
+      icon.textContent = asc ? '▲' : '▼';
+      icon.className = 'sort-icon text-primary';
+
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+
+      rows.sort((a, b) => {
+        const aText = (a.cells[colIdx]?.innerText || '').trim();
+        const bText = (b.cells[colIdx]?.innerText || '').trim();
+
+        // Tenta comparar como número (R$ ou data)
+        const aNum = parseFloat(aText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        const bNum = parseFloat(bText.replace(/[^\d,.-]/g, '').replace(',', '.'));
+
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return asc ? aNum - bNum : bNum - aNum;
+        }
+        return asc ? aText.localeCompare(bText, 'pt-BR') : bText.localeCompare(aText, 'pt-BR');
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+    });
+  });
+});
+</script>
 {% endblock %}
