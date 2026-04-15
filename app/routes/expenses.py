@@ -23,13 +23,16 @@ def list():
     category = request.args.get('category', '')
     page = request.args.get('page', 1, type=int)
 
-    query = Expense.query.filter_by(year=year, month=month)
+    # month=0 significa "todos os meses"
+    query = Expense.query.filter_by(year=year)
+    if month != 0:
+        query = query.filter_by(month=month)
     if user_id:
         query = query.filter_by(user_id=user_id)
     if category:
         query = query.filter_by(category=category)
 
-    query = query.order_by(Expense.day.desc(), Expense.created_at.desc())
+    query = query.order_by(Expense.month.desc(), Expense.day.desc(), Expense.created_at.desc())
     pagination = query.paginate(page=page, per_page=ITEMS_PER_PAGE, error_out=False)
     expenses = pagination.items
 
