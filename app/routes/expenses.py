@@ -21,6 +21,7 @@ def list():
     month = request.args.get('month', now.month, type=int)
     year = request.args.get('year', now.year, type=int)
     category = request.args.get('category', '')
+    payment_method = request.args.get('payment_method', '')
     page = request.args.get('page', 1, type=int)
 
     # month=0 significa "todos os meses"
@@ -31,6 +32,8 @@ def list():
         query = query.filter_by(user_id=user_id)
     if category:
         query = query.filter_by(category=category)
+    if payment_method:
+        query = query.filter_by(payment_method=payment_method)
 
     query = query.order_by(Expense.month.desc(), Expense.day.desc(), Expense.created_at.desc())
     pagination = query.paginate(page=page, per_page=ITEMS_PER_PAGE, error_out=False)
