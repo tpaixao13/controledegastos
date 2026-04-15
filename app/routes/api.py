@@ -154,7 +154,9 @@ def daily():
 
 @api_bp.route('/payment-methods')
 def payment_methods():
-    months = _last_n_months(6)
+    n = request.args.get('months', 6, type=int)
+    n = max(1, min(n, 24))
+    months = _last_n_months(n)
     labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in months]
     methods = list(PAYMENT_COLORS.keys())
     datasets = []
