@@ -187,7 +187,7 @@
         </tbody>
         <tfoot class="table-light">
           <tr>
-            <td colspan="7" class="fw-semibold text-end">Total do mês:</td>
+            <td colspan="7" class="fw-semibold text-end">{{ 'Total do ano:' if filters.month == 0 else 'Total do mês:' }}</td>
             <td class="text-end fw-bold text-danger">{{ total_mes|brl }}</td>
             <td></td>
           </tr>
