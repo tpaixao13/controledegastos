@@ -305,9 +305,43 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 <script>
-// Ordenação de tabelas
+// ── Drag & drop dos gráficos ──────────────────────────────────
+const STORAGE_KEY = 'dashboard_chart_order';
+const grid = document.getElementById('chartsGrid');
+
+function saveOrder() {
+  const ids = [...grid.querySelectorAll('.chart-card')].map(el => el.dataset.id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
+}
+
+function restoreOrder() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+  const ids = JSON.parse(saved);
+  ids.forEach(id => {
+    const el = grid.querySelector(`[data-id="${id}"]`);
+    if (el) grid.appendChild(el);
+  });
+}
+
+restoreOrder();
+
+Sortable.create(grid, {
+  handle: '.chart-drag-handle',
+  animation: 150,
+  ghostClass: 'opacity-50',
+  onEnd: saveOrder,
+});
+
+document.getElementById('btnResetLayout').addEventListener('click', () => {
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+// ── Ordenação de tabelas
 document.querySelectorAll('.sortable-table').forEach(table => {
   const headers = table.querySelectorAll('th.sortable');
   let lastCol = -1, asc = true;
