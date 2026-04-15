@@ -119,7 +119,24 @@
               {% endif %}
             </td>
             <td class="text-muted small">{{ e.bank or '—' }}</td>
-            <td class="text-end fw-semibold">{{ e.amount|brl }}</td>
+            <td class="text-center">
+              <form method="POST"
+                    action="{{ url_for('expenses.toggle_paid', expense_id=e.id) }}"
+                    style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="next" value="{{ request.url }}">
+                <button type="submit"
+                        class="badge border-0 {{ 'badge-pago' if e.paid else 'badge-pendente' }}"
+                        title="{{ 'Clique para marcar como Pendente' if e.paid else 'Clique para marcar como Pago' }}">
+                  {% if e.paid %}
+                    <i class="bi bi-check-circle-fill"></i> Pago
+                  {% else %}
+                    <i class="bi bi-clock-fill"></i> Pendente
+                  {% endif %}
+                </button>
+              </form>
+            </td>
+            <td class="text-end fw-semibold {{ 'text-muted text-decoration-line-through' if e.paid else '' }}">{{ e.amount|brl }}</td>
             <td class="text-center">
               <a href="{{ url_for('expenses.edit', expense_id=e.id) }}" class="btn btn-sm btn-outline-info">
                 <i class="bi bi-pencil"></i>
