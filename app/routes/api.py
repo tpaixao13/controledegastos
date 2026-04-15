@@ -66,12 +66,14 @@ def _get_month_year():
     return month, year
 
 
-def _last_n_months(n=6):
+def _last_n_months(n=6, end_month=None, end_year=None):
     now = datetime.now()
+    em = end_month or now.month
+    ey = end_year or now.year
     months = []
     for i in range(n - 1, -1, -1):
-        m = (now.month - 1 - i) % 12 + 1
-        y = now.year + ((now.month - 1 - i) // 12)
+        m = (em - 1 - i) % 12 + 1
+        y = ey + ((em - 1 - i) // 12)
         months.append((m, y))
     return months
 
