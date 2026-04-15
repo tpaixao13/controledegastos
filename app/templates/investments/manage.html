@@ -74,8 +74,8 @@
                 <span class="input-group-text">% a.a.</span>
               </div>
               <div class="form-text" id="rateHint">
-                <span class="spinner-border spinner-border-sm text-success" role="status"></span>
-                Buscando CDI...
+                <i class="bi bi-info-circle text-success"></i>
+                CDI/Selic atual: <strong>{{ selic }}% a.a.</strong>
               </div>
               {% for e in form.annual_rate.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
             </div>
