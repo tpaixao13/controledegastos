@@ -6,9 +6,13 @@ from datetime import datetime
 import urllib.request
 import json
 import time
+import ssl
 
 # Cache simples em memória
 _cache = {}
+_ssl_ctx = ssl.create_default_context()
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
 
 
 def _fetch_json(url, cache_key, ttl=3600):
@@ -17,12 +21,16 @@ def _fetch_json(url, cache_key, ttl=3600):
     if cache_key in _cache and now - _cache[cache_key]['ts'] < ttl:
         return _cache[cache_key]['data']
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'ControleGastos/1.0'})
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (compatible; ControleGastos/1.0)',
+            'Accept': 'application/json',
+        })
+        with urllib.request.urlopen(req, timeout=8, context=_ssl_ctx) as resp:
             data = json.loads(resp.read().decode())
         _cache[cache_key] = {'data': data, 'ts': now}
         return data
-    except Exception:
+    except Exception as e:
+        print(f'[_fetch_json] Erro ao buscar {url}: {e}')
         return None
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/chart')
