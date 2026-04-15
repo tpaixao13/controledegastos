@@ -255,7 +255,10 @@
                       Buscando cotação...
                     </div>
                   {% elif not inv.crypto_coin and inv.annual_rate %}
-                    <span class="text-muted small">Renda fixa</span>
+                    {% set monthly_rate = (1 + inv.annual_rate | float / 100) ** (1/12) - 1 %}
+                    {% set monthly_return = inv.amount | float * monthly_rate %}
+                    <div class="text-success fw-semibold">+{{ monthly_return | brl }} / mês</div>
+                    <small class="text-muted">{{ '%.4f'|format(monthly_rate * 100) }}% a.m.</small>
                   {% else %}—{% endif %}
                 </td>
                 <td class="text-center">
