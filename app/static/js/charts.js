@@ -68,36 +68,36 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
-  // 2 — Barras: gastos vs salário (últimos 6 meses)
-  fetch('/api/chart/monthly-vs-salary')
-    .then(r => r.json())
-    .then(d => {
-      const ctx = document.getElementById('chartMonthly');
-      if (!ctx) return;
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: d.labels,
-          datasets: [
-            {
-              label: 'Salário',
-              data: d.salarios,
-              backgroundColor: 'rgba(25, 135, 84, 0.6)',
-              borderColor: '#198754',
-              borderWidth: 1,
-            },
-            {
-              label: 'Gastos',
-              data: d.gastos,
-              backgroundColor: 'rgba(220, 53, 69, 0.6)',
-              borderColor: '#dc3545',
-              borderWidth: 1,
-            }
-          ]
-        },
-        options: { responsive: true, maintainAspectRatio: false, ...tooltipBRL }
+  // 2 — Barras: gastos vs salário (período dinâmico)
+  let chartMonthlyInst = null;
+  function loadChartMonthly(months) {
+    fetch(`/api/chart/monthly-vs-salary?months=${months}`)
+      .then(r => r.json())
+      .then(d => {
+        const ctx = document.getElementById('chartMonthly');
+        if (!ctx) return;
+        if (chartMonthlyInst) chartMonthlyInst.destroy();
+        chartMonthlyInst = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: d.labels,
+            datasets: [
+              { label: 'Salário', data: d.salarios, backgroundColor: 'rgba(25,135,84,0.6)', borderColor: '#198754', borderWidth: 1 },
+              { label: 'Gastos', data: d.gastos, backgroundColor: 'rgba(220,53,69,0.6)', borderColor: '#dc3545', borderWidth: 1 }
+            ]
+          },
+          options: { responsive: true, maintainAspectRatio: false, ...tooltipBRL }
+        });
       });
+  }
+  loadChartMonthly(6);
+  document.querySelectorAll('#monthlyPeriod button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#monthlyPeriod button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadChartMonthly(btn.dataset.months);
     });
+  });
 
   // 3 — Barras: comparação Tiago vs Greyce
   fetch('/api/chart/user-comparison' + params)
