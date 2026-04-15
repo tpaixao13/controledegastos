@@ -133,9 +133,10 @@ class InvestmentForm(FlaskForm):
     amount = DecimalField('Valor Investido (R$)', places=2, validators=[DataRequired(), NumberRange(min=0.01)])
     investment_type = SelectField('Tipo de Investimento', choices=INVESTMENT_TYPES,
                                    validators=[DataRequired()])
+    crypto_coin = SelectField('Criptomoeda', choices=CRYPTO_COINS, validators=[Optional()])
     annual_rate = DecimalField('Taxa a.a. (%)', places=2,
-                                validators=[DataRequired(), NumberRange(min=0.01, max=999)],
-                                default=14.75)
+                                validators=[Optional(), NumberRange(min=0, max=999)],
+                                default=0)
     year = IntegerField('Ano', validators=[DataRequired(), NumberRange(min=2000, max=2100)])
     month = SelectField('Mês', choices=MONTHS, coerce=int, validators=[DataRequired()])
     submit = SubmitField('Registrar Investimento')
