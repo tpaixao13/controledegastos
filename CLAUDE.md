@@ -49,3 +49,19 @@ Flask app using the application factory pattern (`create_app` in [app/__init__.p
 - `|mes_nome` — converts a month integer to a 3-letter Portuguese abbreviation
 
 **Frontend**: plain Bootstrap 5 + vanilla JS. [app/static/js/expense_form.js](app/static/js/expense_form.js) controls the dynamic show/hide of bank and installment fields. [app/static/js/charts.js](app/static/js/charts.js) fetches the API endpoints and renders Chart.js charts on the dashboard.
+
+## GitHub
+
+Repositório: **https://github.com/tpaixao13/controledegastos**
+
+O arquivo [.claude/settings.json](.claude/settings.json) configura um hook `PostToolUse` que faz commit e push automaticamente para o GitHub sempre que Claude editar ou criar um arquivo. O commit usa a mensagem `auto(<tool>): <arquivo>`.
+
+Para o hook funcionar, o `gh` CLI deve estar autenticado:
+```bash
+"C:\Program Files\GitHub CLI\gh.exe" auth status
+```
+
+Se não estiver autenticado:
+```bash
+"C:\Program Files\GitHub CLI\gh.exe" auth login
+```
