@@ -55,6 +55,22 @@ MONTHS = [
 INSTALLMENTS = [(i, f'{i}x') for i in range(2, 13)]
 RECURRENCES = [(i, f'{i}x') for i in range(2, 25)]
 
+CRYPTO_COINS = [
+    ('', '— Selecione a moeda —'),
+    ('bitcoin', 'Bitcoin (BTC)'),
+    ('ethereum', 'Ethereum (ETH)'),
+    ('binancecoin', 'BNB (BNB)'),
+    ('solana', 'Solana (SOL)'),
+    ('ripple', 'XRP (XRP)'),
+    ('cardano', 'Cardano (ADA)'),
+    ('dogecoin', 'Dogecoin (DOGE)'),
+    ('polkadot', 'Polkadot (DOT)'),
+    ('avalanche-2', 'Avalanche (AVAX)'),
+    ('chainlink', 'Chainlink (LINK)'),
+    ('litecoin', 'Litecoin (LTC)'),
+    ('matic-network', 'Polygon (MATIC)'),
+]
+
 INVESTMENT_TYPES = [
     ('', '— Selecione o tipo —'),
     ('Tesouro Selic', 'Tesouro Selic'),
