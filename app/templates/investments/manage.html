@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   {% endif %}
 
-  // ── CDI auto-fill ─────────────────────────────────────────────
+  // ── CDI auto-fill (dados já carregados pelo servidor) ─────────
   const invType = document.getElementById('invType');
   const invRate = document.getElementById('invRate');
   const rateHint = document.getElementById('rateHint');
@@ -413,26 +413,20 @@ document.addEventListener('DOMContentLoaded', function () {
   const invAmount = document.getElementById('invAmount');
   const cryptoBuyPrice = document.getElementById('cryptoBuyPrice');
 
-  let suggestions = {};
+  const SELIC = {{ selic }};
+  const SUGGESTIONS = {{ rate_suggestions | tojson }};
   let currentCoinPrice = 0;
-
-  fetch('/api/chart/cdi-rate')
-    .then(r => r.json())
-    .then(d => {
-      suggestions = d.suggestions;
-      rateHint.innerHTML = `<i class="bi bi-info-circle text-success"></i> CDI/Selic atual: <strong>${d.selic.toFixed(2)}% a.a.</strong>`;
-      applySuggestion();
-    })
-    .catch(() => {
-      rateHint.innerHTML = `<small class="text-muted">Selic atual: ~14,75% a.a.</small>`;
-    });
 
   function applySuggestion() {
     const type = invType ? invType.value : '';
-    const suggested = suggestions[type];
-    if (suggested !== undefined && suggested > 0) {
+    const suggested = SUGGESTIONS[type];
+    if (suggested && suggested > 0) {
       invRate.value = suggested.toFixed(2);
-      rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Taxa sugerida para <strong>${type}</strong>: ${suggested.toFixed(2)}% a.a.`;
+      rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Taxa sugerida para <strong>${type}</strong>: <strong>${suggested.toFixed(2)}% a.a.</strong> (baseado no CDI/Selic ${SELIC}%)`;
+    } else if (type && type !== '') {
+      rateHint.innerHTML = `<i class="bi bi-info-circle text-warning"></i> CDI/Selic atual: <strong>${SELIC}% a.a.</strong> — informe a taxa manualmente`;
+    } else {
+      rateHint.innerHTML = `<i class="bi bi-info-circle text-success"></i> CDI/Selic atual: <strong>${SELIC}% a.a.</strong>`;
     }
   }
 
@@ -446,6 +440,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (invType) {
     invType.addEventListener('change', () => { applySuggestion(); toggleCryptoRow(); });
     toggleCryptoRow();
+    applySuggestion(); // aplica imediatamente ao carregar a página
   }
 
   // ── Cotação ao vivo no formulário ─────────────────────────────
