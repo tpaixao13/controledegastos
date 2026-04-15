@@ -58,6 +58,15 @@
           {% endfor %}
         </select>
       </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">Pagamento</label>
+        <select name="payment_method" class="form-select form-select-sm auto-filter">
+          <option value="">Todos</option>
+          {% for pm in payment_methods %}
+          <option value="{{ pm }}" {{ 'selected' if filters.payment_method == pm }}>{{ pm }}</option>
+          {% endfor %}
+        </select>
+      </div>
       <div class="col-auto">
         <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-x-lg"></i> Limpar
