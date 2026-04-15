@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
       });
   }
-  loadChartMonthly(6);
+  loadChartMonthly(1);
   document.querySelectorAll('#monthlyPeriod button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('#monthlyPeriod button').forEach(b => b.classList.remove('active'));
