@@ -128,7 +128,38 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
-  // 5 — Barras empilhadas: forma de pagamento por mês
+  // 5 — Doughnut: pago vs pendente
+  fetch('/api/chart/pending-vs-paid' + params)
+    .then(r => r.json())
+    .then(d => {
+      const ctx = document.getElementById('chartPending');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: d.labels,
+          datasets: [{
+            data: d.data,
+            backgroundColor: d.colors,
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'right' },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${brl(ctx.parsed)}`
+              }
+            }
+          }
+        }
+      });
+    });
+
+  // 6 — Barras empilhadas: forma de pagamento por mês
   fetch('/api/chart/payment-methods')
     .then(r => r.json())
     .then(d => {
