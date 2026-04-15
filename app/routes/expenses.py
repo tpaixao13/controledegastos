@@ -165,6 +165,7 @@ def edit(expense_id):
         expense.year = form.year.data
         expense.month = form.month.data
         expense.day = form.day.data
+        expense.paid = form.paid.data
         db.session.commit()
         flash('Despesa atualizada com sucesso!', 'success')
         return redirect(url_for('expenses.list'))
