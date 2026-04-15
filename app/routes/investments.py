@@ -40,8 +40,13 @@ def manage():
                    .order_by(Investment.year.desc(), Investment.month.desc())
                    .all())
 
+    fixed_investments = [i for i in investments if not i.crypto_coin]
+    crypto_investments = [i for i in investments if i.crypto_coin]
+
     return render_template('investments/manage.html',
-                           form=form, investments=investments, users=users)
+                           form=form, investments=investments, users=users,
+                           fixed_investments=fixed_investments,
+                           crypto_investments=crypto_investments)
 
 
 @investments_bp.route('/delete/<int:inv_id>', methods=['POST'])
