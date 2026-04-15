@@ -107,7 +107,8 @@ class SalaryForm(FlaskForm):
     year = IntegerField('Ano', validators=[DataRequired(), NumberRange(min=2000, max=2100)])
     month = SelectField('Mês', choices=MONTHS, coerce=int, validators=[DataRequired()])
     amount = DecimalField('Salário (R$)', places=2, validators=[DataRequired(), NumberRange(min=0.01)])
-    submit = SubmitField('Salvar Salário')
+    company = StringField('Empresa / Fonte', validators=[Optional(), Length(max=200)])
+    submit = SubmitField('Adicionar Salário')
 
 
 class InvestmentForm(FlaskForm):
