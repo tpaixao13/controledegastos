@@ -178,24 +178,33 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
 
-  // 6 — Barras empilhadas: forma de pagamento por mês
-  fetch('/api/chart/payment-methods')
-    .then(r => r.json())
-    .then(d => {
-      const ctx = document.getElementById('chartPayments');
-      if (!ctx) return;
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: d.labels,
-          datasets: d.datasets,
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { x: { stacked: true }, y: { stacked: true } },
-          ...tooltipBRL
-        }
+  // 6 — Barras empilhadas: forma de pagamento (período dinâmico)
+  let chartPaymentsInst = null;
+  function loadChartPayments(months) {
+    fetch(`/api/chart/payment-methods?months=${months}`)
+      .then(r => r.json())
+      .then(d => {
+        const ctx = document.getElementById('chartPayments');
+        if (!ctx) return;
+        if (chartPaymentsInst) chartPaymentsInst.destroy();
+        chartPaymentsInst = new Chart(ctx, {
+          type: 'bar',
+          data: { labels: d.labels, datasets: d.datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { x: { stacked: true }, y: { stacked: true } },
+            ...tooltipBRL
+          }
+        });
       });
+  }
+  loadChartPayments(6);
+  document.querySelectorAll('#paymentsPeriod button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#paymentsPeriod button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadChartPayments(btn.dataset.months);
     });
+  });
 });
