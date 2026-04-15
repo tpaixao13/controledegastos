@@ -72,6 +72,7 @@ def _run_migrations():
         'ALTER TABLE expenses ADD COLUMN paid INTEGER DEFAULT 0',
         'ALTER TABLE salaries ADD COLUMN company TEXT',
         'ALTER TABLE investments ADD COLUMN crypto_coin TEXT',
+        'ALTER TABLE investments ADD COLUMN crypto_buy_price NUMERIC(18,8)',
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
