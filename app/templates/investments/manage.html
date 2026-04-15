@@ -368,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function () {
     quotePrice.textContent = 'Buscando...';
     cryptoQuote.style.display = '';
 
-    fetch(`/api/crypto-price?coins=${coin}`)
+    fetch(`/api/chart/crypto-price?coins=${coin}`)
       .then(r => r.json())
       .then(d => {
         if (d.error || !d[coin]) {
