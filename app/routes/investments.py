@@ -24,7 +24,8 @@ def manage():
             description=form.description.data or None,
             amount=form.amount.data,
             investment_type=form.investment_type.data,
-            annual_rate=form.annual_rate.data,
+            annual_rate=form.annual_rate.data or 0,
+            crypto_coin=form.crypto_coin.data if form.investment_type.data == 'Criptomoedas' else None,
             year=form.year.data,
             month=form.month.data,
         )
