@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/login)",
-      "Bash(pkill -f \"run.py\")"
+      "Bash(pkill -f \"run.py\")",
+      "Bash(venv/Scripts/python.exe run.py)"
     ]
   }
 }
