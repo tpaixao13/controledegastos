@@ -94,7 +94,9 @@
                 {{ e.user.name }}
               </span>
             </td>
-            <td class="text-muted small">{{ '%02d'|format(e.day) }}/{{ '%02d'|format(e.month) }}</td>
+            <td class="text-muted small">
+              {{ '%02d'|format(e.day) }}/{{ '%02d'|format(e.month) }}{% if filters.month == 0 %}/{{ e.year }}{% endif %}
+            </td>
             <td>
               {{ e.description }}
               {% if e.installment_group_id %}
