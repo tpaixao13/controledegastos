@@ -163,6 +163,22 @@
   </div>
 </div>
 
+<!-- Gráfico pendente vs pago -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-hourglass-split text-warning"></i> Pago vs Pendente no Mês
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="chartPending"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Despesas Pendentes -->
 {% if pending %}
 <div class="card mb-4 border-warning">
