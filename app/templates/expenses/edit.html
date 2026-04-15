@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Despesa — Controle de Gastos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header bg-info text-white fw-semibold">
+        <i class="bi bi-pencil"></i> Editar Despesa
+        {% if expense.installment_group_id %}
+          <span class="badge bg-light text-dark ms-2">Parcela {{ expense.installment_number }}/{{ expense.installment_group.num_installments }}</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        {% if expense.installment_group_id %}
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle"></i>
+          Esta é uma despesa parcelada. Editar aqui altera apenas esta parcela.
+          Para eliminar todas as parcelas, <a href="{{ url_for('expenses.list') }}">volte à listagem</a>.
+        </div>
+        {% endif %}
+
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.user_id.label(class='form-label fw-semibold') }}
+              {{ form.user_id(class='form-select') }}
+            </div>
+            <div class="col-md-6">
+              {{ form.category.label(class='form-label fw-semibold') }}
+              {{ form.category(class='form-select') }}
+            </div>
+            <div class="col-12">
+              {{ form.description.label(class='form-label fw-semibold') }}
+              {{ form.description(class='form-control') }}
+            </div>
+            <div class="col-md-4">
+              {{ form.amount.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                {{ form.amount(class='form-control') }}
+              </div>
+            </div>
+            <div class="col-md-2">
+              {{ form.day.label(class='form-label fw-semibold') }}
+              {{ form.day(class='form-control') }}
+            </div>
+            <div class="col-md-3">
+              {{ form.month.label(class='form-label fw-semibold') }}
+              {{ form.month(class='form-select') }}
+            </div>
+            <div class="col-md-3">
+              {{ form.year.label(class='form-label fw-semibold') }}
+              {{ form.year(class='form-control') }}
+            </div>
+            <div class="col-12">
+              {{ form.payment_method.label(class='form-label fw-semibold') }}
+              {{ form.payment_method(class='form-select', id='payment_method') }}
+            </div>
+            <div class="col-12" id="bank-row">
+              {{ form.bank.label(class='form-label fw-semibold') }}
+              {{ form.bank(class='form-select') }}
+            </div>
+            <div class="col-12" id="installment-section" style="display:none">
+              <label class="form-label fw-semibold">Modalidade</label>
+              <div class="d-flex gap-4">
+                {% for subfield in form.credit_type %}
+                <div class="form-check">
+                  {{ subfield(class='form-check-input') }}
+                  {{ subfield.label(class='form-check-label') }}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-md-4" id="num-installments-row" style="display:none">
+              {{ form.num_installments.label(class='form-label fw-semibold') }}
+              {{ form.num_installments(class='form-select') }}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            {{ form.submit(class='btn btn-info text-white fw-semibold px-4') }}
+            <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmação para excluir grupo -->
+{% if expense.installment_group_id %}
+<div class="row justify-content-center mt-3">
+  <div class="col-lg-7">
+    <div class="card border-danger">
+      <div class="card-body">
+        <h6 class="text-danger"><i class="bi bi-exclamation-triangle"></i> Zona de Perigo</h6>
+        <p class="small text-muted mb-2">Eliminar todas as {{ expense.installment_group.num_installments }} parcelas desta compra.</p>
+        <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#modalDeleteGroup">
+          <i class="bi bi-trash"></i> Eliminar todas as parcelas
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalDeleteGroup" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">Confirmar exclusão</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Tem a certeza que deseja eliminar <strong>todas as {{ expense.installment_group.num_installments }} parcelas</strong> de
+        "{{ expense.installment_group.description }}"? Esta ação não pode ser desfeita.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form method="POST" action="{{ url_for('expenses.delete_group', group_id=expense.installment_group_id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger">Sim, eliminar tudo</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/expense_form.js') }}"></script>
+{% endblock %}

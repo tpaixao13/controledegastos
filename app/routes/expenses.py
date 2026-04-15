@@ -1,0 +1,188 @@
+from decimal import Decimal, ROUND_HALF_UP
+from flask import Blueprint, render_template, redirect, url_for, flash, request
+from app import db
+from app.models import User, Expense, InstallmentGroup
+from app.forms import ExpenseForm
+from datetime import datetime
+
+expenses_bp = Blueprint('expenses', __name__, url_prefix='/expenses')
+
+ITEMS_PER_PAGE = 20
+
+
+@expenses_bp.route('/')
+def list():
+    users = User.query.order_by(User.name).all()
+    now = datetime.now()
+
+    # Filtros via query string
+    user_id = request.args.get('user_id', type=int)
+    month = request.args.get('month', now.month, type=int)
+    year = request.args.get('year', now.year, type=int)
+    category = request.args.get('category', '')
+    page = request.args.get('page', 1, type=int)
+
+    query = Expense.query.filter_by(year=year, month=month)
+    if user_id:
+        query = query.filter_by(user_id=user_id)
+    if category:
+        query = query.filter_by(category=category)
+
+    query = query.order_by(Expense.day.desc(), Expense.created_at.desc())
+    pagination = query.paginate(page=page, per_page=ITEMS_PER_PAGE, error_out=False)
+    expenses = pagination.items
+
+    total_mes = sum(float(e.amount) for e in query.all())
+
+    categories = db.session.query(Expense.category).distinct().order_by(Expense.category).all()
+    categories = [c[0] for c in categories]
+
+    return render_template('expenses/list.html',
+                           expenses=expenses,
+                           pagination=pagination,
+                           users=users,
+                           categories=categories,
+                           total_mes=total_mes,
+                           filters={'user_id': user_id, 'month': month, 'year': year, 'category': category})
+
+
+@expenses_bp.route('/add', methods=['GET', 'POST'])
+def add():
+    users = User.query.order_by(User.name).all()
+    form = ExpenseForm()
+    form.user_id.choices = [(u.id, u.name) for u in users]
+
+    now = datetime.now()
+    if request.method == 'GET':
+        form.year.data = now.year
+        form.month.data = now.month
+        form.day.data = now.day
+        form.num_installments.data = 2
+
+    if form.validate_on_submit():
+        payment = form.payment_method.data
+        bank = form.bank.data if payment in ('Cartão de Débito', 'Cartão de Crédito') else None
+        is_parcelado = (payment == 'Cartão de Crédito' and
+                        form.credit_type.data == 'parcelado')
+
+        if is_parcelado:
+            _create_installments(form, bank)
+        else:
+            expense = Expense(
+                user_id=form.user_id.data,
+                description=form.description.data,
+                amount=form.amount.data,
+                category=form.category.data,
+                payment_method=payment,
+                bank=bank,
+                year=form.year.data,
+                month=form.month.data,
+                day=form.day.data,
+            )
+            db.session.add(expense)
+            db.session.commit()
+            flash('Despesa adicionada com sucesso!', 'success')
+
+        return redirect(url_for('expenses.list'))
+
+    return render_template('expenses/add.html', form=form, users=users)
+
+
+@expenses_bp.route('/edit/<int:expense_id>', methods=['GET', 'POST'])
+def edit(expense_id):
+    expense = Expense.query.get_or_404(expense_id)
+    users = User.query.order_by(User.name).all()
+    form = ExpenseForm(obj=expense)
+    form.user_id.choices = [(u.id, u.name) for u in users]
+
+    if request.method == 'GET':
+        form.credit_type.data = 'avista'
+
+    if form.validate_on_submit():
+        payment = form.payment_method.data
+        expense.user_id = form.user_id.data
+        expense.description = form.description.data
+        expense.amount = form.amount.data
+        expense.category = form.category.data
+        expense.payment_method = payment
+        expense.bank = form.bank.data if payment in ('Cartão de Débito', 'Cartão de Crédito') else None
+        expense.year = form.year.data
+        expense.month = form.month.data
+        expense.day = form.day.data
+        db.session.commit()
+        flash('Despesa atualizada com sucesso!', 'success')
+        return redirect(url_for('expenses.list'))
+
+    return render_template('expenses/edit.html', form=form, expense=expense, users=users)
+
+
+@expenses_bp.route('/delete/<int:expense_id>', methods=['POST'])
+def delete(expense_id):
+    expense = Expense.query.get_or_404(expense_id)
+    db.session.delete(expense)
+    db.session.commit()
+    flash('Despesa eliminada.', 'warning')
+    return redirect(url_for('expenses.list'))
+
+
+@expenses_bp.route('/delete-group/<int:group_id>', methods=['POST'])
+def delete_group(group_id):
+    group = InstallmentGroup.query.get_or_404(group_id)
+    count = group.installments.count()
+    db.session.delete(group)
+    db.session.commit()
+    flash(f'Todas as {count} parcelas foram eliminadas.', 'warning')
+    return redirect(url_for('expenses.list'))
+
+
+def _create_installments(form, bank):
+    n = form.num_installments.data
+    total = Decimal(str(form.amount.data))
+    parcela = (total / n).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    ultima_parcela = total - parcela * (n - 1)
+
+    group = InstallmentGroup(
+        user_id=form.user_id.data,
+        description=form.description.data,
+        total_amount=total,
+        num_installments=n,
+        bank=bank or '',
+    )
+    db.session.add(group)
+    db.session.flush()  # garante group.id antes do loop
+
+    mes_inicio = form.month.data
+    ano_inicio = form.year.data
+
+    for i in range(n):
+        mes_atual = (mes_inicio - 1 + i) % 12 + 1
+        ano_atual = ano_inicio + ((mes_inicio - 1 + i) // 12)
+        valor = ultima_parcela if i == n - 1 else parcela
+
+        expense = Expense(
+            user_id=form.user_id.data,
+            description=form.description.data,
+            amount=valor,
+            category=form.category.data,
+            payment_method='Cartão de Crédito',
+            bank=bank,
+            year=ano_atual,
+            month=mes_atual,
+            day=form.day.data,
+            installment_group_id=group.id,
+            installment_number=i + 1,
+        )
+        db.session.add(expense)
+
+    db.session.commit()
+
+    meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+             'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    mes_fim = (mes_inicio - 1 + n - 1) % 12 + 1
+    ano_fim = ano_inicio + ((mes_inicio - 1 + n - 1) // 12)
+    parcela_fmt = f'R$ {float(parcela):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+    flash(
+        f'{n} parcelas criadas de {parcela_fmt} cada '
+        f'({meses[mes_inicio-1]}/{ano_inicio} → {meses[mes_fim-1]}/{ano_fim})',
+        'success'
+    )

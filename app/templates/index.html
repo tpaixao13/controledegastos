@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — Controle de Gastos{% endblock %}
+
+{% block content %}
+<!-- Navegação de mês -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <h2 class="fw-bold mb-0">
+    <i class="bi bi-speedometer2 text-primary"></i>
+    Dashboard — {{ month_name }} / {{ year }}
+  </h2>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('main.index', month=prev_month, year=prev_year) }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-chevron-left"></i> Mês anterior
+    </a>
+    <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary btn-sm">Hoje</a>
+    <a href="{{ url_for('main.index', month=next_month, year=next_year) }}" class="btn btn-outline-secondary btn-sm">
+      Próximo mês <i class="bi bi-chevron-right"></i>
+    </a>
+  </div>
+</div>
+
+<!-- Inputs ocultos para os gráficos JS -->
+<input type="hidden" id="chart-month" value="{{ month }}">
+<input type="hidden" id="chart-year" value="{{ year }}">
+
+<!-- Cards de resumo -->
+<div class="row g-3 mb-4">
+  {% for s in user_summaries %}
+  <div class="col-md-3">
+    <div class="card card-summary {{ 'card-tiago' if s.user.name == 'Tiago' else 'card-greyce' }}">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted small mb-1">
+              <span class="badge {{ 'bg-primary' if s.user.name == 'Tiago' else 'bg-danger' }}">
+                {{ s.user.name }}
+              </span> — Saldo
+            </p>
+            <h4 class="fw-bold {{ 'saldo-positivo' if s.saldo >= 0 else 'saldo-negativo' }}">
+              {{ s.saldo|brl }}
+            </h4>
+          </div>
+          <i class="bi bi-person-circle fs-2 text-muted opacity-50"></i>
+        </div>
+        <div class="mt-2 small text-muted">
+          Salário: {{ s.salario|brl }} | Gastos: {{ s.gasto|brl }}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div class="col-md-3">
+    <div class="card card-summary card-combined">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted small mb-1">Saldo Combinado</p>
+            <h4 class="fw-bold {{ 'saldo-positivo' if saldo_combinado >= 0 else 'saldo-negativo' }}">
+              {{ saldo_combinado|brl }}
+            </h4>
+          </div>
+          <i class="bi bi-people-fill fs-2 text-muted opacity-50"></i>
+        </div>
+        <div class="mt-2 small text-muted">
+          Salários: {{ total_salario|brl }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card card-summary card-total">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <p class="text-muted small mb-1">Total Gasto no Mês</p>
+            <h4 class="fw-bold text-danger">{{ total_gasto|brl }}</h4>
+          </div>
+          <i class="bi bi-receipt fs-2 text-muted opacity-50"></i>
+        </div>
+        {% if total_salario > 0 %}
+        <div class="mt-2">
+          <div class="progress" style="height:6px;">
+            {% set pct = [(total_gasto / total_salario * 100), 100]|min %}
+            <div class="progress-bar {{ 'bg-danger' if pct > 90 else ('bg-warning' if pct > 70 else 'bg-success') }}"
+                 style="width:{{ pct }}%"></div>
+          </div>
+          <small class="text-muted">{{ '%.1f'|format(pct) }}% do salário</small>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gráficos linha 1 -->
+<div class="row g-4 mb-4">
+  <div class="col-md-5">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-pie-chart text-primary"></i> Gastos por Categoria
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="chartDoughnut"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-bar-chart text-success"></i> Gastos vs Salário (últimos 6 meses)
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="chartMonthly"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Gráficos linha 2 -->
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-people text-danger"></i> Tiago vs Greyce
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="chartUsers"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-graph-up text-warning"></i> Evolução Diária
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="chartDaily"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-credit-card text-info"></i> Formas de Pagamento
+      </div>
+      <div class="card-body">
+        <div class="chart-container">
+          <canvas id="chartPayments"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Últimas despesas -->
+<div class="card">
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-clock-history"></i> Últimas Despesas do Mês</span>
+    <a href="{{ url_for('expenses.list', month=month, year=year) }}" class="btn btn-sm btn-outline-primary">
+      Ver todas
+    </a>
+  </div>
+  <div class="card-body p-0">
+    {% if recent %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Pessoa</th>
+            <th>Dia</th>
+            <th>Descrição</th>
+            <th>Categoria</th>
+            <th>Pagamento</th>
+            <th class="text-end">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in recent %}
+          <tr>
+            <td>
+              <span class="badge {{ 'bg-primary' if e.user.name == 'Tiago' else 'bg-danger' }}">
+                {{ e.user.name }}
+              </span>
+            </td>
+            <td class="text-muted small">{{ '%02d'|format(e.day) }}</td>
+            <td>
+              {{ e.description }}
+              {% if e.installment_group_id %}
+              <span class="installment-badge ms-1">{{ e.installment_number }}/{{ e.installment_group.num_installments }}x</span>
+              {% endif %}
+            </td>
+            <td><span class="badge bg-secondary">{{ e.category }}</span></td>
+            <td>
+              {% if e.payment_method == 'PIX' %}
+                <span class="badge badge-pix">PIX</span>
+              {% elif e.payment_method == 'Cartão de Débito' %}
+                <span class="badge badge-debito">Débito</span>
+              {% elif e.payment_method == 'Cartão de Crédito' %}
+                <span class="badge badge-credito">Crédito</span>
+              {% else %}
+                <span class="badge badge-dinheiro">Dinheiro</span>
+              {% endif %}
+              {% if e.bank %}<small class="text-muted ms-1">{{ e.bank }}</small>{% endif %}
+            </td>
+            <td class="text-end fw-semibold">{{ e.amount|brl }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-4">
+      <i class="bi bi-inbox fs-1"></i>
+      <p class="mt-2">Nenhuma despesa este mês ainda.</p>
+      <a href="{{ url_for('expenses.add') }}" class="btn btn-warning btn-sm">
+        <i class="bi bi-plus-lg"></i> Adicionar despesa
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Nova Despesa — Controle de Gastos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header bg-warning fw-semibold">
+        <i class="bi bi-plus-circle"></i> Nova Despesa
+      </div>
+      <div class="card-body">
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="row g-3">
+
+            <!-- Pessoa -->
+            <div class="col-md-6">
+              {{ form.user_id.label(class='form-label fw-semibold') }}
+              {{ form.user_id(class='form-select' + (' is-invalid' if form.user_id.errors else '')) }}
+              {% for e in form.user_id.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+
+            <!-- Categoria -->
+            <div class="col-md-6">
+              {{ form.category.label(class='form-label fw-semibold') }}
+              {{ form.category(class='form-select' + (' is-invalid' if form.category.errors else '')) }}
+            </div>
+
+            <!-- Descrição -->
+            <div class="col-12">
+              {{ form.description.label(class='form-label fw-semibold') }}
+              {{ form.description(class='form-control' + (' is-invalid' if form.description.errors else ''), placeholder='Ex: Supermercado Pão de Açúcar') }}
+              {% for e in form.description.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+
+            <!-- Valor -->
+            <div class="col-md-4">
+              {{ form.amount.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                {{ form.amount(class='form-control' + (' is-invalid' if form.amount.errors else ''), placeholder='0,00') }}
+              </div>
+              {% for e in form.amount.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            </div>
+
+            <!-- Data -->
+            <div class="col-md-2">
+              {{ form.day.label(class='form-label fw-semibold') }}
+              {{ form.day(class='form-control' + (' is-invalid' if form.day.errors else '')) }}
+            </div>
+            <div class="col-md-3">
+              {{ form.month.label(class='form-label fw-semibold') }}
+              {{ form.month(class='form-select') }}
+            </div>
+            <div class="col-md-3">
+              {{ form.year.label(class='form-label fw-semibold') }}
+              {{ form.year(class='form-control') }}
+            </div>
+
+            <!-- Forma de Pagamento -->
+            <div class="col-12">
+              {{ form.payment_method.label(class='form-label fw-semibold') }}
+              {{ form.payment_method(class='form-select', id='payment_method') }}
+            </div>
+
+            <!-- Banco (condicional) -->
+            <div class="col-12" id="bank-row">
+              {{ form.bank.label(class='form-label fw-semibold') }}
+              {{ form.bank(class='form-select' + (' is-invalid' if form.bank.errors else '')) }}
+            </div>
+
+            <!-- Parcelas (condicional) -->
+            <div class="col-12" id="installment-section">
+              <label class="form-label fw-semibold">Modalidade</label>
+              <div class="d-flex gap-4">
+                {% for subfield in form.credit_type %}
+                <div class="form-check">
+                  {{ subfield(class='form-check-input') }}
+                  {{ subfield.label(class='form-check-label') }}
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="col-md-4" id="num-installments-row">
+              {{ form.num_installments.label(class='form-label fw-semibold') }}
+              {{ form.num_installments(class='form-select') }}
+            </div>
+
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            {{ form.submit(class='btn btn-warning fw-semibold px-4') }}
+            <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/expense_form.js') }}"></script>
+{% endblock %}
