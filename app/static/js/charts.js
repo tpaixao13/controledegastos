@@ -24,10 +24,22 @@ document.addEventListener('DOMContentLoaded', function () {
     .then(d => {
       const ctx = document.getElementById('chartDoughnut');
       if (!ctx) return;
+      const salary = d.total_salary || 0;
+      const totalExpenses = d.data.reduce((a, b) => a + b, 0);
+
+      // Labels com % do salário
+      const labelsWithPct = d.labels.map((lbl, i) => {
+        if (salary > 0) {
+          const pct = (d.data[i] / salary * 100).toFixed(1);
+          return `${lbl} (${pct}% sal.)`;
+        }
+        return lbl;
+      });
+
       new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: d.labels,
+          labels: labelsWithPct,
           datasets: [{
             data: d.data,
             backgroundColor: d.colors,
@@ -38,10 +50,17 @@ document.addEventListener('DOMContentLoaded', function () {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
-            legend: { position: 'right' },
+            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
             tooltip: {
               callbacks: {
-                label: ctx => `${ctx.label}: ${brl(ctx.parsed)}`
+                label: ctx => {
+                  const val = ctx.parsed;
+                  const pctTotal = totalExpenses > 0 ? (val / totalExpenses * 100).toFixed(1) : 0;
+                  const pctSal = salary > 0 ? (val / salary * 100).toFixed(1) : null;
+                  const lines = [`${brl(val)} (${pctTotal}% dos gastos)`];
+                  if (pctSal) lines.push(`${pctSal}% do salário`);
+                  return lines;
+                }
               }
             }
           }
