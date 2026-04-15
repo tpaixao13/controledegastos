@@ -13,6 +13,7 @@ CATEGORY_COLORS = {
     'Lazer': '#FF9F40',
     'Moradia': '#9966FF',
     'Saúde': '#4BC0C0',
+    'Internet': '#4361ee',
     'Telefone': '#43aa8b',
     'Transporte': '#36A2EB',
     'Outros': '#C9CBCF',
