@@ -116,7 +116,6 @@
     {% endif %}
 
     <!-- Gráfico cripto -->
-    {% set crypto_investments = investments | selectattr('crypto_coin') | list %}
     {% if crypto_investments %}
     <div class="card mb-4">
       <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
