@@ -71,6 +71,7 @@ def _run_migrations():
         'ALTER TABLE users ADD COLUMN avatar TEXT',
         'ALTER TABLE expenses ADD COLUMN paid INTEGER DEFAULT 0',
         'ALTER TABLE salaries ADD COLUMN company TEXT',
+        'ALTER TABLE investments ADD COLUMN crypto_coin TEXT',
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
