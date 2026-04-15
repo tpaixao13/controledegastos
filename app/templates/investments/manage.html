@@ -67,6 +67,18 @@
               {% for e in form.amount.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
             </div>
 
+            <!-- % do CDI (visível só para tipos CDI-based) -->
+            <div class="col-md-6" id="cdiPctRow" style="display:none">
+              <label class="form-label fw-semibold">% do CDI</label>
+              <div class="input-group">
+                <input type="number" id="cdiPct" class="form-control" placeholder="Ex: 102" min="1" max="300" step="0.1">
+                <span class="input-group-text">% CDI</span>
+              </div>
+              <div class="form-text text-muted">
+                Selic: <strong>{{ selic }}%</strong> &times; <span id="cdiPctDisplay">—</span>% = <strong id="cdiCalcResult">—</strong> a.a.
+              </div>
+            </div>
+
             <div class="col-md-6" id="rateRow">
               {{ form.annual_rate.label(class='form-label fw-semibold') }}
               <div class="input-group">
