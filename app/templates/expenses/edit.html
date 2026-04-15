@@ -81,6 +81,17 @@
             </div>
           </div>
 
+            <!-- Status de pagamento -->
+            <div class="col-12">
+              <div class="form-check form-switch">
+                {{ form.paid(class='form-check-input', id='paid', role='switch') }}
+                <label class="form-check-label fw-semibold" for="paid">
+                  Despesa Paga
+                </label>
+                <div class="form-text">Desligado = Pendente &nbsp;|&nbsp; Ligado = Pago</div>
+              </div>
+            </div>
+
           <div class="d-flex gap-2 mt-4">
             {{ form.submit(class='btn btn-info text-white fw-semibold px-4') }}
             <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary">Cancelar</a>
