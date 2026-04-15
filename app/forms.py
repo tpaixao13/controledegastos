@@ -134,6 +134,7 @@ class InvestmentForm(FlaskForm):
     investment_type = SelectField('Tipo de Investimento', choices=INVESTMENT_TYPES,
                                    validators=[DataRequired()])
     crypto_coin = SelectField('Criptomoeda', choices=CRYPTO_COINS, validators=[Optional()])
+    crypto_buy_price = HiddenField('Preço de Compra')
     annual_rate = DecimalField('Taxa a.a. (%)', places=2,
                                 validators=[Optional(), NumberRange(min=0, max=999)],
                                 default=0)
