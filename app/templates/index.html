@@ -95,88 +95,81 @@
   </div>
 </div>
 
-<!-- 2. Pago vs Pendente (segundo item) -->
-<div class="row g-4 mb-4">
-  <div class="col-md-4">
+<!-- Gráficos (arrastáveis) -->
+<div class="d-flex justify-content-end mb-2">
+  <span class="text-muted small"><i class="bi bi-grip-vertical"></i> Arraste os gráficos para reordenar</span>
+  <button class="btn btn-sm btn-outline-secondary ms-3" id="btnResetLayout">
+    <i class="bi bi-arrow-counterclockwise"></i> Restaurar ordem
+  </button>
+</div>
+<div class="row g-4 mb-4" id="chartsGrid">
+
+  <div class="col-md-4 chart-card" data-id="pending">
     <div class="card h-100">
-      <div class="card-header fw-semibold">
+      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
         <i class="bi bi-hourglass-split text-warning"></i> Pago vs Pendente no Mês
       </div>
       <div class="card-body">
-        <div class="chart-container">
-          <canvas id="chartPending"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chartPending"></canvas></div>
       </div>
     </div>
   </div>
-  <div class="col-md-8">
+
+  <div class="col-md-8 chart-card" data-id="monthly">
     <div class="card h-100">
-      <div class="card-header fw-semibold">
+      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
         <i class="bi bi-bar-chart text-success"></i> Gastos vs Salário (últimos 6 meses)
       </div>
       <div class="card-body">
-        <div class="chart-container">
-          <canvas id="chartMonthly"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chartMonthly"></canvas></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- 3. Gráficos linha 2 -->
-<div class="row g-4 mb-4">
-  <div class="col-md-6">
+  <div class="col-md-6 chart-card" data-id="doughnut">
     <div class="card h-100">
-      <div class="card-header fw-semibold">
+      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
         <i class="bi bi-pie-chart text-primary"></i> Gastos por Categoria
       </div>
       <div class="card-body">
-        <div class="chart-container">
-          <canvas id="chartDoughnut"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chartDoughnut"></canvas></div>
       </div>
     </div>
   </div>
-  <div class="col-md-6">
+
+  <div class="col-md-6 chart-card" data-id="daily">
     <div class="card h-100">
-      <div class="card-header fw-semibold">
+      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
         <i class="bi bi-graph-up text-warning"></i> Evolução Diária
       </div>
       <div class="card-body">
-        <div class="chart-container">
-          <canvas id="chartDaily"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chartDaily"></canvas></div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- 4. Formas de pagamento -->
-<div class="row g-4 mb-4">
-  <div class="col-md-8">
+  <div class="col-md-8 chart-card" data-id="payments">
     <div class="card h-100">
-      <div class="card-header fw-semibold">
+      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
         <i class="bi bi-credit-card text-info"></i> Formas de Pagamento (últimos 6 meses)
       </div>
       <div class="card-body">
-        <div class="chart-container">
-          <canvas id="chartPayments"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chartPayments"></canvas></div>
       </div>
     </div>
   </div>
-  <div class="col-md-4">
+
+  <div class="col-md-4 chart-card" data-id="users">
     <div class="card h-100">
-      <div class="card-header fw-semibold">
+      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
         <i class="bi bi-people text-danger"></i> Tiago vs Greyce
       </div>
       <div class="card-body">
-        <div class="chart-container">
-          <canvas id="chartUsers"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="chartUsers"></canvas></div>
       </div>
     </div>
   </div>
+
 </div>
 
 <!-- 5. Despesas Pendentes -->
