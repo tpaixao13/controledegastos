@@ -20,6 +20,7 @@
       <div class="card-body">
         <form method="POST" novalidate id="invForm">
           {{ form.hidden_tag() }}
+          {{ form.crypto_buy_price(id='cryptoBuyPrice') }}
           <div class="row g-3">
 
             <div class="col-12">
@@ -33,7 +34,7 @@
               {% for e in form.investment_type.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
             </div>
 
-            <!-- Seletor de criptomoeda (visível só quando Criptomoedas selecionado) -->
+            <!-- Seletor de criptomoeda -->
             <div class="col-12" id="cryptoRow" style="display:none">
               {{ form.crypto_coin.label(class='form-label fw-semibold') }}
               {{ form.crypto_coin(class='form-select', id='cryptoCoin') }}
@@ -41,9 +42,9 @@
               <div id="cryptoQuote" class="mt-2" style="display:none">
                 <div class="card border-warning">
                   <div class="card-body py-2 px-3">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
                       <span class="small fw-semibold" id="quoteCoinName">—</span>
-                      <span class="small text-muted" id="quoteChange"></span>
+                      <span class="small" id="quoteChange"></span>
                     </div>
                     <div class="fw-bold text-warning fs-6" id="quotePrice">—</div>
                     <div class="small text-muted mt-1" id="quoteQty"></div>
@@ -97,27 +98,59 @@
     </div>
   </div>
 
-  <!-- Gráfico e lista -->
+  <!-- Gráficos e lista -->
   <div class="col-lg-7">
 
-    <!-- Gráfico de projeção -->
+    <!-- Gráfico renda fixa -->
+    {% set fixed_investments = investments | rejectattr('crypto_coin') | list %}
+    {% if fixed_investments %}
     <div class="card mb-4">
       <div class="card-header fw-semibold">
-        <i class="bi bi-graph-up text-success"></i> Projeção de Rendimento (12 meses)
+        <i class="bi bi-graph-up text-success"></i> Projeção de Rendimento — Renda Fixa (12 meses)
       </div>
       <div class="card-body">
-        {% if investments %}
-        <div style="position:relative; height:260px;">
+        <div style="position:relative; height:240px;">
           <canvas id="chartInvestments"></canvas>
         </div>
-        {% else %}
-        <div class="text-center text-muted py-4">
-          <i class="bi bi-graph-up fs-1"></i>
-          <p class="mt-2">Registre seu primeiro investimento para ver a projeção.</p>
-        </div>
-        {% endif %}
       </div>
     </div>
+    {% endif %}
+
+    <!-- Gráfico cripto -->
+    {% set crypto_investments = investments | selectattr('crypto_coin') | list %}
+    {% if crypto_investments %}
+    <div class="card mb-4">
+      <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-currency-bitcoin text-warning"></i> Histórico de Preço — Criptomoedas (30 dias)</span>
+        <div id="cryptoChartTabs" class="btn-group btn-group-sm">
+          {% set seen_coins = [] %}
+          {% for inv in crypto_investments %}
+            {% if inv.crypto_coin and inv.crypto_coin not in seen_coins %}
+              {% set _ = seen_coins.append(inv.crypto_coin) %}
+              <button class="btn btn-outline-warning crypto-tab {% if loop.first %}active{% endif %}"
+                      data-coin="{{ inv.crypto_coin }}">
+                {{ inv.crypto_coin | upper }}
+              </button>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="position:relative; height:240px;">
+          <canvas id="chartCrypto"></canvas>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if not investments %}
+    <div class="card mb-4">
+      <div class="card-body text-center text-muted py-4">
+        <i class="bi bi-graph-up fs-1"></i>
+        <p class="mt-2">Registre seu primeiro investimento para ver a projeção.</p>
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Resumo -->
     {% if investments %}
@@ -153,13 +186,12 @@
       </div>
     </div>
 
-    <!-- Tabela de investimentos -->
+    <!-- Tabela -->
     <div class="card">
       <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
         <span><i class="bi bi-list-ul"></i> Carteira</span>
-        {% set has_crypto = investments | selectattr('crypto_coin') | list %}
-        {% if has_crypto %}
-        <button class="btn btn-sm btn-outline-warning" id="btnRefreshCrypto">
+        {% if crypto_investments %}
+        <button class="btn btn-sm btn-outline-warning" onclick="location.reload()">
           <i class="bi bi-arrow-repeat"></i> Atualizar cotações
         </button>
         {% endif %}
@@ -174,14 +206,14 @@
                 <th>Descrição</th>
                 <th>Data</th>
                 <th>Taxa / Moeda</th>
-                <th class="text-end">Valor</th>
-                <th class="text-end" id="thCurrent" style="display:none">Cotação Atual</th>
+                <th class="text-end">Investido</th>
+                <th class="text-end">Fração / Valor Atual</th>
                 <th class="text-center">Ação</th>
               </tr>
             </thead>
             <tbody>
               {% for inv in investments %}
-              <tr data-coin="{{ inv.crypto_coin or '' }}" data-amount="{{ inv.amount | float }}">
+              <tr>
                 <td>
                   <span class="badge {{ 'bg-primary' if inv.user.name == 'Tiago' else 'bg-danger' }}">
                     {{ inv.user.name }}
@@ -192,16 +224,29 @@
                 <td class="text-muted small">{{ '%02d'|format(inv.month) }}/{{ inv.year }}</td>
                 <td class="text-muted small">
                   {% if inv.crypto_coin %}
-                    <span class="badge bg-warning text-dark coin-badge" data-coin="{{ inv.crypto_coin }}">{{ inv.crypto_coin }}</span>
+                    <span class="badge bg-warning text-dark">{{ inv.crypto_coin | upper }}</span>
+                    {% if inv.crypto_buy_price %}
+                    <div class="text-muted" style="font-size:.7rem">Compra: {{ inv.crypto_buy_price | brl }}</div>
+                    {% endif %}
                   {% elif inv.annual_rate %}
                     {{ inv.annual_rate }}% a.a.
                   {% else %}—{% endif %}
                 </td>
                 <td class="text-end fw-semibold text-success">{{ inv.amount|brl }}</td>
-                <td class="text-end crypto-current-cell" style="display:none">
-                  {% if inv.crypto_coin %}
-                    <span class="crypto-val" data-coin="{{ inv.crypto_coin }}" data-amount="{{ inv.amount | float }}">—</span>
-                  {% endif %}
+                <td class="text-end">
+                  {% if inv.crypto_coin and inv.crypto_buy_price %}
+                    {% set coins_held = inv.amount | float / inv.crypto_buy_price | float %}
+                    <div class="fw-semibold text-warning">
+                      ≈ {{ '%.8f'|format(coins_held) }} {{ inv.crypto_coin | upper }}
+                    </div>
+                    <div class="small crypto-current-val text-muted"
+                         data-coin="{{ inv.crypto_coin }}"
+                         data-qty="{{ '%.8f'|format(coins_held) }}">
+                      Buscando cotação...
+                    </div>
+                  {% elif not inv.crypto_coin and inv.annual_rate %}
+                    <span class="text-muted small">Renda fixa</span>
+                  {% else %}—{% endif %}
                 </td>
                 <td class="text-center">
                   <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
@@ -210,8 +255,6 @@
                   </button>
                 </td>
               </tr>
-
-              <!-- Modal delete -->
               <div class="modal fade" id="modalDelInv{{ inv.id }}" tabindex="-1">
                 <div class="modal-dialog modal-sm">
                   <div class="modal-content">
@@ -220,7 +263,7 @@
                       <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body small">
-                      Remover investimento "{{ inv.investment_type }}" de {{ inv.amount|brl }}?
+                      Remover "{{ inv.investment_type }}" de {{ inv.amount|brl }}?
                     </div>
                     <div class="modal-footer">
                       <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -250,8 +293,17 @@ document.addEventListener('DOMContentLoaded', function () {
     return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   }
 
-  // ── Gráfico de projeção ──────────────────────────────────────
-  {% if investments %}
+  const COIN_LABELS = {
+    'bitcoin': 'Bitcoin (BTC)', 'ethereum': 'Ethereum (ETH)',
+    'binancecoin': 'BNB (BNB)', 'solana': 'Solana (SOL)',
+    'ripple': 'XRP (XRP)', 'cardano': 'Cardano (ADA)',
+    'dogecoin': 'Dogecoin (DOGE)', 'polkadot': 'Polkadot (DOT)',
+    'avalanche-2': 'Avalanche (AVAX)', 'chainlink': 'Chainlink (LINK)',
+    'litecoin': 'Litecoin (LTC)', 'matic-network': 'Polygon (MATIC)',
+  };
+
+  // ── Gráfico renda fixa ────────────────────────────────────────
+  {% if fixed_investments %}
   fetch('/api/chart/investments')
     .then(r => r.json())
     .then(d => {
@@ -262,53 +314,115 @@ document.addEventListener('DOMContentLoaded', function () {
         data: {
           labels: d.labels,
           datasets: [
-            {
-              label: 'Valor Projetado',
-              data: d.projected,
-              borderColor: '#198754',
-              backgroundColor: 'rgba(25,135,84,0.1)',
-              fill: true,
-              tension: 0.4,
-              pointRadius: 4,
-              borderWidth: 2,
-            },
-            {
-              label: 'Total Investido',
-              data: d.invested,
-              borderColor: '#0d6efd',
-              backgroundColor: 'transparent',
-              borderDash: [5, 5],
-              pointRadius: 0,
-              borderWidth: 1.5,
-            }
+            { label: 'Valor Projetado', data: d.projected, borderColor: '#198754',
+              backgroundColor: 'rgba(25,135,84,0.1)', fill: true, tension: 0.4, pointRadius: 4, borderWidth: 2 },
+            { label: 'Total Investido', data: d.invested, borderColor: '#0d6efd',
+              backgroundColor: 'transparent', borderDash: [5,5], pointRadius: 0, borderWidth: 1.5 }
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${brl(ctx.parsed.y)}` } }
-          },
+          responsive: true, maintainAspectRatio: false,
+          plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${brl(c.parsed.y)}` } } },
           scales: { y: { ticks: { callback: v => brl(v) } } }
         }
       });
     });
   {% endif %}
 
-  // ── CDI: busca e sugere taxa ─────────────────────────────────
-  let selicRate = 14.75;
-  let suggestions = {};
+  // ── Gráfico cripto ────────────────────────────────────────────
+  {% if crypto_investments %}
+  let cryptoChart = null;
+
+  function loadCryptoChart(coin) {
+    fetch(`/api/chart/crypto-history?coin=${coin}&days=30`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) return;
+        const ctx = document.getElementById('chartCrypto');
+        if (!ctx) return;
+        if (cryptoChart) cryptoChart.destroy();
+        cryptoChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: d.labels,
+            datasets: [{
+              label: `${COIN_LABELS[coin] || coin} (BRL)`,
+              data: d.values,
+              borderColor: '#f7931a',
+              backgroundColor: 'rgba(247,147,26,0.1)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 2,
+              borderWidth: 2,
+            }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { tooltip: { callbacks: { label: c => brl(c.parsed.y) } } },
+            scales: { y: { ticks: { callback: v => brl(v) } } }
+          }
+        });
+      });
+  }
+
+  // Carrega a primeira aba
+  const firstTab = document.querySelector('.crypto-tab');
+  if (firstTab) loadCryptoChart(firstTab.dataset.coin);
+
+  document.querySelectorAll('.crypto-tab').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.crypto-tab').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+      loadCryptoChart(this.dataset.coin);
+    });
+  });
+
+  // ── Valores atuais na tabela ──────────────────────────────────
+  const valCells = document.querySelectorAll('.crypto-current-val');
+  if (valCells.length > 0) {
+    const coins = [...new Set([...valCells].map(el => el.dataset.coin).filter(Boolean))];
+    fetch(`/api/chart/crypto-price?coins=${coins.join(',')}`)
+      .then(r => r.json())
+      .then(prices => {
+        valCells.forEach(el => {
+          const coin = el.dataset.coin;
+          const qty = parseFloat(el.dataset.qty);
+          if (prices[coin] && prices[coin].brl) {
+            const price = prices[coin].brl;
+            const currentVal = qty * price;
+            const change = prices[coin].brl_24h_change || 0;
+            const sign = change >= 0 ? '+' : '';
+            const color = change >= 0 ? 'text-success' : 'text-danger';
+            el.innerHTML = `Atual: <strong>${brl(currentVal)}</strong> <span class="${color} small">${sign}${change.toFixed(1)}% 24h</span>`;
+          } else {
+            el.textContent = '—';
+          }
+        });
+      }).catch(() => {
+        valCells.forEach(el => el.textContent = '—');
+      });
+  }
+  {% endif %}
+
+  // ── CDI auto-fill ─────────────────────────────────────────────
   const invType = document.getElementById('invType');
   const invRate = document.getElementById('invRate');
   const rateHint = document.getElementById('rateHint');
   const rateRow = document.getElementById('rateRow');
+  const cryptoRow = document.getElementById('cryptoRow');
+  const cryptoCoin = document.getElementById('cryptoCoin');
+  const cryptoQuote = document.getElementById('cryptoQuote');
+  const invAmount = document.getElementById('invAmount');
+  const cryptoBuyPrice = document.getElementById('cryptoBuyPrice');
+
+  let suggestions = {};
+  let currentCoinPrice = 0;
 
   fetch('/api/chart/cdi-rate')
     .then(r => r.json())
     .then(d => {
-      selicRate = d.selic;
       suggestions = d.suggestions;
-      rateHint.innerHTML = `<i class="bi bi-info-circle text-success"></i> CDI/Selic atual: <strong>${selicRate.toFixed(2)}% a.a.</strong>`;
+      rateHint.innerHTML = `<i class="bi bi-info-circle text-success"></i> CDI/Selic atual: <strong>${d.selic.toFixed(2)}% a.a.</strong>`;
       applySuggestion();
     })
     .catch(() => {
@@ -324,126 +438,60 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  if (invType) invType.addEventListener('change', function () {
-    applySuggestion();
-    toggleCryptoRow();
-  });
-
-  // ── Criptomoedas ─────────────────────────────────────────────
-  const cryptoRow = document.getElementById('cryptoRow');
-  const cryptoCoin = document.getElementById('cryptoCoin');
-  const cryptoQuote = document.getElementById('cryptoQuote');
-  const quoteCoinName = document.getElementById('quoteCoinName');
-  const quotePrice = document.getElementById('quotePrice');
-  const quoteChange = document.getElementById('quoteChange');
-  const quoteQty = document.getElementById('quoteQty');
-  const invAmount = document.getElementById('invAmount');
-
-  const COIN_LABELS = {
-    'bitcoin': 'Bitcoin (BTC)', 'ethereum': 'Ethereum (ETH)',
-    'binancecoin': 'BNB (BNB)', 'solana': 'Solana (SOL)',
-    'ripple': 'XRP (XRP)', 'cardano': 'Cardano (ADA)',
-    'dogecoin': 'Dogecoin (DOGE)', 'polkadot': 'Polkadot (DOT)',
-    'avalanche-2': 'Avalanche (AVAX)', 'chainlink': 'Chainlink (LINK)',
-    'litecoin': 'Litecoin (LTC)', 'matic-network': 'Polygon (MATIC)',
-  };
-
   function toggleCryptoRow() {
     const isCrypto = invType && invType.value === 'Criptomoedas';
     cryptoRow.style.display = isCrypto ? '' : 'none';
     rateRow.style.display = isCrypto ? 'none' : '';
-    if (!isCrypto) {
-      cryptoQuote.style.display = 'none';
-    }
+    if (!isCrypto) { cryptoQuote.style.display = 'none'; currentCoinPrice = 0; }
   }
-  toggleCryptoRow();
 
-  let currentCoinPrice = 0;
+  if (invType) {
+    invType.addEventListener('change', () => { applySuggestion(); toggleCryptoRow(); });
+    toggleCryptoRow();
+  }
 
+  // ── Cotação ao vivo no formulário ─────────────────────────────
   function fetchCryptoQuote() {
     const coin = cryptoCoin ? cryptoCoin.value : '';
     if (!coin) { cryptoQuote.style.display = 'none'; return; }
 
-    quoteCoinName.textContent = COIN_LABELS[coin] || coin;
-    quotePrice.textContent = 'Buscando...';
+    document.getElementById('quoteCoinName').textContent = COIN_LABELS[coin] || coin;
+    document.getElementById('quotePrice').textContent = 'Buscando...';
     cryptoQuote.style.display = '';
+    cryptoBuyPrice.value = '';
 
     fetch(`/api/chart/crypto-price?coins=${coin}`)
       .then(r => r.json())
       .then(d => {
-        if (d.error || !d[coin]) {
-          quotePrice.textContent = 'Indisponível';
-          return;
-        }
+        if (!d[coin]) { document.getElementById('quotePrice').textContent = 'Indisponível'; return; }
         const price = d[coin].brl;
-        const change = d[coin].brl_24h_change;
+        const change = d[coin].brl_24h_change || 0;
         currentCoinPrice = price;
-        quotePrice.textContent = brl(price);
+        cryptoBuyPrice.value = price;  // salva preço de compra
 
-        if (change !== undefined) {
-          const sign = change >= 0 ? '+' : '';
-          quoteChange.innerHTML = `<span class="${change >= 0 ? 'text-success' : 'text-danger'}">${sign}${change.toFixed(2)}% 24h</span>`;
-        }
+        document.getElementById('quotePrice').textContent = brl(price);
+        const sign = change >= 0 ? '+' : '';
+        document.getElementById('quoteChange').innerHTML =
+          `<span class="${change >= 0 ? 'text-success' : 'text-danger'}">${sign}${change.toFixed(2)}% 24h</span>`;
         updateQty();
       })
-      .catch(() => { quotePrice.textContent = 'Erro ao buscar cotação'; });
+      .catch(() => { document.getElementById('quotePrice').textContent = 'Erro ao buscar cotação'; });
   }
 
   function updateQty() {
     const amount = parseFloat(invAmount ? invAmount.value : 0);
+    const coin = cryptoCoin ? cryptoCoin.value : '';
     if (amount > 0 && currentCoinPrice > 0) {
       const qty = amount / currentCoinPrice;
-      const coin = cryptoCoin ? cryptoCoin.value : '';
-      quoteQty.textContent = `Com R$ ${amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})} você compraria ≈ ${qty.toFixed(8)} ${COIN_LABELS[coin] || coin}`;
+      document.getElementById('quoteQty').textContent =
+        `Com R$ ${amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})} você teria ≈ ${qty.toFixed(8)} ${(COIN_LABELS[coin] || coin)}`;
     } else {
-      quoteQty.textContent = '';
+      document.getElementById('quoteQty').textContent = '';
     }
   }
 
   if (cryptoCoin) cryptoCoin.addEventListener('change', fetchCryptoQuote);
   if (invAmount) invAmount.addEventListener('input', updateQty);
-
-  // ── Cotações na tabela ────────────────────────────────────────
-  const cryptoCells = document.querySelectorAll('.crypto-val');
-  const thCurrent = document.getElementById('thCurrent');
-
-  if (cryptoCells.length > 0) {
-    // Coleta todas as moedas únicas
-    const coins = [...new Set([...cryptoCells].map(el => el.dataset.coin).filter(Boolean))];
-    if (coins.length > 0) {
-      thCurrent.style.display = '';
-      document.querySelectorAll('.crypto-current-cell').forEach(el => el.style.display = '');
-
-      fetch(`/api/chart/crypto-price?coins=${coins.join(',')}`)
-        .then(r => r.json())
-        .then(prices => {
-          cryptoCells.forEach(el => {
-            const coin = el.dataset.coin;
-            const amount = parseFloat(el.dataset.amount);
-            if (prices[coin] && prices[coin].brl) {
-              const price = prices[coin].brl;
-              const change = prices[coin].brl_24h_change || 0;
-              const sign = change >= 0 ? '+' : '';
-              const color = change >= 0 ? 'text-success' : 'text-danger';
-              el.innerHTML = `
-                <div class="fw-semibold">${brl(price)}<small class="ms-1 ${color}">${sign}${change.toFixed(1)}%</small></div>
-                <small class="text-muted">por unidade</small>`;
-            } else {
-              el.textContent = '—';
-            }
-          });
-
-          // Atualiza badges com nome amigável
-          document.querySelectorAll('.coin-badge').forEach(badge => {
-            badge.textContent = COIN_LABELS[badge.dataset.coin] || badge.dataset.coin;
-          });
-        })
-        .catch(() => {});
-    }
-  }
-
-  const btnRefresh = document.getElementById('btnRefreshCrypto');
-  if (btnRefresh) btnRefresh.addEventListener('click', () => location.reload());
 });
 </script>
 {% endblock %}
