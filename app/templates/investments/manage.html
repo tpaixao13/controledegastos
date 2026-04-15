@@ -427,14 +427,34 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const SELIC = {{ selic }};
   const SUGGESTIONS = {{ rate_suggestions | tojson }};
+  const CDI_TYPES = ['CDB', 'LCI', 'LCA', 'CRI/CRA', 'Debêntures', 'COE', 'Fundo de Renda Fixa', 'Fundo Multimercado'];
   let currentCoinPrice = 0;
+
+  const cdiPctRow = document.getElementById('cdiPctRow');
+  const cdiPct = document.getElementById('cdiPct');
+  const cdiPctDisplay = document.getElementById('cdiPctDisplay');
+  const cdiCalcResult = document.getElementById('cdiCalcResult');
 
   function applySuggestion() {
     const type = invType ? invType.value : '';
+    const isCdiType = CDI_TYPES.includes(type);
     const suggested = SUGGESTIONS[type];
-    if (suggested && suggested > 0) {
+
+    // Mostra/oculta campo % do CDI
+    cdiPctRow.style.display = (isCdiType && type !== 'Criptomoedas') ? '' : 'none';
+
+    if (isCdiType) {
+      // Calcula taxa a partir do % CDI (padrão 100%)
+      const pct = parseFloat(cdiPct.value) || 100;
+      const rate = parseFloat((SELIC * pct / 100).toFixed(2));
+      invRate.value = rate.toFixed(2);
+      cdiPct.value = cdiPct.value || '100';
+      cdiPctDisplay.textContent = cdiPct.value || '100';
+      cdiCalcResult.textContent = rate.toFixed(2) + '%';
+      rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Selic ${SELIC}% × ${cdiPct.value || 100}% CDI = <strong>${rate.toFixed(2)}% a.a.</strong>`;
+    } else if (suggested && suggested > 0) {
       invRate.value = suggested.toFixed(2);
-      rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Taxa sugerida para <strong>${type}</strong>: <strong>${suggested.toFixed(2)}% a.a.</strong> (baseado no CDI/Selic ${SELIC}%)`;
+      rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Taxa sugerida para <strong>${type}</strong>: <strong>${suggested.toFixed(2)}% a.a.</strong>`;
     } else if (type && type !== '') {
       rateHint.innerHTML = `<i class="bi bi-info-circle text-warning"></i> CDI/Selic atual: <strong>${SELIC}% a.a.</strong> — informe a taxa manualmente`;
     } else {
@@ -442,17 +462,36 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // Recalcula ao digitar no campo % CDI
+  if (cdiPct) {
+    cdiPct.addEventListener('input', () => {
+      const pct = parseFloat(cdiPct.value) || 0;
+      if (pct > 0) {
+        const rate = parseFloat((SELIC * pct / 100).toFixed(2));
+        invRate.value = rate.toFixed(2);
+        cdiPctDisplay.textContent = pct;
+        cdiCalcResult.textContent = rate.toFixed(2) + '%';
+        rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Selic ${SELIC}% × ${pct}% CDI = <strong>${rate.toFixed(2)}% a.a.</strong>`;
+      }
+    });
+  }
+
   function toggleCryptoRow() {
     const isCrypto = invType && invType.value === 'Criptomoedas';
     cryptoRow.style.display = isCrypto ? '' : 'none';
     rateRow.style.display = isCrypto ? 'none' : '';
+    cdiPctRow.style.display = 'none';
     if (!isCrypto) { cryptoQuote.style.display = 'none'; currentCoinPrice = 0; }
   }
 
   if (invType) {
-    invType.addEventListener('change', () => { applySuggestion(); toggleCryptoRow(); });
+    invType.addEventListener('change', () => {
+      cdiPct.value = '100'; // reset ao trocar tipo
+      applySuggestion();
+      toggleCryptoRow();
+    });
     toggleCryptoRow();
-    applySuggestion(); // aplica imediatamente ao carregar a página
+    applySuggestion();
   }
 
   // ── Cotação ao vivo no formulário ─────────────────────────────
