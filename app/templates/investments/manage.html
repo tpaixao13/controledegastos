@@ -480,15 +480,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const isCrypto = invType && invType.value === 'Criptomoedas';
     cryptoRow.style.display = isCrypto ? '' : 'none';
     rateRow.style.display = isCrypto ? 'none' : '';
-    cdiPctRow.style.display = 'none';
     if (!isCrypto) { cryptoQuote.style.display = 'none'; currentCoinPrice = 0; }
   }
 
   if (invType) {
     invType.addEventListener('change', () => {
-      cdiPct.value = '100'; // reset ao trocar tipo
-      applySuggestion();
-      toggleCryptoRow();
+      cdiPct.value = '100';
+      toggleCryptoRow();  // primeiro oculta/mostra crypto
+      applySuggestion();  // depois aplica sugestão (controla cdiPctRow)
     });
     toggleCryptoRow();
     applySuggestion();
