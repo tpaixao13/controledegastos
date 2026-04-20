@@ -6,13 +6,9 @@ from datetime import datetime
 import urllib.request
 import json
 import time
-import ssl
 
 # Cache simples em memória
 _cache = {}
-_ssl_ctx = ssl.create_default_context()
-_ssl_ctx.check_hostname = False
-_ssl_ctx.verify_mode = ssl.CERT_NONE
 
 
 def _fetch_json(url, cache_key, ttl=3600):
@@ -25,7 +21,7 @@ def _fetch_json(url, cache_key, ttl=3600):
             'User-Agent': 'Mozilla/5.0 (compatible; ControleGastos/1.0)',
             'Accept': 'application/json',
         })
-        with urllib.request.urlopen(req, timeout=8, context=_ssl_ctx) as resp:
+        with urllib.request.urlopen(req, timeout=8) as resp:
             data = json.loads(resp.read().decode())
         _cache[cache_key] = {'data': data, 'ts': now}
         return data
