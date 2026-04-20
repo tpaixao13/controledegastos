@@ -14,19 +14,14 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///gastos.db'
+    # Token aleatório por sessão é aceitável em dev (sessões invalidadas ao reiniciar)
     SECRET_KEY = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
 
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///gastos.db'
-
-    @property
-    def SECRET_KEY(self):
-        key = os.environ.get('SECRET_KEY')
-        if not key:
-            raise ValueError("SECRET_KEY deve ser definida via variável de ambiente em produção")
-        return key
+    SECRET_KEY = os.environ.get('SECRET_KEY', '')
 
 
 config = {
