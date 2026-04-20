@@ -12,6 +12,9 @@ def create_app(config_name='default'):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config[config_name])
 
+    if not app.config.get('SECRET_KEY'):
+        raise ValueError("SECRET_KEY deve ser definida via variável de ambiente")
+
     db.init_app(app)
     csrf.init_app(app)
 
