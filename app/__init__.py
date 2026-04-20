@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, session, redirect, url_for, request as flask_request
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
