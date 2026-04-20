@@ -59,6 +59,10 @@ def _get_month_year():
     now = datetime.now()
     month = request.args.get('month', now.month, type=int)
     year = request.args.get('year', now.year, type=int)
+    if not 1 <= month <= 12:
+        month = now.month
+    if not 2000 <= year <= 2100:
+        year = now.year
     return month, year
 
 
