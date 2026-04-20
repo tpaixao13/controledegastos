@@ -125,4 +125,8 @@ def _seed_users():
             db.session.flush()
         if not user.password_hash:
             user.set_password(pwd)
+            logging.warning(
+                "Usuário '%s' criado com senha padrão fraca. "
+                "Altere a senha em /profile imediatamente.", name
+            )
     db.session.commit()
