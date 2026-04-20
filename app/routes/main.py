@@ -12,6 +12,10 @@ def index():
     now = datetime.now()
     month = request.args.get('month', now.month, type=int)
     year = request.args.get('year', now.year, type=int)
+    if not 1 <= month <= 12:
+        month = now.month
+    if not 2000 <= year <= 2100:
+        year = now.year
 
     users = User.query.order_by(User.name).all()
 
