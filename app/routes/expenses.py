@@ -209,7 +209,9 @@ def toggle_paid(expense_id):
     expense = Expense.query.get_or_404(expense_id)
     expense.paid = not bool(expense.paid)
     db.session.commit()
-    next_url = request.form.get('next') or url_for('expenses.list')
+    next_url = request.form.get('next') or ''
+    if not next_url or urlparse(next_url).netloc:
+        next_url = url_for('expenses.list')
     return redirect(next_url)
 
 
