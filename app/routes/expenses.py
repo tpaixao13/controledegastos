@@ -6,7 +6,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from app import db
 from app.models import User, Expense, InstallmentGroup, RecurringGroup
 from app.forms import ExpenseForm
-from app.utils import tenant_users, tenant_user_ids
+from app.utils import tenant_users, tenant_user_ids, MONTH_NAMES_SHORT
 from datetime import datetime
 
 expenses_bp = Blueprint('expenses', __name__, url_prefix='/expenses')
