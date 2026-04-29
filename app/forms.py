@@ -173,7 +173,7 @@ class AddMemberForm(FlaskForm):
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField('Senha Atual', validators=[DataRequired()])
     new_password = PasswordField('Nova Senha', validators=[
-        DataRequired(), Length(min=4, message='Mínimo de 4 caracteres.')
+        DataRequired(), Length(min=8, message='Mínimo de 8 caracteres.')
     ])
     confirm_password = PasswordField('Confirmar Nova Senha', validators=[
         DataRequired(), EqualTo('new_password', message='As senhas não coincidem.')
