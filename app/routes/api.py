@@ -82,8 +82,9 @@ def _last_n_months(n=6, end_month=None, end_year=None):
 @api_bp.route('/doughnut')
 def doughnut():
     month, year = _get_month_year()
+    uids = tenant_user_ids()
     rows = (db.session.query(Expense.category, func.sum(Expense.amount))
-            .filter_by(year=year, month=month)
+            .filter(Expense.user_id.in_(uids), Expense.year == year, Expense.month == month)
             .group_by(Expense.category)
             .all())
 
@@ -91,7 +92,9 @@ def doughnut():
     data = [float(r[1]) for r in rows]
     colors = [CATEGORY_COLORS.get(lbl, '#C9CBCF') for lbl in labels]
 
-    total_salary = db.session.query(func.sum(Salary.amount)).filter_by(year=year, month=month).scalar() or 0
+    total_salary = (db.session.query(func.sum(Salary.amount))
+                    .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month)
+                    .scalar() or 0)
 
     return jsonify({'labels': labels, 'data': data, 'colors': colors, 'total_salary': float(total_salary)})
 
