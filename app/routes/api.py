@@ -146,9 +146,10 @@ def daily():
     month, year = _get_month_year()
     import calendar
     _, days_in_month = calendar.monthrange(year, month)
+    uids = tenant_user_ids()
 
     rows = (db.session.query(Expense.day, func.sum(Expense.amount))
-            .filter_by(year=year, month=month)
+            .filter(Expense.user_id.in_(uids), Expense.year == year, Expense.month == month)
             .group_by(Expense.day)
             .all())
 
