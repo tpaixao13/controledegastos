@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Salários — Controle de Gastos{% endblock %}
+{% block title %}Salários — FinFam{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
@@ -65,46 +65,50 @@
     </div>
   </div>
 
-  <!-- Histórico -->
+  <!-- Histórico agrupado por mês -->
   <div class="col-lg-8">
-    <div class="card">
-      <div class="card-header fw-semibold">
-        <i class="bi bi-table"></i> Histórico de Salários
-      </div>
-      <div class="card-body p-0">
-        {% if salaries %}
-        <div class="table-responsive">
-          <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Pessoa</th>
-                <th>Mês / Ano</th>
-                <th>Empresa / Fonte</th>
-                <th class="text-end">Valor</th>
-                <th class="text-end">Total do Mês</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {% set ns = namespace(prev_key=None) %}
-              {% for s in salaries %}
-                {% set key = (s.user_id, s.year, s.month) %}
-                {% set is_first = (key != ns.prev_key) %}
-                {% set ns.prev_key = key %}
+    {% if groups %}
+      {% for (year, month), items in groups.items() %}
+      <div class="card mb-3">
+        <!-- Cabeçalho do mês -->
+        <div class="card-header d-flex justify-content-between align-items-center"
+             role="button" data-bs-toggle="collapse"
+             data-bs-target="#mes-{{ year }}-{{ month }}"
+             aria-expanded="{{ 'true' if loop.first else 'false' }}">
+          <span class="fw-bold">
+            <i class="bi bi-calendar3 text-primary me-1"></i>
+            {{ month|mes_nome }} / {{ year }}
+          </span>
+          <div class="d-flex align-items-center gap-3">
+            <span class="text-muted small">{{ items|length }} entrada{{ 's' if items|length > 1 }}</span>
+            <span class="badge bg-success fs-6">{{ month_totals[(year, month)]|brl }}</span>
+            <i class="bi bi-chevron-down text-muted" style="transition:.2s"></i>
+          </div>
+        </div>
+
+        <!-- Entradas do mês (expansível) -->
+        <div class="collapse {{ 'show' if loop.first }}" id="mes-{{ year }}-{{ month }}">
+          <div class="card-body p-0">
+            <table class="table table-hover mb-0 align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Pessoa</th>
+                  <th>Empresa / Fonte</th>
+                  <th class="text-end">Valor</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in items %}
                 <tr>
                   <td>
-                    <span class="badge {{ 'bg-primary' if s.user.name == 'Tiago' else 'bg-danger' }}">
+                    <span class="badge {{ 'bg-primary' if loop.index == 1 and items|length > 1 else 'bg-primary' }}"
+                          style="background-color: {{ 'var(--bs-primary)' if s.user.name == users[0].name else '#dc3545' }} !important">
                       {{ s.user.name }}
                     </span>
                   </td>
-                  <td>{{ s.month|mes_nome }}/{{ s.year }}</td>
                   <td class="text-muted small">{{ s.company or '—' }}</td>
                   <td class="text-end fw-semibold">{{ s.amount|brl }}</td>
-                  <td class="text-end">
-                    {% if is_first %}
-                      <span class="badge bg-success">{{ totals_map[(s.user_id, s.year, s.month)]|brl }}</span>
-                    {% endif %}
-                  </td>
                   <td class="text-center">
                     <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}"
                           onsubmit="return confirm('Remover este salário?')" style="display:inline">
@@ -115,18 +119,30 @@
                     </form>
                   </td>
                 </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+                {% endfor %}
+              </tbody>
+              {% if items|length > 1 %}
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="2" class="fw-semibold text-end text-muted small">Total combinado:</td>
+                  <td class="text-end fw-bold text-success">{{ month_totals[(year, month)]|brl }}</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+              {% endif %}
+            </table>
+          </div>
         </div>
-        {% else %}
-        <div class="text-center text-muted py-5">
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="card">
+        <div class="card-body text-center text-muted py-5">
           <i class="bi bi-inbox fs-1"></i>
           <p class="mt-2">Nenhum salário registado ainda.</p>
         </div>
-        {% endif %}
       </div>
-    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
