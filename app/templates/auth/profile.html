@@ -39,7 +39,7 @@
 
             <p class="fw-semibold mb-1 fs-5">{{ user.name }}</p>
 
-            <form method="POST" enctype="multipart/form-data" novalidate>
+            <form method="POST" action="{{ url_for('auth.upload_avatar') }}" enctype="multipart/form-data" novalidate>
               {{ avatar_form.hidden_tag() }}
 
               <div class="mb-3">
