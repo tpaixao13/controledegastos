@@ -84,7 +84,9 @@ def manage():
         flash('Investimento registrado com sucesso!', 'success')
         return redirect(url_for('investments.manage'))
 
+    uids = [u.id for u in users]
     investments = (Investment.query
+                   .filter(Investment.user_id.in_(uids))
                    .join(User)
                    .order_by(Investment.year.desc(), Investment.month.desc())
                    .all())
