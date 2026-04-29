@@ -106,12 +106,15 @@ def monthly_vs_salary():
     end_month, end_year = _get_month_year()
     months = _last_n_months(n, end_month, end_year)
     labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in months]
+    uids = tenant_user_ids()
     gastos = []
     salarios = []
 
     for m, y in months:
-        total = db.session.query(func.sum(Expense.amount)).filter_by(year=y, month=m).scalar() or 0
-        sal = db.session.query(func.sum(Salary.amount)).filter_by(year=y, month=m).scalar() or 0
+        total = (db.session.query(func.sum(Expense.amount))
+                 .filter(Expense.user_id.in_(uids), Expense.year == y, Expense.month == m).scalar() or 0)
+        sal = (db.session.query(func.sum(Salary.amount))
+               .filter(Salary.user_id.in_(uids), Salary.year == y, Salary.month == m).scalar() or 0)
         gastos.append(float(total))
         salarios.append(float(sal))
 
