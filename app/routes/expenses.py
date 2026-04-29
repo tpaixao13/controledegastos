@@ -48,7 +48,9 @@ def list():
 
     total_mes = sum(float(e.amount) for e in query.all())
 
-    categories = db.session.query(Expense.category).distinct().order_by(Expense.category).all()
+    categories = (db.session.query(Expense.category)
+                  .filter(Expense.user_id.in_(uids))
+                  .distinct().order_by(Expense.category).all())
     categories = [c[0] for c in categories]
 
     payment_methods = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'Dinheiro']
