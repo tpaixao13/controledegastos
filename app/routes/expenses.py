@@ -305,8 +305,7 @@ def _create_recurring(form, bank, payment):
     ano_inicio = form.year.data
 
     for i in range(n):
-        mes_atual = (mes_inicio - 1 + i) % 12 + 1
-        ano_atual = ano_inicio + ((mes_inicio - 1 + i) // 12)
+        mes_atual, ano_atual = month_offset(mes_inicio, ano_inicio, i)
 
         expense = Expense(
             user_id=form.user_id.data,
