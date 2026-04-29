@@ -117,7 +117,7 @@ def export_csv():
 
 @expenses_bp.route('/add', methods=['GET', 'POST'])
 def add():
-    users = User.query.order_by(User.name).all()
+    users = tenant_users().order_by(User.name).all()
     form = ExpenseForm()
     form.user_id.choices = [(u.id, u.name) for u in users]
 
