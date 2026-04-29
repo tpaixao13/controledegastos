@@ -164,8 +164,9 @@ def add():
 
 @expenses_bp.route('/edit/<int:expense_id>', methods=['GET', 'POST'])
 def edit(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
-    users = User.query.order_by(User.name).all()
+    uids = tenant_user_ids()
+    expense = Expense.query.filter(Expense.id == expense_id, Expense.user_id.in_(uids)).first_or_404()
+    users = tenant_users().order_by(User.name).all()
     form = ExpenseForm(obj=expense)
     form.user_id.choices = [(u.id, u.name) for u in users]
 
