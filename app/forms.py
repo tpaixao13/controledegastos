@@ -154,7 +154,7 @@ class RegisterTenantForm(FlaskForm):
     tenant_name = StringField('Nome do Grupo', validators=[DataRequired(), Length(2, 50)])
     tenant_code = StringField('Código do Grupo', validators=[DataRequired(), Length(3, 20)])
     user_name = StringField('Seu Nome', validators=[DataRequired(), Length(2, 30)])
-    password = PasswordField('Senha', validators=[DataRequired(), Length(min=4)])
+    password = PasswordField('Senha', validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField('Confirmar Senha', validators=[
         DataRequired(), EqualTo('password', message='As senhas não coincidem.')
     ])
@@ -163,7 +163,7 @@ class RegisterTenantForm(FlaskForm):
 
 class AddMemberForm(FlaskForm):
     user_name = StringField('Nome', validators=[DataRequired(), Length(2, 30)])
-    password = PasswordField('Senha', validators=[DataRequired(), Length(min=4)])
+    password = PasswordField('Senha', validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField('Confirmar Senha', validators=[
         DataRequired(), EqualTo('password', message='As senhas não coincidem.')
     ])
