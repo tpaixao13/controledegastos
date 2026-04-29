@@ -120,7 +120,8 @@ def manage():
 
 @investments_bp.route('/delete/<int:inv_id>', methods=['POST'])
 def delete(inv_id):
-    inv = Investment.query.get_or_404(inv_id)
+    uids = tenant_user_ids()
+    inv = Investment.query.filter(Investment.id == inv_id, Investment.user_id.in_(uids)).first_or_404()
     db.session.delete(inv)
     db.session.commit()
     flash('Investimento removido.', 'warning')
