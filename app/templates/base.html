@@ -16,8 +16,9 @@
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold" href="{{ url_for('main.index') }}">
-      <i class="bi bi-wallet2"></i> Controle de Gastos
+    <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{{ url_for('main.index') }}">
+      <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="FinFam" width="32" height="32">
+      FinFam
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
