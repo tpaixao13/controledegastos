@@ -72,28 +72,14 @@ def manage():
     fixed_investments = [i for i in investments if not i.crypto_coin]
     crypto_investments = [i for i in investments if i.crypto_coin]
 
-    selic = _fetch_selic()
-    rate_suggestions = {
-        'Tesouro Selic': round(selic, 2),
-        'CDB': round(selic, 2),
-        'LCI': round(selic * 0.87, 2),
-        'LCA': round(selic * 0.87, 2),
-        'CRI/CRA': round(selic * 0.95, 2),
-        'Debêntures': round(selic * 1.05, 2),
-        'COE': round(selic * 0.90, 2),
-        'Fundo de Renda Fixa': round(selic * 0.95, 2),
-        'Fundo Multimercado': round(selic * 1.10, 2),
-        'Tesouro IPCA+': round(selic * 0.60, 2),
-        'Tesouro Prefixado': round(selic * 0.95, 2),
-        'Poupança': round(selic * 0.70, 2),
-    }
+    selic = get_selic_rate()
 
     return render_template('investments/manage.html',
                            form=form, investments=investments, users=users,
                            fixed_investments=fixed_investments,
                            crypto_investments=crypto_investments,
                            selic=selic,
-                           rate_suggestions=rate_suggestions)
+                           rate_suggestions=rate_suggestions(selic))
 
 
 @investments_bp.route('/delete/<int:inv_id>', methods=['POST'])
