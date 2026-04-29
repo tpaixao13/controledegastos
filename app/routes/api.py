@@ -287,7 +287,8 @@ def crypto_history():
 def investments_chart():
     """Retorna projeção de crescimento da carteira para os próximos 12 meses."""
     now = datetime.now()
-    all_investments = Investment.query.all()
+    uids = tenant_user_ids()
+    all_investments = Investment.query.filter(Investment.user_id.in_(uids)).all()
 
     if not all_investments:
         return jsonify({'labels': [], 'invested': [], 'projected': []})
