@@ -61,9 +61,6 @@ def index():
     next_month = month + 1 if month < 12 else 1
     next_year = year if month < 12 else year + 1
 
-    month_names = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-                   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-
     return render_template('index.html',
                            today=now.date(),
                            user_summaries=user_summaries,
@@ -75,7 +72,7 @@ def index():
                            total_pendente=total_pendente,
                            month=month,
                            year=year,
-                           month_name=month_names[month - 1],
+                           month_name=MONTH_NAMES_FULL[month - 1],
                            prev_month=prev_month,
                            prev_year=prev_year,
                            next_month=next_month,
