@@ -324,8 +324,7 @@ def _create_recurring(form, bank, payment):
 
     db.session.commit()
 
-    mes_fim = (mes_inicio - 1 + n - 1) % 12 + 1
-    ano_fim = ano_inicio + ((mes_inicio - 1 + n - 1) // 12)
+    mes_fim, ano_fim = month_offset(mes_inicio, ano_inicio, n - 1)
     flash(
         f'Despesa recorrente criada por {n} meses '
         f'({MONTH_NAMES_SHORT[mes_inicio-1]}/{ano_inicio} → {MONTH_NAMES_SHORT[mes_fim-1]}/{ano_fim})',
