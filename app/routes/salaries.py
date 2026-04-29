@@ -40,17 +40,24 @@ def manage():
                 .order_by(Salary.year.desc(), Salary.month.desc(), User.name)
                 .all())
 
-    totals = (db.session.query(
-                Salary.user_id, Salary.year, Salary.month,
-                func.sum(Salary.amount).label('total'))
-              .filter(Salary.user_id.in_(uids))
-              .group_by(Salary.user_id, Salary.year, Salary.month)
-              .all())
-    totals_map = {(t.user_id, t.year, t.month): float(t.total) for t in totals}
+    # Agrupar por (ano, mês)
+    from collections import defaultdict, OrderedDict
+    groups = OrderedDict()
+    for s in salaries:
+        key = (s.year, s.month)
+        if key not in groups:
+            groups[key] = []
+        groups[key].append(s)
+
+    # Total combinado por (ano, mês)
+    month_totals = {
+        key: sum(float(s.amount) for s in items)
+        for key, items in groups.items()
+    }
 
     return render_template('salaries/manage.html',
-                           form=form, salaries=salaries,
-                           users=users, totals_map=totals_map)
+                           form=form, groups=groups,
+                           month_totals=month_totals, users=users)
 
 
 @salaries_bp.route('/delete/<int:salary_id>', methods=['POST'])
