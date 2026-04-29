@@ -77,6 +77,8 @@ def _run_migrations():
         'ALTER TABLE salaries ADD COLUMN company TEXT',
         'ALTER TABLE investments ADD COLUMN crypto_coin TEXT',
         'ALTER TABLE investments ADD COLUMN crypto_buy_price NUMERIC(18,8)',
+        "CREATE TABLE IF NOT EXISTS tenants (id INTEGER PRIMARY KEY, name TEXT NOT NULL, code TEXT NOT NULL UNIQUE, created_at DATETIME)",
+        'ALTER TABLE users ADD COLUMN tenant_id INTEGER REFERENCES tenants(id)',
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
