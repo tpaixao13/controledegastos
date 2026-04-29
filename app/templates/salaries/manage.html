@@ -99,11 +99,12 @@
                 </tr>
               </thead>
               <tbody>
+                {% set user_colors = ['bg-primary','bg-danger','bg-success','bg-warning text-dark','bg-info text-dark'] %}
                 {% for s in items %}
+                {% set u_index = users.index(s.user) if s.user in users else 0 %}
                 <tr>
                   <td>
-                    <span class="badge {{ 'bg-primary' if loop.index == 1 and items|length > 1 else 'bg-primary' }}"
-                          style="background-color: {{ 'var(--bs-primary)' if s.user.name == users[0].name else '#dc3545' }} !important">
+                    <span class="badge {{ user_colors[u_index % user_colors|length] }}">
                       {{ s.user.name }}
                     </span>
                   </td>
