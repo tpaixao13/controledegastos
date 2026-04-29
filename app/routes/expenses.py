@@ -16,7 +16,8 @@ ITEMS_PER_PAGE = 20
 
 @expenses_bp.route('/')
 def list():
-    users = User.query.order_by(User.name).all()
+    users = tenant_users().order_by(User.name).all()
+    uids = [u.id for u in users]
     now = datetime.now()
 
     user_id = request.args.get('user_id', type=int)
@@ -31,15 +32,15 @@ def list():
     page = request.args.get('page', 1, type=int)
 
     # month=0 significa "todos os meses"
-    query = Expense.query.filter_by(year=year)
+    query = Expense.query.filter(Expense.user_id.in_(uids)).filter(Expense.year == year)
     if month != 0:
-        query = query.filter_by(month=month)
-    if user_id:
-        query = query.filter_by(user_id=user_id)
+        query = query.filter(Expense.month == month)
+    if user_id and user_id in uids:
+        query = query.filter(Expense.user_id == user_id)
     if category:
-        query = query.filter_by(category=category)
+        query = query.filter(Expense.category == category)
     if payment_method:
-        query = query.filter_by(payment_method=payment_method)
+        query = query.filter(Expense.payment_method == payment_method)
 
     query = query.order_by(Expense.month.desc(), Expense.day.desc(), Expense.created_at.desc())
     pagination = query.paginate(page=page, per_page=ITEMS_PER_PAGE, error_out=False)
