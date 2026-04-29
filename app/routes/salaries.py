@@ -33,16 +33,17 @@ def manage():
         flash('Salário adicionado com sucesso!', 'success')
         return redirect(url_for('salaries.manage'))
 
-    # Buscar histórico de salários
+    uids = [u.id for u in users]
     salaries = (Salary.query
+                .filter(Salary.user_id.in_(uids))
                 .join(User)
                 .order_by(Salary.year.desc(), Salary.month.desc(), User.name)
                 .all())
 
-    # Totais por pessoa/mês para exibir subtotais
     totals = (db.session.query(
                 Salary.user_id, Salary.year, Salary.month,
                 func.sum(Salary.amount).label('total'))
+              .filter(Salary.user_id.in_(uids))
               .group_by(Salary.user_id, Salary.year, Salary.month)
               .all())
     totals_map = {(t.user_id, t.year, t.month): float(t.total) for t in totals}
