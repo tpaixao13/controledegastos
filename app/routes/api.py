@@ -172,13 +172,16 @@ def payment_methods():
     months = _last_n_months(n, end_month, end_year)
     labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in months]
     methods = list(PAYMENT_COLORS.keys())
+    uids = tenant_user_ids()
     datasets = []
 
     for method in methods:
         values = []
         for m, y in months:
             total = (db.session.query(func.sum(Expense.amount))
-                     .filter_by(year=y, month=m, payment_method=method).scalar() or 0)
+                     .filter(Expense.user_id.in_(uids), Expense.year == y,
+                             Expense.month == m, Expense.payment_method == method)
+                     .scalar() or 0)
             values.append(float(total))
         datasets.append({
             'label': method,
