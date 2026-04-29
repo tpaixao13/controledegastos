@@ -1,35 +1,10 @@
 import calendar
-import json
-import time
-import urllib.request
 from datetime import datetime, timezone
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 from app import db
 from app.models import Expense, Salary, User, Investment
-from app.utils import tenant_user_ids, tenant_users, MONTH_NAMES_SHORT
-
-# Cache simples em memória
-_cache = {}
-
-
-def _fetch_json(url, cache_key, ttl=3600):
-    """Busca JSON de URL externa com cache em memória."""
-    now = time.time()
-    if cache_key in _cache and now - _cache[cache_key]['ts'] < ttl:
-        return _cache[cache_key]['data']
-    try:
-        req = urllib.request.Request(url, headers={
-            'User-Agent': 'Mozilla/5.0 (compatible; ControleGastos/1.0)',
-            'Accept': 'application/json',
-        })
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            data = json.loads(resp.read().decode())
-        _cache[cache_key] = {'data': data, 'ts': now}
-        return data
-    except Exception as e:
-        print(f'[_fetch_json] Erro ao buscar {url}: {e}')
-        return None
+from app.utils import tenant_user_ids, tenant_users, MONTH_NAMES_SHORT, _fetch_json, get_selic_rate, month_offset
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/chart')
 
