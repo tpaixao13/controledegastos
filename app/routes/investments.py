@@ -2,43 +2,21 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from app import db
 from app.models import User, Investment
 from app.forms import InvestmentForm
-from app.utils import tenant_users, tenant_user_ids
+from app.utils import tenant_users, tenant_user_ids, _fetch_json, get_selic_rate, rate_suggestions
 from datetime import datetime
-import urllib.request
-import json
-import ssl
 
 investments_bp = Blueprint('investments', __name__, url_prefix='/investments')
 
-_ssl_ctx = ssl.create_default_context()
-_ssl_ctx.check_hostname = False
-_ssl_ctx.verify_mode = ssl.CERT_NONE
-
-
-def _fetch_selic():
-    """Busca taxa Selic atual do BCB. Retorna float (ex: 14.75)."""
-    try:
-        url = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json'
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json'})
-        with urllib.request.urlopen(req, timeout=5, context=_ssl_ctx) as resp:
-            data = json.loads(resp.read().decode())
-        return float(data[0]['valor'].replace(',', '.'))
-    except Exception:
-        return 14.75  # fallback
-
 
 def _fetch_crypto_price(coin):
-    """Busca preço atual de uma crypto em BRL via CoinGecko."""
-    try:
-        url = f'https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=brl'
-        req = urllib.request.Request(url, headers={
-            'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json'
-        })
-        with urllib.request.urlopen(req, timeout=8, context=_ssl_ctx) as resp:
-            data = json.loads(resp.read().decode())
+    data = _fetch_json(
+        f'https://api.coingecko.com/api/v3/simple/price?ids={coin}&vs_currencies=brl',
+        f'crypto_price_{coin}',
+        ttl=300,
+    )
+    if data and coin in data:
         return float(data[coin]['brl'])
-    except Exception:
-        return None
+    return None
 
 
 @investments_bp.route('/', methods=['GET', 'POST'])
