@@ -273,7 +273,6 @@ def crypto_history():
     labels = []
     values = []
     for ts, price in prices:
-        from datetime import timezone
         dt = datetime.fromtimestamp(ts / 1000, tz=timezone.utc)
         labels.append(dt.strftime('%d/%m'))
         values.append(round(price, 2))
