@@ -1,5 +1,8 @@
 import logging
+import os
 import secrets
+import shutil
+import sys
 from flask import Flask, session, redirect, url_for, request as flask_request
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
@@ -11,7 +14,30 @@ csrf = CSRFProtect()
 
 
 def create_app(config_name='default'):
-    app = Flask(__name__, instance_relative_config=True)
+    if getattr(sys, 'frozen', False):
+        # Rodando como .exe gerado pelo PyInstaller
+        _bundle = sys._MEIPASS
+        _appdata = os.path.join(
+            os.environ.get('APPDATA', os.path.expanduser('~')), 'FinFam'
+        )
+        _user_static = os.path.join(_appdata, 'static')
+
+        # Copia static (css/js/images) para APPDATA na primeira execução
+        # para que uploads de avatar também funcionem nessa pasta
+        if not os.path.exists(_user_static):
+            shutil.copytree(
+                os.path.join(_bundle, 'app', 'static'),
+                _user_static,
+            )
+
+        app = Flask(
+            __name__,
+            template_folder=os.path.join(_bundle, 'app', 'templates'),
+            static_folder=_user_static,
+            instance_relative_config=False,
+        )
+    else:
+        app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config[config_name])
 
     if not app.config.get('SECRET_KEY'):
