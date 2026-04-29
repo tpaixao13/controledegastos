@@ -48,7 +48,18 @@ def manage():
             groups[key] = []
         groups[key].append(s)
 
-    # Total combinado por (ano, mês)
+    # Mês atual primeiro, passado em DESC, futuro por último
+    def _sort_key(ym):
+        diff = (ym[0] - now.year) * 12 + (ym[1] - now.month)
+        if diff == 0:
+            return (0, 0)
+        elif diff < 0:
+            return (1, diff)   # passado: menos negativo = mais recente
+        else:
+            return (2, diff)   # futuro: mais próximo primeiro
+
+    groups = OrderedDict(sorted(groups.items(), key=lambda kv: _sort_key(kv[0])))
+
     month_totals = {
         key: sum(float(s.amount) for s in items)
         for key, items in groups.items()
