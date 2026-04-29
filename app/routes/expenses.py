@@ -68,16 +68,17 @@ def list():
 @expenses_bp.route('/export')
 def export_csv():
     now = datetime.now()
+    uids = tenant_user_ids()
     user_id = request.args.get('user_id', type=int)
     month = request.args.get('month', now.month, type=int)
     year = request.args.get('year', now.year, type=int)
     category = request.args.get('category', '')
 
-    query = Expense.query.filter_by(year=year, month=month)
-    if user_id:
-        query = query.filter_by(user_id=user_id)
+    query = Expense.query.filter(Expense.user_id.in_(uids), Expense.year == year, Expense.month == month)
+    if user_id and user_id in uids:
+        query = query.filter(Expense.user_id == user_id)
     if category:
-        query = query.filter_by(category=category)
+        query = query.filter(Expense.category == category)
     query = query.order_by(Expense.day.asc(), Expense.created_at.asc())
 
     output = io.StringIO()
