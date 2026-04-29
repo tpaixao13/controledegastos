@@ -117,14 +117,23 @@ def _run_migrations():
 
 
 def _seed_users():
-    from app.models import User
+    from app.models import User, Tenant
+
+    default_tenant = Tenant.query.filter_by(code='default').first()
+    if not default_tenant:
+        default_tenant = Tenant(name='Controle de Gastos', code='default')
+        db.session.add(default_tenant)
+        db.session.flush()
+
     defaults = [('Tiago', 'tiago'), ('Greyce', 'greyce')]
     for name, pwd in defaults:
         user = User.query.filter_by(name=name).first()
         if not user:
-            user = User(name=name)
+            user = User(name=name, tenant_id=default_tenant.id)
             db.session.add(user)
             db.session.flush()
+        if not user.tenant_id:
+            user.tenant_id = default_tenant.id
         if not user.password_hash:
             user.set_password(pwd)
             logging.warning(
