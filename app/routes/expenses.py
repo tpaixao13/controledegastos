@@ -279,8 +279,7 @@ def _create_installments(form, bank):
 
     db.session.commit()
 
-    mes_fim = (mes_inicio - 1 + n - 1) % 12 + 1
-    ano_fim = ano_inicio + ((mes_inicio - 1 + n - 1) // 12)
+    mes_fim, ano_fim = month_offset(mes_inicio, ano_inicio, n - 1)
     parcela_fmt = f'R$ {float(parcela):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
     flash(
         f'{n} parcelas criadas de {parcela_fmt} cada '
