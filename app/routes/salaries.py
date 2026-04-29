@@ -11,7 +11,7 @@ salaries_bp = Blueprint('salaries', __name__, url_prefix='/salaries')
 
 @salaries_bp.route('/', methods=['GET', 'POST'])
 def manage():
-    users = User.query.order_by(User.name).all()
+    users = tenant_users().order_by(User.name).all()
     form = SalaryForm()
     form.user_id.choices = [(u.id, u.name) for u in users]
 
