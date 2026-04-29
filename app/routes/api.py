@@ -143,7 +143,6 @@ def user_comparison():
 @api_bp.route('/daily')
 def daily():
     month, year = _get_month_year()
-    import calendar
     _, days_in_month = calendar.monthrange(year, month)
     uids = tenant_user_ids()
 
