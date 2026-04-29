@@ -150,8 +150,7 @@ def _seed_users():
         db.session.add(default_tenant)
         db.session.flush()
 
-    defaults = [('Tiago', 'tiago'), ('Greyce', 'greyce')]
-    for name, pwd in defaults:
+    for name in ('Tiago', 'Greyce'):
         user = User.query.filter_by(name=name, tenant_id=default_tenant.id).first()
         if not user:
             user = User(name=name, tenant_id=default_tenant.id)
@@ -160,9 +159,13 @@ def _seed_users():
         if not user.tenant_id:
             user.tenant_id = default_tenant.id
         if not user.password_hash:
+            pwd = secrets.token_urlsafe(12)
             user.set_password(pwd)
-            logging.warning(
-                "Usuário '%s' criado com senha padrão fraca. "
-                "Altere a senha em /profile imediatamente.", name
-            )
+            border = '=' * 58
+            print(f'\n{border}')
+            print(f'  SENHA INICIAL GERADA — {name}')
+            print(f'  Senha: {pwd}')
+            print(f'  Acesse /profile e altere imediatamente!')
+            print(f'{border}\n')
+            logging.warning("Senha aleatória gerada para '%s'. Altere em /profile.", name)
     db.session.commit()
