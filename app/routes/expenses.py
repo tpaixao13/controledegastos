@@ -194,7 +194,8 @@ def edit(expense_id):
 
 @expenses_bp.route('/delete/<int:expense_id>', methods=['POST'])
 def delete(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
+    uids = tenant_user_ids()
+    expense = Expense.query.filter(Expense.id == expense_id, Expense.user_id.in_(uids)).first_or_404()
     db.session.delete(expense)
     db.session.commit()
     flash('Despesa eliminada.', 'warning')
@@ -203,7 +204,8 @@ def delete(expense_id):
 
 @expenses_bp.route('/delete-group/<int:group_id>', methods=['POST'])
 def delete_group(group_id):
-    group = InstallmentGroup.query.get_or_404(group_id)
+    uids = tenant_user_ids()
+    group = InstallmentGroup.query.filter(InstallmentGroup.id == group_id, InstallmentGroup.user_id.in_(uids)).first_or_404()
     count = group.installments.count()
     db.session.delete(group)
     db.session.commit()
@@ -213,7 +215,8 @@ def delete_group(group_id):
 
 @expenses_bp.route('/toggle-paid/<int:expense_id>', methods=['POST'])
 def toggle_paid(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
+    uids = tenant_user_ids()
+    expense = Expense.query.filter(Expense.id == expense_id, Expense.user_id.in_(uids)).first_or_404()
     expense.paid = not bool(expense.paid)
     db.session.commit()
     next_url = request.form.get('next') or ''
@@ -224,7 +227,8 @@ def toggle_paid(expense_id):
 
 @expenses_bp.route('/delete-recurring/<int:group_id>', methods=['POST'])
 def delete_recurring(group_id):
-    group = RecurringGroup.query.get_or_404(group_id)
+    uids = tenant_user_ids()
+    group = RecurringGroup.query.filter(RecurringGroup.id == group_id, RecurringGroup.user_id.in_(uids)).first_or_404()
     count = group.recurrences.count()
     db.session.delete(group)
     db.session.commit()
