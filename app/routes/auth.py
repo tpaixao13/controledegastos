@@ -136,7 +136,9 @@ def profile():
 
 @auth_bp.route('/members', methods=['GET', 'POST'])
 def members():
-    tenant_id = session['tenant_id']
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return redirect(url_for('auth.login'))
     tenant = Tenant.query.get(tenant_id)
     form = AddMemberForm()
 
