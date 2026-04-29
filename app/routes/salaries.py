@@ -55,7 +55,8 @@ def manage():
 
 @salaries_bp.route('/delete/<int:salary_id>', methods=['POST'])
 def delete(salary_id):
-    salary = Salary.query.get_or_404(salary_id)
+    uids = tenant_user_ids()
+    salary = Salary.query.filter(Salary.id == salary_id, Salary.user_id.in_(uids)).first_or_404()
     db.session.delete(salary)
     db.session.commit()
     flash('Salário removido.', 'info')
