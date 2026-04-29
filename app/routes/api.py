@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 from app import db
 from app.models import Expense, Salary, User, Investment
+from app.utils import tenant_user_ids
 from datetime import datetime
 import urllib.request
 import json
