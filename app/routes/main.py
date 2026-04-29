@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request
 from sqlalchemy import func
 from app import db
 from app.models import User, Expense, Salary
-from app.utils import tenant_users, tenant_user_ids
+from app.utils import tenant_users, tenant_user_ids, MONTH_NAMES_FULL
 from datetime import datetime
 
 main_bp = Blueprint('main', __name__)
