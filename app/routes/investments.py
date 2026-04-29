@@ -43,7 +43,7 @@ def _fetch_crypto_price(coin):
 
 @investments_bp.route('/', methods=['GET', 'POST'])
 def manage():
-    users = User.query.order_by(User.name).all()
+    users = tenant_users().order_by(User.name).all()
     form = InvestmentForm()
     form.user_id.choices = [(u.id, u.name) for u in users]
 
