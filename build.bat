@@ -6,10 +6,16 @@ echo   Build FinFam.exe
 echo  ============================================
 echo.
 
-echo  [1/3] Instalando dependencias de build...
-pip install waitress pyinstaller --quiet
+echo  [1/3] Instalando dependencias...
+pip install -r requirements.txt --quiet
 if errorlevel 1 (
-    echo  ERRO ao instalar dependencias.
+    echo  ERRO ao instalar requirements.txt.
+    pause
+    exit /b 1
+)
+pip install pyinstaller --quiet
+if errorlevel 1 (
+    echo  ERRO ao instalar pyinstaller.
     pause
     exit /b 1
 )
