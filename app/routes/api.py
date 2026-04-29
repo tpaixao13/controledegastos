@@ -46,12 +46,7 @@ def _last_n_months(n=6, end_month=None, end_year=None):
     now = datetime.now()
     em = end_month or now.month
     ey = end_year or now.year
-    months = []
-    for i in range(n - 1, -1, -1):
-        m = (em - 1 - i) % 12 + 1
-        y = ey + ((em - 1 - i) // 12)
-        months.append((m, y))
-    return months
+    return [month_offset(em, ey, -i) for i in range(n - 1, -1, -1)]
 
 
 @api_bp.route('/doughnut')
