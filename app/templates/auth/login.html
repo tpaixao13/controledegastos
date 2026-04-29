@@ -37,16 +37,36 @@
               {{ form.hidden_tag() }}
 
               <div class="mb-3">
-                {{ form.user_id.label(class='form-label fw-semibold') }}
-                {{ form.user_id(class='form-select' + (' is-invalid' if form.user_id.errors else '')) }}
+                <label class="form-label fw-semibold">Código do Grupo</label>
+                <input type="text" name="tenant_code" id="tenant_code"
+                       class="form-control {{ 'is-invalid' if form.tenant_code.errors else '' }}"
+                       value="{{ prefill_code or request.form.get('tenant_code', '') }}"
+                       placeholder="Ex: familia-silva" autocomplete="off">
+                <div id="tenantStatus" class="form-text"></div>
+                {% for e in form.tenant_code.errors %}
+                <div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Usuário</label>
+                <select name="user_id" id="user_id"
+                        class="form-select {{ 'is-invalid' if form.user_id.errors else '' }}">
+                  {% if form.user_id.choices and form.user_id.choices[0][0] != 0 %}
+                    {% for val, label in form.user_id.choices %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                  {% else %}
+                  <option value="">— informe o código do grupo —</option>
+                  {% endif %}
+                </select>
                 {% for e in form.user_id.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
               </div>
 
               <div class="mb-4">
-                {{ form.password.label(class='form-label fw-semibold') }}
+                <label class="form-label fw-semibold">Senha</label>
                 <div class="input-group">
-                  {{ form.password(class='form-control' + (' is-invalid' if form.password.errors else ''),
-                                   id='password', type='password', placeholder='••••••••') }}
+                  <input name="password" class="form-control {{ 'is-invalid' if form.password.errors else '' }}"
+                         id="password" type="password" placeholder="••••••••">
                   <button class="btn btn-outline-secondary" type="button" id="togglePwd">
                     <i class="bi bi-eye" id="eyeIcon"></i>
                   </button>
@@ -54,8 +74,14 @@
                 </div>
               </div>
 
-              {{ form.submit(class='btn btn-primary w-100 fw-semibold py-2') }}
+              <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">Entrar</button>
             </form>
+
+            <hr class="my-3">
+            <p class="text-center text-muted small mb-0">
+              Novo por aqui?
+              <a href="{{ url_for('auth.register') }}" class="fw-semibold">Criar um grupo</a>
+            </p>
           </div>
         </div>
       </div>
@@ -75,6 +101,45 @@
         icon.className = 'bi bi-eye';
       }
     });
+
+    async function loadUsers(code) {
+      const sel = document.getElementById('user_id');
+      const status = document.getElementById('tenantStatus');
+      if (!code) {
+        sel.innerHTML = '<option value="">— informe o código do grupo —</option>';
+        status.textContent = '';
+        return;
+      }
+      try {
+        const resp = await fetch(`/auth/tenant-users?code=${encodeURIComponent(code)}`);
+        const users = await resp.json();
+        if (users.length === 0) {
+          sel.innerHTML = '<option value="">Grupo não encontrado</option>';
+          status.textContent = 'Código inválido.';
+          status.className = 'form-text text-danger';
+        } else {
+          sel.innerHTML = users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+          status.textContent = `${users.length} membro(s) encontrado(s).`;
+          status.className = 'form-text text-success';
+        }
+      } catch (e) {
+        status.textContent = 'Erro ao buscar membros.';
+        status.className = 'form-text text-danger';
+      }
+    }
+
+    document.getElementById('tenant_code').addEventListener('blur', function () {
+      loadUsers(this.value.trim());
+    });
+
+    // Se já há um código pré-preenchido (erro de validação) e o dropdown está vazio, recarrega
+    (function () {
+      const code = document.getElementById('tenant_code').value.trim();
+      const sel = document.getElementById('user_id');
+      if (code && sel.options.length === 1 && !sel.options[0].value) {
+        loadUsers(code);
+      }
+    })();
   </script>
 </body>
 </html>
