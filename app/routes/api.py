@@ -260,12 +260,7 @@ def investments_chart():
     if not all_investments:
         return jsonify({'labels': [], 'invested': [], 'projected': []})
 
-    # Gera os próximos 12 meses a partir do mês atual
-    future_months = []
-    for i in range(12):
-        m = (now.month - 1 + i) % 12 + 1
-        y = now.year + ((now.month - 1 + i) // 12)
-        future_months.append((m, y))
+    future_months = [month_offset(now.month, now.year, i) for i in range(12)]
 
     labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in future_months]
     total_invested = sum(float(inv.amount) for inv in all_investments)
