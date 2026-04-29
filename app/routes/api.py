@@ -195,12 +195,13 @@ def payment_methods():
 @api_bp.route('/pending-vs-paid')
 def pending_vs_paid():
     month, year = _get_month_year()
+    uids = tenant_user_ids()
     paid_total = (db.session.query(func.sum(Expense.amount))
-                  .filter(Expense.year == year, Expense.month == month,
-                          Expense.paid == True).scalar() or 0)
+                  .filter(Expense.user_id.in_(uids), Expense.year == year,
+                          Expense.month == month, Expense.paid == True).scalar() or 0)
     pending_total = (db.session.query(func.sum(Expense.amount))
-                     .filter(Expense.year == year, Expense.month == month,
-                             Expense.paid.isnot(True)).scalar() or 0)
+                     .filter(Expense.user_id.in_(uids), Expense.year == year,
+                             Expense.month == month, Expense.paid.isnot(True)).scalar() or 0)
     return jsonify({
         'labels': ['Pago', 'Pendente'],
         'data': [float(paid_total), float(pending_total)],
