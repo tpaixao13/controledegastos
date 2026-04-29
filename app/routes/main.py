@@ -19,7 +19,7 @@ def index():
         year = now.year
 
     users = tenant_users().order_by(User.name).all()
-    uids = [u.id for u in users]
+    uids = tenant_user_ids()
 
     user_summaries = []
     total_salario = 0
