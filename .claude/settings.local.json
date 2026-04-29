@@ -6,7 +6,8 @@
       "Bash(venv/Scripts/python.exe run.py)",
       "Bash(venv\\\\Scripts\\\\activate)",
       "Bash(python run.py)",
-      "Bash(pkill -f \"python run.py\")"
+      "Bash(pkill -f \"python run.py\")",
+      "Bash(venv/Scripts/python -c \"from app import create_app; create_app\\(\\); print\\('OK'\\)\")"
     ]
   }
 }
