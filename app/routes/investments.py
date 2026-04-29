@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from app import db
 from app.models import User, Investment
 from app.forms import InvestmentForm
+from app.utils import tenant_users, tenant_user_ids
 from datetime import datetime
 import urllib.request
 import json
