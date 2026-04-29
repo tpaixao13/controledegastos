@@ -90,7 +90,6 @@ def _run_migrations():
 
         # Remove unique constraint on salaries (SQLite requires table recreation)
         try:
-            # Check if the unique constraint still exists in the table definition
             row = conn.execute(text(
                 "SELECT sql FROM sqlite_master WHERE type='table' AND name='salaries'"
             )).fetchone()
@@ -111,6 +110,31 @@ def _run_migrations():
                 ))
                 conn.execute(text("DROP TABLE salaries"))
                 conn.execute(text("ALTER TABLE salaries_new RENAME TO salaries"))
+                conn.commit()
+        except Exception:
+            pass
+
+        # Remove unique constraint on users.name (multi-tenant: same name allowed in different tenants)
+        try:
+            row = conn.execute(text(
+                "SELECT sql FROM sqlite_master WHERE type='table' AND name='users'"
+            )).fetchone()
+            if row and 'UNIQUE' in row[0].upper():
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS users_new (
+                        id INTEGER PRIMARY KEY,
+                        tenant_id INTEGER REFERENCES tenants(id),
+                        name TEXT NOT NULL,
+                        password_hash TEXT,
+                        avatar TEXT
+                    )
+                """))
+                conn.execute(text(
+                    "INSERT INTO users_new (id, tenant_id, name, password_hash, avatar) "
+                    "SELECT id, tenant_id, name, password_hash, avatar FROM users"
+                ))
+                conn.execute(text("DROP TABLE users"))
+                conn.execute(text("ALTER TABLE users_new RENAME TO users"))
                 conn.commit()
         except Exception:
             pass
