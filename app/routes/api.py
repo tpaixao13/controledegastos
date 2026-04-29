@@ -124,7 +124,6 @@ def monthly_vs_salary():
 @api_bp.route('/user-comparison')
 def user_comparison():
     month, year = _get_month_year()
-    from app.utils import tenant_users
     users = tenant_users().order_by(User.name).all()
     labels = [u.name for u in users]
     gastos = []
