@@ -151,7 +151,7 @@ def _seed_users():
 
     defaults = [('Tiago', 'tiago'), ('Greyce', 'greyce')]
     for name, pwd in defaults:
-        user = User.query.filter_by(name=name).first()
+        user = User.query.filter_by(name=name, tenant_id=default_tenant.id).first()
         if not user:
             user = User(name=name, tenant_id=default_tenant.id)
             db.session.add(user)
