@@ -41,8 +41,6 @@ def manage():
                 .order_by(Salary.year.desc(), Salary.month.desc(), User.name)
                 .all())
 
-    # Agrupar por (ano, mês)
-    from collections import defaultdict, OrderedDict
     groups = OrderedDict()
     for s in salaries:
         key = (s.year, s.month)
