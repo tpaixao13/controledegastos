@@ -52,8 +52,7 @@ PAYMENT_COLORS = {
     'Dinheiro': '#198754',
 }
 
-MONTH_NAMES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-               'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+MONTH_NAMES = MONTH_NAMES_SHORT
 
 
 def _get_month_year():
