@@ -146,7 +146,7 @@ class InvestmentForm(FlaskForm):
 class LoginForm(FlaskForm):
     tenant_code = StringField('Código do Grupo', validators=[DataRequired()])
     user_id = SelectField('Usuário', coerce=int, validators=[DataRequired()])
-    password = StringField('Senha', validators=[DataRequired()])
+    password = PasswordField('Senha', validators=[DataRequired()])
     submit = SubmitField('Entrar')
 
 
