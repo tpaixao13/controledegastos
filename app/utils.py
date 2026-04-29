@@ -1,3 +1,7 @@
+import json
+import ssl
+import time
+import urllib.request
 from flask import session
 from app.models import User
 
@@ -7,6 +11,14 @@ MONTH_NAMES_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
 MONTH_NAMES_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
+_SELIC_URL = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json'
+SELIC_FALLBACK = 14.75
+
+_cache: dict = {}
+_ssl_ctx = ssl.create_default_context()
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
+
 
 def tenant_users():
     tid = session.get('tenant_id')
@@ -15,3 +27,59 @@ def tenant_users():
 
 def tenant_user_ids():
     return [u.id for u in tenant_users().all()]
+
+
+def month_offset(base_month: int, base_year: int, offset: int) -> tuple[int, int]:
+    """Returns (month, year) shifted by `offset` months from base."""
+    m = (base_month - 1 + offset) % 12 + 1
+    y = base_year + ((base_month - 1 + offset) // 12)
+    return m, y
+
+
+def _fetch_json(url: str, cache_key: str, ttl: int = 3600):
+    now = time.time()
+    if cache_key in _cache and now - _cache[cache_key]['ts'] < ttl:
+        return _cache[cache_key]['data']
+    try:
+        req = urllib.request.Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (compatible; ControleGastos/1.0)',
+            'Accept': 'application/json',
+        })
+        with urllib.request.urlopen(req, timeout=8, context=_ssl_ctx) as resp:
+            data = json.loads(resp.read().decode())
+        _cache[cache_key] = {'data': data, 'ts': now}
+        return data
+    except Exception as e:
+        print(f'[_fetch_json] Erro ao buscar {url}: {e}')
+        return None
+
+
+def get_selic_rate() -> float:
+    data = _fetch_json(_SELIC_URL, 'selic')
+    if data:
+        try:
+            return float(data[0]['valor'].replace(',', '.'))
+        except Exception:
+            pass
+    return SELIC_FALLBACK
+
+
+def rate_suggestions(selic: float) -> dict:
+    return {
+        'Tesouro Selic':       round(selic, 2),
+        'CDB':                 round(selic, 2),
+        'LCI':                 round(selic * 0.87, 2),
+        'LCA':                 round(selic * 0.87, 2),
+        'CRI/CRA':             round(selic * 0.95, 2),
+        'Debêntures':          round(selic * 1.05, 2),
+        'COE':                 round(selic * 0.90, 2),
+        'Fundo de Renda Fixa': round(selic * 0.95, 2),
+        'Fundo Multimercado':  round(selic * 1.10, 2),
+        'Tesouro IPCA+':       round(selic * 0.60, 2),
+        'Tesouro Prefixado':   round(selic * 0.95, 2),
+        'Poupança':            round(selic * 0.70, 2),
+        'Ações':               0,
+        'FIIs':                0,
+        'Criptomoedas':        0,
+        'Outros':              0,
+    }
