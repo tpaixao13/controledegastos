@@ -159,7 +159,9 @@ def members():
 
 @auth_bp.route('/members/delete/<int:user_id>', methods=['POST'])
 def delete_member(user_id):
-    tenant_id = session['tenant_id']
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return redirect(url_for('auth.login'))
     if user_id == session['user_id']:
         flash('Você não pode remover a si mesmo.', 'danger')
         return redirect(url_for('auth.members'))
