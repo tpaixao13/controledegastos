@@ -3,6 +3,7 @@ from sqlalchemy import func
 from app import db
 from app.models import User, Salary
 from app.forms import SalaryForm
+from app.utils import tenant_users, tenant_user_ids
 from datetime import datetime
 
 salaries_bp = Blueprint('salaries', __name__, url_prefix='/salaries')
