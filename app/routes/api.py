@@ -179,37 +179,9 @@ def pending_vs_paid():
 
 @api_bp.route('/cdi-rate')
 def cdi_rate():
-    """Retorna taxa Selic atual do BCB e sugestões por tipo de investimento."""
-    data = _fetch_json(
-        'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json',
-        'selic'
-    )
-    selic = 14.75  # fallback
-    if data and len(data) > 0:
-        try:
-            selic = float(data[0]['valor'].replace(',', '.'))
-        except Exception:
-            pass
-
-    suggestions = {
-        'Tesouro Selic': round(selic, 2),
-        'CDB': round(selic, 2),
-        'LCI': round(selic * 0.87, 2),
-        'LCA': round(selic * 0.87, 2),
-        'CRI/CRA': round(selic * 0.95, 2),
-        'Debêntures': round(selic * 1.05, 2),
-        'COE': round(selic * 0.90, 2),
-        'Fundo de Renda Fixa': round(selic * 0.95, 2),
-        'Fundo Multimercado': round(selic * 1.10, 2),
-        'Tesouro IPCA+': round(selic * 0.60, 2),
-        'Tesouro Prefixado': round(selic * 0.95, 2),
-        'Poupança': round(selic * 0.70, 2),
-        'Ações': 0,
-        'FIIs': 0,
-        'Criptomoedas': 0,
-        'Outros': 0,
-    }
-    return jsonify({'selic': selic, 'suggestions': suggestions})
+    from app.utils import rate_suggestions
+    selic = get_selic_rate()
+    return jsonify({'selic': selic, 'suggestions': rate_suggestions(selic)})
 
 
 @api_bp.route('/crypto-price')
