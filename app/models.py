@@ -3,11 +3,26 @@ from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
+class Tenant(db.Model):
+    __tablename__ = 'tenants'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.Text, nullable=False)
+    code = db.Column(db.Text, nullable=False, unique=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    users = db.relationship('User', backref='tenant', lazy='dynamic', cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Tenant {self.name} ({self.code})>'
+
+
 class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.Text, nullable=False, unique=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=True)
+    name = db.Column(db.Text, nullable=False)
     password_hash = db.Column(db.Text, nullable=True)
     avatar = db.Column(db.Text, nullable=True)
 
