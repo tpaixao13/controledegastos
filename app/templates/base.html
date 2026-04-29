@@ -65,9 +65,20 @@
             {{ session.user_name }}
           </a>
           <ul class="dropdown-menu dropdown-menu-end">
+            {% if session.get('tenant_name') %}
+            <li><span class="dropdown-item-text text-muted small">
+              <i class="bi bi-people"></i> {{ session.tenant_name }}
+            </span></li>
+            <li><hr class="dropdown-divider"></li>
+            {% endif %}
             <li>
               <a class="dropdown-item" href="{{ url_for('auth.profile') }}">
                 <i class="bi bi-person-gear"></i> Perfil
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{{ url_for('auth.members') }}">
+                <i class="bi bi-people-fill"></i> Membros do Grupo
               </a>
             </li>
             <li><hr class="dropdown-divider"></li>
