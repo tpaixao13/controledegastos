@@ -59,7 +59,7 @@ def create_app(config_name='default'):
 
     @app.before_request
     def require_login():
-        exempt = {'auth.login', 'auth.logout', 'static'}
+        exempt = {'auth.login', 'auth.logout', 'auth.register', 'auth.tenant_users_api', 'static'}
         if flask_request.endpoint not in exempt and not session.get('logged_in'):
             return redirect(url_for('auth.login'))
 
