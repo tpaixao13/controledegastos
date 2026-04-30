@@ -22,12 +22,15 @@
 <form method="POST" action="{{ url_for('expenses.import_c6_confirm') }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-  {% for i, t in transactions | enumerate %}
+  {# Hidden fields: indices and per-row fixed data #}
+  {% for t in transactions %}
+  {% set i = loop.index0 %}
   <input type="hidden" name="idx" value="{{ i }}">
   <input type="hidden" name="user_id_{{ i }}" value="{{ user_id }}">
   <input type="hidden" name="day_{{ i }}" value="{{ t.day }}">
   <input type="hidden" name="month_{{ i }}" value="{{ t.month }}">
   <input type="hidden" name="year_{{ i }}" value="{{ t.year }}">
+  <input type="hidden" name="amount_{{ i }}" value="{{ '%.2f'|format(t.amount) }}">
   {% endfor %}
 
   <div class="card mb-3">
@@ -44,15 +47,16 @@
           <thead class="table-light">
             <tr>
               <th style="width:40px"></th>
-              <th style="width:80px">Data</th>
+              <th style="width:110px">Data</th>
               <th>Descrição</th>
               <th style="width:180px">Categoria</th>
               <th class="text-end" style="width:120px">Valor</th>
             </tr>
           </thead>
           <tbody>
-            {% for i, t in transactions | enumerate %}
-            <tr class="row-item">
+            {% for t in transactions %}
+            {% set i = loop.index0 %}
+            <tr>
               <td>
                 <input class="form-check-input row-check" type="checkbox"
                        name="include_{{ i }}" value="1" checked>
@@ -62,7 +66,7 @@
               </td>
               <td>
                 <input type="text" name="desc_{{ i }}" value="{{ t.description }}"
-                       class="form-control form-control-sm border-0 bg-transparent px-0"
+                       class="form-control form-control-sm border-0 bg-transparent px-1"
                        required>
               </td>
               <td>
@@ -73,7 +77,6 @@
                 </select>
               </td>
               <td class="text-end fw-semibold">
-                <input type="hidden" name="amount_{{ i }}" value="{{ '%.2f'|format(t.amount) }}">
                 {{ t.amount | brl }}
               </td>
             </tr>
@@ -84,9 +87,9 @@
     </div>
   </div>
 
-  <div class="d-flex justify-content-end gap-2">
+  <div class="d-flex justify-content-end gap-2 mb-4">
     <a href="{{ url_for('expenses.import_c6') }}" class="btn btn-outline-secondary">Cancelar</a>
-    <button type="submit" class="btn btn-success fw-semibold" id="btnConfirm">
+    <button type="submit" class="btn btn-success fw-semibold">
       <i class="bi bi-check-lg"></i> Importar <span id="btnCount">{{ transactions|length }}</span> despesa(s)
     </button>
   </div>
@@ -95,23 +98,23 @@
 <script>
 (function () {
   const selectAll = document.getElementById('selectAll');
-  const checks = document.querySelectorAll('.row-check');
+  const checks = Array.from(document.querySelectorAll('.row-check'));
   const countLabel = document.getElementById('countLabel');
   const btnCount = document.getElementById('btnCount');
 
   function updateCount() {
-    const n = document.querySelectorAll('.row-check:checked').length;
+    const n = checks.filter(c => c.checked).length;
     countLabel.textContent = n + ' selecionada' + (n !== 1 ? 's' : '');
     btnCount.textContent = n;
   }
 
   selectAll.addEventListener('change', () => {
-    checks.forEach(c => c.checked = selectAll.checked);
+    checks.forEach(c => { c.checked = selectAll.checked; });
     updateCount();
   });
 
   checks.forEach(c => c.addEventListener('change', () => {
-    selectAll.checked = [...checks].every(c => c.checked);
+    selectAll.checked = checks.every(c => c.checked);
     updateCount();
   }));
 })();
