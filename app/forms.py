@@ -101,7 +101,7 @@ class ExpenseForm(FlaskForm):
     user_id = SelectField('Pessoa', coerce=int, validators=[DataRequired()])
     description = StringField('Descrição', validators=[DataRequired(), Length(max=200)])
     amount = DecimalField('Valor Total (R$)', places=2, validators=[DataRequired(), NumberRange(min=0.01)])
-    category = SelectField('Categoria', choices=CATEGORIES, validators=[DataRequired()])
+    category = StringField('Categoria', validators=[DataRequired(), Length(max=50)])
     payment_method = SelectField('Forma de Pagamento', choices=PAYMENT_METHODS,
                                   validators=[validate_payment_method])
     bank = SelectField('Banco / Cartão', choices=BANKS, validators=[Optional()])
