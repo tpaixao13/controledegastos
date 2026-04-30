@@ -8,6 +8,21 @@ from app.models import User
 MONTH_NAMES_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
                      'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
+# Paleta por ordem de cadastro — suporta até 6 usuários por tenant
+USER_PALETTE = [
+    {'card_class': 'card-user-0', 'badge_class': 'bg-primary',            'hex': '#0d6efd', 'hex_alpha': 'rgba(13,110,253,0.7)'},
+    {'card_class': 'card-user-1', 'badge_class': 'bg-danger',             'hex': '#dc3545', 'hex_alpha': 'rgba(220,53,69,0.7)'},
+    {'card_class': 'card-user-2', 'badge_class': 'bg-success',            'hex': '#198754', 'hex_alpha': 'rgba(25,135,84,0.7)'},
+    {'card_class': 'card-user-3', 'badge_class': 'bg-warning text-dark',  'hex': '#ffc107', 'hex_alpha': 'rgba(255,193,7,0.7)'},
+    {'card_class': 'card-user-4', 'badge_class': 'bg-info text-dark',     'hex': '#0dcaf0', 'hex_alpha': 'rgba(13,202,240,0.7)'},
+    {'card_class': 'card-user-5', 'badge_class': 'bg-secondary',          'hex': '#6c757d', 'hex_alpha': 'rgba(108,117,125,0.7)'},
+]
+
+
+def user_color_map(users: list) -> dict:
+    """Returns {user.id: palette_entry} ordered by the users list."""
+    return {u.id: USER_PALETTE[i % len(USER_PALETTE)] for i, u in enumerate(users)}
+
 MONTH_NAMES_FULL = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
