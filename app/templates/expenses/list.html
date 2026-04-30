@@ -8,10 +8,23 @@
     <h2 class="fw-bold"><i class="bi bi-list-ul text-primary"></i> Despesas</h2>
   </div>
   <div class="col-auto d-flex gap-2">
-    <a href="{{ url_for('expenses.export_csv', user_id=filters.user_id or '', month=filters.month, year=filters.year, category=filters.category or '') }}"
-       class="btn btn-outline-success btn-sm fw-semibold">
-      <i class="bi bi-file-earmark-spreadsheet"></i> Exportar CSV
-    </a>
+    <div class="btn-group">
+      <button class="btn btn-outline-success btn-sm fw-semibold dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-file-earmark-arrow-down"></i> Exportar
+      </button>
+      <ul class="dropdown-menu">
+        <li>
+          <a class="dropdown-item" href="{{ url_for('expenses.export_csv', fmt='xlsx', user_id=filters.user_id or '', month=filters.month, year=filters.year, category=filters.category or '') }}">
+            <i class="bi bi-file-earmark-excel text-success"></i> Excel (.xlsx)
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="{{ url_for('expenses.export_csv', fmt='pdf', user_id=filters.user_id or '', month=filters.month, year=filters.year, category=filters.category or '') }}">
+            <i class="bi bi-file-earmark-pdf text-danger"></i> PDF (.pdf)
+          </a>
+        </li>
+      </ul>
+    </div>
     <a href="{{ url_for('expenses.import_bank') }}" class="btn btn-outline-primary btn-sm fw-semibold">
       <i class="bi bi-cloud-upload"></i> Importar Extrato
     </a>
