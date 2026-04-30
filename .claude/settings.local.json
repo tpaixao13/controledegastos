@@ -14,7 +14,9 @@
       "Bash(pip install *)",
       "Bash(python -c \"from PIL import Image; print\\('Pillow instalado'\\)\")",
       "Bash(venv/Scripts/pyinstaller finfam.spec --clean --noconfirm)",
-      "Bash(venv/Scripts/python run.py)"
+      "Bash(venv/Scripts/python run.py)",
+      "Bash(venv/Scripts/pip install *)",
+      "Bash(venv/Scripts/python -c ' *)"
     ]
   }
 }

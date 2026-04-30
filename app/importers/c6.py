@@ -1,15 +1,33 @@
+"""
+Parser do extrato de conta corrente C6 Bank (PDF).
+
+Formato do PDF:
+    Colunas: Data lançamento | Data contábil | Tipo | Descrição | Valor
+    Valores negativos (-R$ X,XX) = saídas (despesas)
+    Valores positivos (R$ X,XX)  = entradas (ignorados)
+"""
 import io
 import re
 from dataclasses import dataclass
 
 import pdfplumber
 
-# DD/MM at start of string (possibly with surrounding whitespace)
-_DATE_RE = re.compile(r'^\s*(\d{2})/(\d{2})\s+')
-# Brazilian amount at end: 1.234,56 or 234,56
-_AMOUNT_RE = re.compile(r'([\d]+(?:\.\d{3})*,\d{2})\s*$')
-# Year in statement header
-_YEAR_RE = re.compile(r'\b(20\d{2})\b')
+# Tipos que representam despesas e o método de pagamento correspondente
+_TIPO_PAYMENT = {
+    'Débito de Cartão': 'Cartão de Débito',
+    'Saída PIX':        'PIX',
+    'Pagamento':        'PIX',
+}
+
+# Padrões de descrição que devem ser ignorados (não são despesas reais)
+_SKIP_DESC = re.compile(
+    r'PGTO FAT CARTAO|PAGAMENTO DE FATURA|PAGAMENTO FATURA',
+    re.IGNORECASE,
+)
+
+_DATE_CELL = re.compile(r'^(\d{2})/(\d{2})$')
+_AMOUNT_NEG = re.compile(r'^-R\$\s*([\d.]+,\d{2})$')   # ex: -R$ 48,00
+_YEAR_RE    = re.compile(r'\b(20\d{2})\b')
 
 
 @dataclass
@@ -18,77 +36,112 @@ class C6Transaction:
     month: int
     year: int
     description: str
-    amount: float  # positive = expense
+    amount: float          # sempre positivo
+    payment_method: str    # 'PIX' | 'Cartão de Débito'
 
 
-def _to_float(s: str) -> float | None:
-    """'1.234,56' → 1234.56"""
-    try:
-        return float(s.replace('.', '').replace(',', '.'))
-    except ValueError:
-        return None
+def _to_float(s: str) -> float:
+    return float(s.replace('.', '').replace(',', '.'))
 
 
-def _from_text_line(line: str, year: int) -> C6Transaction | None:
-    dm = _DATE_RE.match(line)
-    if not dm:
-        return None
-    remainder = line[dm.end():]
-    am = _AMOUNT_RE.search(remainder)
-    if not am:
-        return None
-    amount = _to_float(am.group(1))
-    if not amount or amount <= 0:
-        return None
-    desc = remainder[: am.start()].strip()
-    if not desc:
-        return None
-    return C6Transaction(
-        day=int(dm.group(1)),
-        month=int(dm.group(2)),
-        year=year,
-        description=desc,
-        amount=amount,
-    )
-
-
-def _from_table_row(row: list, year: int) -> C6Transaction | None:
+def _from_table_row(row: list, year: int) -> 'C6Transaction | None':
+    """
+    Linha esperada: [data_lanc, data_contab, tipo, descricao, valor]
+    Aceita também linhas com colunas fundidas (pdfplumber às vezes une colunas).
+    """
     if not row:
         return None
     cells = [str(c or '').strip() for c in row]
-    # Find the date cell
-    date_cell = None
-    for c in cells:
-        if _DATE_RE.match(c + ' '):
-            date_cell = c
-            break
-    if date_cell is None:
+
+    # Primeira célula deve ser DD/MM
+    dm = _DATE_CELL.match(cells[0])
+    if not dm:
         return None
-    dm = re.match(r'(\d{2})/(\d{2})', date_cell)
-    # Last cell that looks like an amount
-    amount_str = None
-    desc_parts = []
-    for c in cells:
-        if c == date_cell:
-            continue
-        if _AMOUNT_RE.match(c):
-            amount_str = c
-        elif c:
-            desc_parts.append(c)
-    if not amount_str:
+
+    day, month = int(dm.group(1)), int(dm.group(2))
+
+    # Detecta tipo e valor conforme número de colunas extraídas
+    tipo = description = valor_str = ''
+
+    if len(cells) >= 5:
+        tipo        = cells[2]
+        description = cells[3]
+        valor_str   = cells[4]
+    elif len(cells) == 4:
+        tipo      = cells[2]
+        valor_str = cells[3]
+    elif len(cells) == 3:
+        # Tipo + descrição podem estar fundidos
+        tipo_desc = cells[1]
+        valor_str = cells[2]
+        for t in _TIPO_PAYMENT:
+            if tipo_desc.startswith(t):
+                tipo = t
+                description = tipo_desc[len(t):].strip()
+                break
+    else:
         return None
-    amount = _to_float(amount_str)
-    if not amount or amount <= 0:
+
+    if tipo not in _TIPO_PAYMENT:
         return None
-    desc = ' '.join(desc_parts).strip()
-    if not desc:
+
+    am = _AMOUNT_NEG.match(valor_str)
+    if not am:
         return None
+
+    amount = _to_float(am.group(1))
+    if amount <= 0:
+        return None
+
+    if _SKIP_DESC.search(description):
+        return None
+
     return C6Transaction(
-        day=int(dm.group(1)),
-        month=int(dm.group(2)),
-        year=year,
-        description=desc,
+        day=day, month=month, year=year,
+        description=description,
         amount=amount,
+        payment_method=_TIPO_PAYMENT[tipo],
+    )
+
+
+# Regex para linha de texto: DD/MM DD/MM <Tipo> <Desc> -R$ X,XX
+_LINE_RE = re.compile(
+    r'^(\d{2})/(\d{2})\s+\d{2}/\d{2}\s+(.+?)\s+-R\$\s*([\d.]+,\d{2})\s*$'
+)
+
+
+def _from_text_line(line: str, year: int) -> 'C6Transaction | None':
+    m = _LINE_RE.match(line.strip())
+    if not m:
+        return None
+
+    day   = int(m.group(1))
+    month = int(m.group(2))
+    middle       = m.group(3)   # "Tipo Descrição" combinados
+    amount_str   = m.group(4)
+
+    tipo = description = ''
+    for t in _TIPO_PAYMENT:
+        if middle.startswith(t):
+            tipo        = t
+            description = middle[len(t):].strip()
+            break
+
+    if not tipo:
+        return None
+
+    if _SKIP_DESC.search(description):
+        return None
+
+    amount = _to_float(amount_str)
+    if amount <= 0:
+        return None
+
+    return C6Transaction(
+        day=day, month=month, year=year,
+        description=description,
+        amount=amount,
+        payment_method=_TIPO_PAYMENT[tipo],
     )
 
 
@@ -100,28 +153,28 @@ def parse_c6_pdf(file_bytes: bytes, ref_year: int | None = None) -> list[C6Trans
     transactions: list[C6Transaction] = []
 
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        # Try to detect the statement year from the first page
+        # Detecta o ano no cabeçalho do PDF
         first_text = pdf.pages[0].extract_text() or '' if pdf.pages else ''
         ym = _YEAR_RE.search(first_text)
         if ym:
             ref_year = int(ym.group(1))
 
         for page in pdf.pages:
-            # Strategy 1: table rows
+            # Estratégia 1: extração de tabelas
             for table in (page.extract_tables() or []):
                 for row in table:
                     t = _from_table_row(row, ref_year)
                     if t:
                         transactions.append(t)
 
-            # Strategy 2: plain text lines
+            # Estratégia 2: texto linha a linha (fallback)
             text = page.extract_text() or ''
             for line in text.splitlines():
                 t = _from_text_line(line, ref_year)
                 if t:
                     transactions.append(t)
 
-    # Deduplicate (table + text may overlap)
+    # Remove duplicatas (tabela + texto podem se sobrepor)
     seen: set[tuple] = set()
     unique: list[C6Transaction] = []
     for t in transactions:
@@ -130,6 +183,5 @@ def parse_c6_pdf(file_bytes: bytes, ref_year: int | None = None) -> list[C6Trans
             seen.add(key)
             unique.append(t)
 
-    # Sort by month then day
     unique.sort(key=lambda t: (t.month, t.day))
     return unique
