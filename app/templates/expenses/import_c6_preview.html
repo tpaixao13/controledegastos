@@ -8,7 +8,8 @@
     <h2 class="fw-bold"><i class="bi bi-card-checklist text-primary"></i> Confirmar Importação</h2>
     <p class="text-muted mb-0">
       <strong>{{ transactions|length }}</strong> transações encontradas para
-      <strong>{{ selected_user.name }}</strong>.
+      <strong>{{ selected_user.name }}</strong>
+      &mdash; total: <strong class="text-danger">{{ total|brl }}</strong>.
       Desmarque as que não deseja importar e ajuste as categorias.
     </p>
   </div>
@@ -22,15 +23,16 @@
 <form method="POST" action="{{ url_for('expenses.import_c6_confirm') }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-  {# Hidden fields: indices and per-row fixed data #}
+  {# Campos fixos por linha (não editáveis pelo usuário) #}
   {% for t in transactions %}
   {% set i = loop.index0 %}
-  <input type="hidden" name="idx" value="{{ i }}">
-  <input type="hidden" name="user_id_{{ i }}" value="{{ user_id }}">
-  <input type="hidden" name="day_{{ i }}" value="{{ t.day }}">
-  <input type="hidden" name="month_{{ i }}" value="{{ t.month }}">
-  <input type="hidden" name="year_{{ i }}" value="{{ t.year }}">
-  <input type="hidden" name="amount_{{ i }}" value="{{ '%.2f'|format(t.amount) }}">
+  <input type="hidden" name="idx"                   value="{{ i }}">
+  <input type="hidden" name="user_id_{{ i }}"       value="{{ user_id }}">
+  <input type="hidden" name="day_{{ i }}"           value="{{ t.day }}">
+  <input type="hidden" name="month_{{ i }}"         value="{{ t.month }}">
+  <input type="hidden" name="year_{{ i }}"          value="{{ t.year }}">
+  <input type="hidden" name="amount_{{ i }}"        value="{{ '%.2f'|format(t.amount) }}">
+  <input type="hidden" name="payment_method_{{ i }}" value="{{ t.payment_method }}">
   {% endfor %}
 
   <div class="card mb-3">
@@ -49,8 +51,9 @@
               <th style="width:40px"></th>
               <th style="width:110px">Data</th>
               <th>Descrição</th>
-              <th style="width:180px">Categoria</th>
-              <th class="text-end" style="width:120px">Valor</th>
+              <th style="width:160px">Categoria</th>
+              <th style="width:110px">Método</th>
+              <th class="text-end" style="width:110px">Valor</th>
             </tr>
           </thead>
           <tbody>
@@ -76,12 +79,27 @@
                   {% endfor %}
                 </select>
               </td>
-              <td class="text-end fw-semibold">
+              <td>
+                {% if t.payment_method == 'PIX' %}
+                  <span class="badge badge-pix">PIX</span>
+                {% elif t.payment_method == 'Cartão de Débito' %}
+                  <span class="badge badge-debito">Débito</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ t.payment_method }}</span>
+                {% endif %}
+              </td>
+              <td class="text-end fw-semibold text-danger">
                 {{ t.amount | brl }}
               </td>
             </tr>
             {% endfor %}
           </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <td colspan="5" class="text-end fw-semibold">Total selecionado:</td>
+              <td class="text-end fw-bold text-danger" id="totalSelected">{{ total|brl }}</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
@@ -97,26 +115,39 @@
 
 <script>
 (function () {
-  const selectAll = document.getElementById('selectAll');
-  const checks = Array.from(document.querySelectorAll('.row-check'));
+  const selectAll  = document.getElementById('selectAll');
+  const checks     = Array.from(document.querySelectorAll('.row-check'));
   const countLabel = document.getElementById('countLabel');
-  const btnCount = document.getElementById('btnCount');
+  const btnCount   = document.getElementById('btnCount');
+  const totalEl    = document.getElementById('totalSelected');
 
-  function updateCount() {
-    const n = checks.filter(c => c.checked).length;
+  // Amounts indexed by row (same order as checks)
+  const amounts = [
+    {% for t in transactions %}{{ t.amount }}{% if not loop.last %},{% endif %}{% endfor %}
+  ];
+
+  function fmt(n) {
+    return 'R$ ' + n.toFixed(2)
+      .replace('.', ',')
+      .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function update() {
+    let n = 0, total = 0;
+    checks.forEach((c, i) => {
+      if (c.checked) { n++; total += amounts[i]; }
+    });
     countLabel.textContent = n + ' selecionada' + (n !== 1 ? 's' : '');
-    btnCount.textContent = n;
+    btnCount.textContent   = n;
+    totalEl.textContent    = fmt(total);
+    selectAll.checked      = checks.every(c => c.checked);
   }
 
   selectAll.addEventListener('change', () => {
     checks.forEach(c => { c.checked = selectAll.checked; });
-    updateCount();
+    update();
   });
-
-  checks.forEach(c => c.addEventListener('change', () => {
-    selectAll.checked = checks.every(c => c.checked);
-    updateCount();
-  }));
+  checks.forEach(c => c.addEventListener('change', update));
 })();
 </script>
 {% endblock %}
