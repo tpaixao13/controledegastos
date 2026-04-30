@@ -166,31 +166,3 @@ def _run_migrations():
             pass
 
 
-def _seed_users():
-    from app.models import User, Tenant
-
-    default_tenant = Tenant.query.filter_by(code='default').first()
-    if not default_tenant:
-        default_tenant = Tenant(name='Controle de Gastos', code='default')
-        db.session.add(default_tenant)
-        db.session.flush()
-
-    for name in ('Tiago', 'Greyce'):
-        user = User.query.filter_by(name=name, tenant_id=default_tenant.id).first()
-        if not user:
-            user = User(name=name, tenant_id=default_tenant.id)
-            db.session.add(user)
-            db.session.flush()
-        if not user.tenant_id:
-            user.tenant_id = default_tenant.id
-        if not user.password_hash:
-            pwd = secrets.token_urlsafe(12)
-            user.set_password(pwd)
-            border = '=' * 58
-            print(f'\n{border}')
-            print(f'  SENHA INICIAL GERADA — {name}')
-            print(f'  Senha: {pwd}')
-            print(f'  Acesse /profile e altere imediatamente!')
-            print(f'{border}\n')
-            logging.warning("Senha aleatória gerada para '%s'. Altere em /profile.", name)
-    db.session.commit()
