@@ -152,7 +152,8 @@ def parse_c6_pdf(file_bytes: bytes, ref_year: int | None = None, password: str |
 
     transactions: list[C6Transaction] = []
 
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+    open_kwargs = {'password': password} if password else {}
+    with pdfplumber.open(io.BytesIO(file_bytes), **open_kwargs) as pdf:
         # Detecta o ano no cabeçalho do PDF
         first_text = pdf.pages[0].extract_text() or '' if pdf.pages else ''
         ym = _YEAR_RE.search(first_text)
