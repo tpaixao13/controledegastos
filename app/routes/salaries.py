@@ -67,7 +67,8 @@ def manage():
 
     return render_template('salaries/manage.html',
                            form=form, groups=groups,
-                           month_totals=month_totals, users=users)
+                           month_totals=month_totals, users=users,
+                           user_colors=user_color_map(users))
 
 
 @salaries_bp.route('/delete/<int:salary_id>', methods=['POST'])
