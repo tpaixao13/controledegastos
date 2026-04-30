@@ -177,7 +177,6 @@ def pending_vs_paid():
 
 @api_bp.route('/cdi-rate')
 def cdi_rate():
-    from app.utils import rate_suggestions
     selic = get_selic_rate()
     return jsonify({'selic': selic, 'suggestions': rate_suggestions(selic)})
 
