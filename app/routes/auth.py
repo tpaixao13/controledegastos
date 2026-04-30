@@ -50,8 +50,7 @@ def register():
             return render_template('auth/register.html', form=form)
 
         code = secrets.token_hex(8)
-        first_name = form.user_name.data.strip().split()[0]
-        tenant = Tenant(name=f'Família {first_name}', code=code)
+        tenant = Tenant(name=form.family_name.data.strip(), code=code)
         db.session.add(tenant)
         db.session.flush()
 
