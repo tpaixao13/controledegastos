@@ -120,7 +120,7 @@
           {% for e in expenses %}
           <tr>
             <td>
-              <span class="badge {{ 'bg-primary' if e.user.name == 'Tiago' else 'bg-danger' }}">
+              <span class="badge {{ user_colors[e.user_id].badge_class }}">
                 {{ e.user.name }}
               </span>
             </td>
