@@ -19,25 +19,33 @@ def index():
         year = now.year
 
     users = tenant_users().order_by(User.name).all()
-    uids = tenant_user_ids()
+    uids = [u.id for u in users]
+
+    # Duas queries GROUP BY em vez de 2×N queries individuais
+    expense_map = dict(
+        db.session.query(Expense.user_id, func.sum(Expense.amount))
+        .filter(Expense.user_id.in_(uids), Expense.year == year, Expense.month == month)
+        .group_by(Expense.user_id).all()
+    )
+    salary_map = dict(
+        db.session.query(Salary.user_id, func.sum(Salary.amount))
+        .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month)
+        .group_by(Salary.user_id).all()
+    )
 
     user_summaries = []
-    total_salario = 0
-    total_gasto = 0
+    total_salario = total_gasto = 0.0
 
     for u in users:
-        salario = (db.session.query(func.sum(Salary.amount))
-                   .filter_by(user_id=u.id, year=year, month=month).scalar() or 0)
-        gasto = (db.session.query(func.sum(Expense.amount))
-                 .filter_by(user_id=u.id, year=year, month=month).scalar() or 0)
-        saldo = float(salario) - float(gasto)
-        total_salario += float(salario)
-        total_gasto += float(gasto)
+        gasto   = float(expense_map.get(u.id) or 0)
+        salario = float(salary_map.get(u.id) or 0)
+        total_gasto   += gasto
+        total_salario += salario
         user_summaries.append({
             'user': u,
-            'salario': float(salario),
-            'gasto': float(gasto),
-            'saldo': saldo,
+            'salario': salario,
+            'gasto': gasto,
+            'saldo': salario - gasto,
         })
 
     saldo_combinado = total_salario - total_gasto
