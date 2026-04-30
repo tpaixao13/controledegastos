@@ -40,8 +40,15 @@ def _parse_date(s: str) -> tuple[int, int, int] | None:
 
 
 def _to_float(s: str) -> float | None:
+    s = s.strip()
+    if not s:
+        return None
     try:
-        return float(s.strip().replace('.', '').replace(',', '.'))
+        if ',' in s:
+            # Formato brasileiro: 1.234,56
+            return float(s.replace('.', '').replace(',', '.'))
+        # Formato inglês: 150.0 ou 1234.56
+        return float(s)
     except ValueError:
         return None
 
