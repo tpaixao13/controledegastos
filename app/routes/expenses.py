@@ -310,6 +310,7 @@ def import_c6_confirm():
             amount_raw = request.form[f'amount_{idx}'].replace(',', '.')
             amount = float(amount_raw)
             category = request.form.get(f'category_{idx}', 'Outros')
+            payment_method = request.form.get(f'payment_method_{idx}', 'PIX')
         except (KeyError, ValueError):
             continue
 
@@ -321,7 +322,7 @@ def import_c6_confirm():
             description=description,
             amount=amount,
             category=category,
-            payment_method='Cartão de Crédito',
+            payment_method=payment_method,
             bank='C6',
             year=year,
             month=month,
