@@ -268,10 +268,15 @@ def import_c6_parse():
         return redirect(url_for('expenses.import_c6'))
 
     pdf_bytes = pdf_file.read()
+    pdf_password = request.form.get('pdf_password', '').strip() or None
     try:
-        transactions = parse_c6_pdf(pdf_bytes)
-    except Exception:
-        flash('Erro ao processar o PDF. Verifique se é um extrato C6 válido.', 'danger')
+        transactions = parse_c6_pdf(pdf_bytes, password=pdf_password)
+    except Exception as e:
+        msg = str(e).lower()
+        if 'password' in msg or 'encrypt' in msg or 'decrypt' in msg:
+            flash('O PDF está protegido por senha. Informe a senha correta.', 'danger')
+        else:
+            flash('Erro ao processar o PDF. Verifique se é um extrato C6 válido.', 'danger')
         return redirect(url_for('expenses.import_c6'))
 
     if not transactions:
