@@ -98,8 +98,6 @@ def change_password():
 
 @auth_bp.route('/profile/avatar', methods=['POST'])
 def upload_avatar():
-    if not session.get('logged_in'):
-        return redirect(url_for('auth.login'))
     user = User.query.get(session['user_id'])
     avatar_form = AvatarForm(prefix='av')
     if avatar_form.validate_on_submit():
