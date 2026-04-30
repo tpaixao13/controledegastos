@@ -128,13 +128,8 @@ def payment_methods():
     datasets = []
 
     for method in methods:
-        values = []
-        for m, y in months:
-            total = (db.session.query(func.sum(Expense.amount))
-                     .filter(Expense.user_id.in_(uids), Expense.year == y,
-                             Expense.month == m, Expense.payment_method == method)
-                     .scalar() or 0)
-            values.append(float(total))
+        values = [sum_expenses_month(uids, y, m, Expense.payment_method == method)
+                  for m, y in months]
         datasets.append({
             'label': method,
             'data': values,
