@@ -47,6 +47,10 @@ def _fetch_json(url: str, cache_key: str, ttl: int = 3600):
         })
         with urllib.request.urlopen(req, timeout=8, context=_ssl_ctx) as resp:
             data = json.loads(resp.read().decode())
+        # purge entradas expiradas há mais de 2h para evitar crescimento ilimitado
+        stale = [k for k, v in _cache.items() if now - v['ts'] > 7200]
+        for k in stale:
+            del _cache[k]
         _cache[cache_key] = {'data': data, 'ts': now}
         return data
     except Exception as e:
