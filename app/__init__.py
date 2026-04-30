@@ -68,7 +68,6 @@ def create_app(config_name='default'):
         from app import models
         db.create_all()
         _run_migrations()
-        _seed_users()
 
         from app.routes.auth import auth_bp
         from app.routes.main import main_bp
