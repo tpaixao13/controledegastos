@@ -7,22 +7,47 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    body { background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%); min-height: 100vh; }
-    .login-card { border: none; border-radius: 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
-    .login-logo { font-size: 2.5rem; color: #0d6efd; }
+    body {
+      background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+      min-height: 100vh;
+    }
+    .login-card {
+      border: none;
+      border-radius: 1.25rem;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+    }
+    .logo-wrap {
+      background: linear-gradient(135deg, #0d6efd, #6610f2);
+      border-radius: 50%;
+      width: 96px;
+      height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      box-shadow: 0 4px 20px rgba(13,110,253,0.4);
+    }
+    .logo-wrap img { filter: brightness(0) invert(1); }
+    .app-title { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; }
+    .app-subtitle { color: #6c757d; font-size: 0.9rem; }
   </style>
 </head>
 <body class="d-flex align-items-center justify-content-center py-5">
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+      <div class="col-12 col-sm-9 col-md-6 col-lg-5 col-xl-4">
+
+        <!-- Logo above card -->
+        <div class="text-center mb-4">
+          <div class="logo-wrap">
+            <img src="/static/images/logo.svg" alt="FinFam" width="52" height="52">
+          </div>
+          <h1 class="app-title text-white">FinFam</h1>
+          <p class="app-subtitle text-white-50">Controle financeiro familiar</p>
+        </div>
+
         <div class="card login-card">
           <div class="card-body p-4 p-sm-5">
-            <div class="text-center mb-4">
-              <img src="/static/images/logo.svg" alt="FinFam" width="64" height="64">
-              <h4 class="fw-bold mt-2 mb-0">FinFam</h4>
-              <p class="text-muted small">Controle financeiro familiar</p>
-            </div>
 
             {% with messages = get_flashed_messages(with_categories=true) %}
               {% for cat, msg in messages %}
@@ -37,53 +62,42 @@
               {{ form.hidden_tag() }}
 
               <div class="mb-3">
-                <label class="form-label fw-semibold">Código do Grupo</label>
-                <input type="text" name="tenant_code" id="tenant_code"
-                       class="form-control {{ 'is-invalid' if form.tenant_code.errors else '' }}"
-                       value="{{ prefill_code or request.form.get('tenant_code', '') }}"
-                       placeholder="Ex: familia-silva" autocomplete="off">
-                <div id="tenantStatus" class="form-text"></div>
-                {% for e in form.tenant_code.errors %}
-                <div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label fw-semibold">Usuário</label>
-                <select name="user_id" id="user_id"
-                        class="form-select {{ 'is-invalid' if form.user_id.errors else '' }}">
-                  {% if form.user_id.choices and form.user_id.choices[0][0] != 0 %}
-                    {% for val, label in form.user_id.choices %}
-                    <option value="{{ val }}">{{ label }}</option>
-                    {% endfor %}
-                  {% else %}
-                  <option value="">— informe o código do grupo —</option>
-                  {% endif %}
-                </select>
-                {% for e in form.user_id.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                <label class="form-label fw-semibold">E-mail</label>
+                <input type="email" name="email"
+                       class="form-control {{ 'is-invalid' if form.email.errors else '' }}"
+                       value="{{ request.form.get('email', '') }}"
+                       placeholder="seu@email.com" autocomplete="email" autofocus>
+                {% for e in form.email.errors %}
+                <div class="invalid-feedback">{{ e }}</div>{% endfor %}
               </div>
 
               <div class="mb-4">
                 <label class="form-label fw-semibold">Senha</label>
                 <div class="input-group">
-                  <input name="password" class="form-control {{ 'is-invalid' if form.password.errors else '' }}"
-                         id="password" type="password" placeholder="••••••••">
+                  <input name="password" id="password" type="password"
+                         class="form-control {{ 'is-invalid' if form.password.errors else '' }}"
+                         placeholder="••••••••" autocomplete="current-password">
                   <button class="btn btn-outline-secondary" type="button" id="togglePwd">
                     <i class="bi bi-eye" id="eyeIcon"></i>
                   </button>
-                  {% for e in form.password.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                  {% for e in form.password.errors %}
+                  <div class="invalid-feedback">{{ e }}</div>{% endfor %}
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary w-100 fw-semibold py-2">Entrar</button>
+              <button type="submit" class="btn btn-primary w-100 fw-semibold py-2 fs-5">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Entrar
+              </button>
             </form>
 
             <hr class="my-3">
             <p class="text-center text-muted small mb-0">
               Novo por aqui?
-              <a href="{{ url_for('auth.register') }}" class="fw-semibold">Criar um grupo</a>
+              <a href="{{ url_for('auth.register') }}" class="fw-semibold">Criar conta</a>
             </p>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -101,45 +115,6 @@
         icon.className = 'bi bi-eye';
       }
     });
-
-    async function loadUsers(code) {
-      const sel = document.getElementById('user_id');
-      const status = document.getElementById('tenantStatus');
-      if (!code) {
-        sel.innerHTML = '<option value="">— informe o código do grupo —</option>';
-        status.textContent = '';
-        return;
-      }
-      try {
-        const resp = await fetch(`/auth/tenant-users?code=${encodeURIComponent(code)}`);
-        const users = await resp.json();
-        if (users.length === 0) {
-          sel.innerHTML = '<option value="">Grupo não encontrado</option>';
-          status.textContent = 'Código inválido.';
-          status.className = 'form-text text-danger';
-        } else {
-          sel.innerHTML = users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
-          status.textContent = `${users.length} membro(s) encontrado(s).`;
-          status.className = 'form-text text-success';
-        }
-      } catch (e) {
-        status.textContent = 'Erro ao buscar membros.';
-        status.className = 'form-text text-danger';
-      }
-    }
-
-    document.getElementById('tenant_code').addEventListener('blur', function () {
-      loadUsers(this.value.trim());
-    });
-
-    // Se já há um código pré-preenchido (erro de validação) e o dropdown está vazio, recarrega
-    (function () {
-      const code = document.getElementById('tenant_code').value.trim();
-      const sel = document.getElementById('user_id');
-      if (code && sel.options.length === 1 && !sel.options[0].value) {
-        loadUsers(code);
-      }
-    })();
   </script>
 </body>
 </html>
