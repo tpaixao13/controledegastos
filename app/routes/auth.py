@@ -1,5 +1,6 @@
 import os
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app, jsonify
+import secrets
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from werkzeug.utils import secure_filename
 from app import db
 from app.models import User, Tenant
@@ -16,66 +17,50 @@ def _avatar_url(user):
     return None
 
 
-@auth_bp.route('/auth/tenant-users')
-def tenant_users_api():
-    code = request.args.get('code', '').strip()
-    tenant = Tenant.query.filter_by(code=code).first()
-    if not tenant:
-        return jsonify([])
-    users = User.query.filter_by(tenant_id=tenant.id).order_by(User.name).all()
-    return jsonify([{'id': u.id, 'name': u.name} for u in users])
-
-
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if session.get('logged_in'):
         return redirect(url_for('main.index'))
 
     form = LoginForm()
-
-    tenant_code = request.form.get('tenant_code', '').strip() or request.args.get('tc', '').strip()
-    tenant = Tenant.query.filter_by(code=tenant_code).first() if tenant_code else None
-    available_users = User.query.filter_by(tenant_id=tenant.id).order_by(User.name).all() if tenant else []
-    form.user_id.choices = [(u.id, u.name) for u in available_users] or [(0, '')]
-
     if form.validate_on_submit():
-        t = Tenant.query.filter_by(code=form.tenant_code.data.strip()).first()
-        if not t:
-            flash('Código do grupo inválido.', 'danger')
-        else:
-            user = User.query.filter_by(id=form.user_id.data, tenant_id=t.id).first()
-            if user and user.check_password(form.password.data):
-                session['logged_in'] = True
-                session['user_name'] = user.name
-                session['user_id'] = user.id
-                session['user_avatar'] = _avatar_url(user)
-                session['tenant_id'] = t.id
-                session['tenant_name'] = t.name
-                return redirect(url_for('main.index'))
-            flash('Usuário ou senha incorretos.', 'danger')
+        email = form.email.data.strip().lower()
+        user = User.query.filter_by(email=email).first()
+        if user and user.check_password(form.password.data):
+            tenant = Tenant.query.get(user.tenant_id) if user.tenant_id else None
+            session['logged_in'] = True
+            session['user_name'] = user.name
+            session['user_id'] = user.id
+            session['user_avatar'] = _avatar_url(user)
+            session['tenant_id'] = user.tenant_id
+            session['tenant_name'] = tenant.name if tenant else ''
+            return redirect(url_for('main.index'))
+        flash('E-mail ou senha incorretos.', 'danger')
 
-    return render_template('auth/login.html', form=form, prefill_code=tenant_code)
+    return render_template('auth/login.html', form=form)
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterTenantForm()
     if form.validate_on_submit():
-        code = form.tenant_code.data.strip().lower()
-        if Tenant.query.filter_by(code=code).first():
-            flash('Este código já está em uso. Escolha outro.', 'danger')
+        email = form.email.data.strip().lower()
+        if User.query.filter_by(email=email).first():
+            flash('E-mail já cadastrado. Faça login ou use outro e-mail.', 'danger')
             return render_template('auth/register.html', form=form)
 
-        tenant = Tenant(name=form.tenant_name.data.strip(), code=code)
+        code = secrets.token_hex(8)
+        first_name = form.user_name.data.strip().split()[0]
+        tenant = Tenant(name=f'Família {first_name}', code=code)
         db.session.add(tenant)
         db.session.flush()
 
-        user = User(name=form.user_name.data.strip(), tenant_id=tenant.id)
+        user = User(name=form.user_name.data.strip(), email=email, tenant_id=tenant.id)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
 
-        flash(f'Grupo "{tenant.name}" criado! Faça login com o código "{code}".', 'success')
+        flash('Conta criada com sucesso! Faça login.', 'success')
         return redirect(url_for('auth.login'))
 
     return render_template('auth/register.html', form=form)
@@ -158,10 +143,11 @@ def members():
     form = AddMemberForm()
 
     if form.validate_on_submit():
-        if User.query.filter_by(tenant_id=tenant_id, name=form.user_name.data.strip()).first():
-            flash('Já existe um membro com esse nome.', 'danger')
+        email = form.email.data.strip().lower()
+        if User.query.filter_by(email=email).first():
+            flash('E-mail já cadastrado.', 'danger')
         else:
-            user = User(name=form.user_name.data.strip(), tenant_id=tenant_id)
+            user = User(name=form.user_name.data.strip(), email=email, tenant_id=tenant_id)
             user.set_password(form.password.data)
             db.session.add(user)
             db.session.commit()
