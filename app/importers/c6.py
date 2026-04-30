@@ -30,14 +30,9 @@ _AMOUNT_NEG = re.compile(r'^-R\$\s*([\d.]+,\d{2})$')   # ex: -R$ 48,00
 _YEAR_RE    = re.compile(r'\b(20\d{2})\b')
 
 
-@dataclass
-class C6Transaction:
-    day: int
-    month: int
-    year: int
-    description: str
-    amount: float          # sempre positivo
-    payment_method: str    # 'PIX' | 'Cartão de Débito'
+
+# Alias para compatibilidade com código existente
+C6Transaction = BankTransaction
 
 
 def _to_float(s: str) -> float:
