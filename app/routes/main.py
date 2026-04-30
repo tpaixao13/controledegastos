@@ -70,6 +70,7 @@ def index():
     return render_template('index.html',
                            today=now.date(),
                            user_summaries=user_summaries,
+                           user_colors=user_color_map(users),
                            total_salario=total_salario,
                            total_gasto=total_gasto,
                            saldo_combinado=saldo_combinado,
