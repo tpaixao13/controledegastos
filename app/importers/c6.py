@@ -145,7 +145,7 @@ def _from_text_line(line: str, year: int) -> 'C6Transaction | None':
     )
 
 
-def parse_c6_pdf(file_bytes: bytes, ref_year: int | None = None) -> list[C6Transaction]:
+def parse_c6_pdf(file_bytes: bytes, ref_year: int | None = None, password: str | None = None) -> list[C6Transaction]:
     from datetime import datetime
     if ref_year is None:
         ref_year = datetime.now().year
