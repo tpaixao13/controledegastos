@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}Confirmar Importação — FinFam{% endblock %}
+
+{% block content %}
+<div class="row mb-3 align-items-center">
+  <div class="col">
+    <h2 class="fw-bold"><i class="bi bi-card-checklist text-primary"></i> Confirmar Importação</h2>
+    <p class="text-muted mb-0">
+      <strong>{{ transactions|length }}</strong> transações encontradas para
+      <strong>{{ selected_user.name }}</strong>
+      {% if bank %} · <span class="badge bg-secondary">{{ bank }}</span>{% endif %}
+      &mdash; total: <strong class="text-danger">{{ total|brl }}</strong>.
+    </p>
+  </div>
+  <div class="col-auto">
+    <a href="{{ url_for('expenses.import_bank') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Novo upload
+    </a>
+  </div>
+</div>
+
+<form method="POST" action="{{ url_for('expenses.import_bank_confirm') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  {% for t in transactions %}
+  {% set i = loop.index0 %}
+  <input type="hidden" name="idx"                    value="{{ i }}">
+  <input type="hidden" name="user_id_{{ i }}"        value="{{ user_id }}">
+  <input type="hidden" name="day_{{ i }}"            value="{{ t.day }}">
+  <input type="hidden" name="month_{{ i }}"          value="{{ t.month }}">
+  <input type="hidden" name="year_{{ i }}"           value="{{ t.year }}">
+  <input type="hidden" name="amount_{{ i }}"         value="{{ '%.2f'|format(t.amount) }}">
+  <input type="hidden" name="payment_method_{{ i }}" value="{{ t.payment_method }}">
+  <input type="hidden" name="bank_{{ i }}"           value="{{ bank }}">
+  {% endfor %}
+
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center py-2">
+      <div class="form-check mb-0">
+        <input class="form-check-input" type="checkbox" id="selectAll" checked>
+        <label class="form-check-label fw-semibold" for="selectAll">Selecionar todas</label>
+      </div>
+      <span class="text-muted small" id="countLabel">{{ transactions|length }} selecionadas</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th style="width:40px"></th>
+              <th style="width:110px">Data</th>
+              <th>Descrição</th>
+              <th style="width:160px">Categoria</th>
+              <th style="width:110px">Método</th>
+              <th class="text-end" style="width:110px">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in transactions %}
+            {% set i = loop.index0 %}
+            <tr>
+              <td>
+                <input class="form-check-input row-check" type="checkbox"
+                       name="include_{{ i }}" value="1" checked>
+              </td>
+              <td class="text-muted small">
+                {{ '%02d'|format(t.day) }}/{{ '%02d'|format(t.month) }}/{{ t.year }}
+              </td>
+              <td>
+                <input type="text" name="desc_{{ i }}" value="{{ t.description }}"
+                       class="form-control form-control-sm border-0 bg-transparent px-1" required>
+              </td>
+              <td>
+                <select name="category_{{ i }}" class="form-select form-select-sm">
+                  {% for cat in categories %}
+                  <option value="{{ cat }}" {{ 'selected' if cat == 'Outros' }}>{{ cat }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td>
+                {% if t.payment_method == 'PIX' %}
+                  <span class="badge badge-pix">PIX</span>
+                {% elif t.payment_method == 'Cartão de Débito' %}
+                  <span class="badge badge-debito">Débito</span>
+                {% elif t.payment_method == 'Cartão de Crédito' %}
+                  <span class="badge badge-credito">Crédito</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ t.payment_method }}</span>
+                {% endif %}
+              </td>
+              <td class="text-end fw-semibold text-danger">
+                {{ t.amount | brl }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <td colspan="5" class="text-end fw-semibold">Total selecionado:</td>
+              <td class="text-end fw-bold text-danger" id="totalSelected">{{ total|brl }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-end gap-2 mb-4">
+    <a href="{{ url_for('expenses.import_bank') }}" class="btn btn-outline-secondary">Cancelar</a>
+    <button type="submit" class="btn btn-success fw-semibold">
+      <i class="bi bi-check-lg"></i> Importar <span id="btnCount">{{ transactions|length }}</span> despesa(s)
+    </button>
+  </div>
+</form>
+
+<script>
+(function () {
+  const selectAll  = document.getElementById('selectAll');
+  const checks     = Array.from(document.querySelectorAll('.row-check'));
+  const countLabel = document.getElementById('countLabel');
+  const btnCount   = document.getElementById('btnCount');
+  const totalEl    = document.getElementById('totalSelected');
+  const amounts    = [{% for t in transactions %}{{ t.amount }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+  function fmt(n) {
+    return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+  function update() {
+    let n = 0, total = 0;
+    checks.forEach((c, i) => { if (c.checked) { n++; total += amounts[i]; } });
+    countLabel.textContent = n + ' selecionada' + (n !== 1 ? 's' : '');
+    btnCount.textContent   = n;
+    totalEl.textContent    = fmt(total);
+    selectAll.checked      = checks.every(c => c.checked);
+  }
+  selectAll.addEventListener('change', () => { checks.forEach(c => { c.checked = selectAll.checked; }); update(); });
+  checks.forEach(c => c.addEventListener('change', update));
+})();
+</script>
+{% endblock %}
