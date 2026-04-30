@@ -25,7 +25,15 @@
             <!-- Categoria -->
             <div class="col-md-6">
               {{ form.category.label(class='form-label fw-semibold') }}
-              {{ form.category(class='form-select' + (' is-invalid' if form.category.errors else '')) }}
+              {{ form.category(class='form-control' + (' is-invalid' if form.category.errors else ''),
+                               list='category-opts', autocomplete='off',
+                               placeholder='Ex: Alimentação, Lazer...') }}
+              <datalist id="category-opts">
+                {% for cat in all_categories %}
+                <option value="{{ cat }}">
+                {% endfor %}
+              </datalist>
+              {% for e in form.category.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
             </div>
 
             <!-- Descrição -->
