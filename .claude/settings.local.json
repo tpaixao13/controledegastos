@@ -12,7 +12,9 @@
       "Bash(python -c \"import cairosvg; print\\('cairosvg ok'\\)\")",
       "Bash(python -c \"import PIL; print\\('pillow ok'\\)\")",
       "Bash(pip install *)",
-      "Bash(python -c \"from PIL import Image; print\\('Pillow instalado'\\)\")"
+      "Bash(python -c \"from PIL import Image; print\\('Pillow instalado'\\)\")",
+      "Bash(venv/Scripts/pyinstaller finfam.spec --clean --noconfirm)",
+      "Bash(venv/Scripts/python run.py)"
     ]
   }
 }
