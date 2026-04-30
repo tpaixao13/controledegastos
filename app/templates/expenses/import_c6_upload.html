@@ -34,9 +34,15 @@
           </div>
 
           <div class="mb-4">
-            <label class="form-label fw-semibold">Arquivo PDF da fatura C6</label>
+            <label class="form-label fw-semibold">Arquivo PDF do extrato C6</label>
             <input type="file" name="pdf_file" accept=".pdf" class="form-control" required>
             <div class="form-text">Apenas arquivos .pdf são aceitos.</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Senha do PDF <span class="text-muted fw-normal">(se o arquivo tiver senha)</span></label>
+            <input type="password" name="pdf_password" class="form-control"
+                   placeholder="Deixe em branco se não tiver senha" autocomplete="off">
           </div>
 
           <div class="d-grid">
