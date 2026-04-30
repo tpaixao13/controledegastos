@@ -28,8 +28,6 @@ PAYMENT_COLORS = {
     'Dinheiro': '#198754',
 }
 
-MONTH_NAMES = MONTH_NAMES_SHORT
-
 
 def _get_month_year():
     now = datetime.now()
