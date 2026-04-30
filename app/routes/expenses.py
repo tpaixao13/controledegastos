@@ -244,59 +244,86 @@ def delete_recurring(group_id):
     return redirect(url_for('expenses.list'))
 
 
+@expenses_bp.route('/import', methods=['GET'])
+def import_bank():
+    users = tenant_users().order_by(User.name).all()
+    return render_template('expenses/import_upload.html', users=users)
+
+
+# Redireciona rota antiga para nova
 @expenses_bp.route('/import-c6', methods=['GET'])
 def import_c6():
-    users = tenant_users().order_by(User.name).all()
-    return render_template('expenses/import_c6_upload.html', users=users)
+    return redirect(url_for('expenses.import_bank'))
 
 
-@expenses_bp.route('/import-c6/parse', methods=['POST'])
-def import_c6_parse():
-    from app.importers.c6 import parse_c6_pdf
-
+@expenses_bp.route('/import/parse', methods=['POST'])
+def import_bank_parse():
     users = tenant_users().order_by(User.name).all()
     uids = [u.id for u in users]
 
     user_id = request.form.get('user_id', type=int)
     if not user_id or user_id not in uids:
         flash('Selecione um usuário válido.', 'danger')
-        return redirect(url_for('expenses.import_c6'))
+        return redirect(url_for('expenses.import_bank'))
 
-    pdf_file = request.files.get('pdf_file')
-    if not pdf_file or not pdf_file.filename.lower().endswith('.pdf'):
-        flash('Selecione um arquivo PDF válido.', 'danger')
-        return redirect(url_for('expenses.import_c6'))
+    fmt    = request.form.get('format', '')
+    bank   = request.form.get('bank', '').strip()
+    upload = request.files.get('file')
 
-    pdf_bytes = pdf_file.read()
-    pdf_password = request.form.get('pdf_password', '').strip() or None
+    if not upload or not upload.filename:
+        flash('Selecione um arquivo.', 'danger')
+        return redirect(url_for('expenses.import_bank'))
+
+    file_bytes = upload.read()
+    transactions = []
+
     try:
-        transactions = parse_c6_pdf(pdf_bytes, password=pdf_password)
+        if fmt == 'c6pdf':
+            from app.importers.c6 import parse_c6_pdf
+            pwd = request.form.get('pdf_password', '').strip() or None
+            transactions = parse_c6_pdf(file_bytes, password=pwd)
+            bank = 'C6'
+
+        elif fmt == 'ofx':
+            from app.importers.ofx import parse_ofx
+            transactions = parse_ofx(file_bytes)
+
+        elif fmt == 'nubank_csv':
+            from app.importers.nubank import parse_nubank_csv
+            transactions = parse_nubank_csv(file_bytes)
+            bank = 'Nubank'
+
+        else:
+            flash('Formato não reconhecido.', 'danger')
+            return redirect(url_for('expenses.import_bank'))
+
     except Exception as e:
         msg = str(e).lower()
         if 'password' in msg or 'encrypt' in msg or 'decrypt' in msg:
             flash('O PDF está protegido por senha. Informe a senha correta.', 'danger')
         else:
-            flash('Erro ao processar o PDF. Verifique se é um extrato C6 válido.', 'danger')
-        return redirect(url_for('expenses.import_c6'))
+            flash(f'Erro ao processar o arquivo: {e}', 'danger')
+        return redirect(url_for('expenses.import_bank'))
 
     if not transactions:
-        flash('Nenhuma transação encontrada no PDF. Verifique se é um extrato C6 válido.', 'warning')
-        return redirect(url_for('expenses.import_c6'))
+        flash('Nenhuma transação de saída encontrada. Verifique o arquivo e o formato selecionado.', 'warning')
+        return redirect(url_for('expenses.import_bank'))
 
     selected_user = next(u for u in users if u.id == user_id)
     return render_template(
-        'expenses/import_c6_preview.html',
+        'expenses/import_preview.html',
         transactions=transactions,
         users=users,
         selected_user=selected_user,
         user_id=user_id,
+        bank=bank,
         categories=CATEGORIES,
         total=sum(t.amount for t in transactions),
     )
 
 
-@expenses_bp.route('/import-c6/confirm', methods=['POST'])
-def import_c6_confirm():
+@expenses_bp.route('/import/confirm', methods=['POST'])
+def import_bank_confirm():
     uids = tenant_user_ids()
     indices = request.form.getlist('idx')
     count = 0
@@ -305,35 +332,34 @@ def import_c6_confirm():
         if not request.form.get(f'include_{idx}'):
             continue
         try:
-            user_id = int(request.form[f'user_id_{idx}'])
+            user_id        = int(request.form[f'user_id_{idx}'])
             if user_id not in uids:
                 continue
-            day = int(request.form[f'day_{idx}'])
-            month = int(request.form[f'month_{idx}'])
-            year = int(request.form[f'year_{idx}'])
-            description = request.form[f'desc_{idx}'].strip()
-            amount_raw = request.form[f'amount_{idx}'].replace(',', '.')
-            amount = float(amount_raw)
-            category = request.form.get(f'category_{idx}', 'Outros')
+            day            = int(request.form[f'day_{idx}'])
+            month          = int(request.form[f'month_{idx}'])
+            year           = int(request.form[f'year_{idx}'])
+            description    = request.form[f'desc_{idx}'].strip()
+            amount         = float(request.form[f'amount_{idx}'].replace(',', '.'))
+            category       = request.form.get(f'category_{idx}', 'Outros')
             payment_method = request.form.get(f'payment_method_{idx}', 'PIX')
+            bank           = request.form.get(f'bank_{idx}', '')
         except (KeyError, ValueError):
             continue
 
         if not description or amount <= 0:
             continue
 
-        expense = Expense(
+        db.session.add(Expense(
             user_id=user_id,
             description=description,
             amount=amount,
             category=category,
             payment_method=payment_method,
-            bank='C6',
+            bank=bank or None,
             year=year,
             month=month,
             day=day,
-        )
-        db.session.add(expense)
+        ))
         count += 1
 
     db.session.commit()
