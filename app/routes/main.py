@@ -56,10 +56,8 @@ def index():
                .all())
     total_pendente = sum(float(e.amount) for e in pending)
 
-    prev_month = month - 1 if month > 1 else 12
-    prev_year = year if month > 1 else year - 1
-    next_month = month + 1 if month < 12 else 1
-    next_year = year if month < 12 else year + 1
+    prev_month, prev_year = month_offset(month, year, -1)
+    next_month, next_year = month_offset(month, year,  1)
 
     return render_template('index.html',
                            today=now.date(),
