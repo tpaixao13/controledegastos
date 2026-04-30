@@ -79,7 +79,8 @@ def manage():
                            fixed_investments=fixed_investments,
                            crypto_investments=crypto_investments,
                            selic=selic,
-                           rate_suggestions=rate_suggestions(selic))
+                           rate_suggestions=rate_suggestions(selic),
+                           user_colors=user_color_map(users))
 
 
 @investments_bp.route('/delete/<int:inv_id>', methods=['POST'])
