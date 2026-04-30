@@ -225,7 +225,7 @@
               {% for inv in investments %}
               <tr>
                 <td>
-                  <span class="badge {{ 'bg-primary' if inv.user.name == 'Tiago' else 'bg-danger' }}">
+                  <span class="badge {{ user_colors[inv.user_id].badge_class }}">
                     {{ inv.user.name }}
                   </span>
                 </td>
