@@ -437,6 +437,8 @@ def import_bank_confirm():
             day            = int(request.form[f'day_{idx}'])
             month          = int(request.form[f'month_{idx}'])
             year           = int(request.form[f'year_{idx}'])
+            if not (1 <= month <= 12 and 2000 <= year <= 2100 and 1 <= day <= 31):
+                continue
             description    = request.form[f'desc_{idx}'].strip()
             amount         = float(request.form[f'amount_{idx}'].replace(',', '.'))
             category       = request.form.get(f'category_{idx}', 'Outros')
