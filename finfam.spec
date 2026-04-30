@@ -77,6 +77,7 @@ exe = EXE(
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,   # janela de terminal mostra logs de startup e erros
+    icon='finfam.ico',
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
