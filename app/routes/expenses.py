@@ -286,6 +286,7 @@ def import_c6_parse():
         selected_user=selected_user,
         user_id=user_id,
         categories=CATEGORIES,
+        total=sum(t.amount for t in transactions),
     )
 
 
