@@ -199,7 +199,7 @@ def crypto_price():
 def crypto_history():
     """Retorna histórico de preço de uma crypto em BRL (últimos 30 dias)."""
     coin = request.args.get('coin', 'bitcoin')
-    days = request.args.get('days', 30, type=int)
+    days = max(1, min(request.args.get('days', 30, type=int), 365))
     data = _fetch_json(
         f'https://api.coingecko.com/api/v3/coins/{coin}/market_chart?vs_currency=brl&days={days}',
         f'history_{coin}_{days}',
