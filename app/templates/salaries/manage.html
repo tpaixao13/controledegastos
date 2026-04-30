@@ -102,7 +102,7 @@
                 {% for s in items %}
                 <tr>
                   <td>
-                    <span class="badge {{ 'bg-primary' if s.user.name == 'Tiago' else 'bg-danger' }}">
+                    <span class="badge {{ user_colors[s.user_id].badge_class }}">
                       {{ s.user.name }}
                     </span>
                   </td>
