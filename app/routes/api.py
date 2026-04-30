@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 from app import db
 from app.models import Expense, Salary, User, Investment
-from app.utils import tenant_user_ids, tenant_users, MONTH_NAMES_SHORT, _fetch_json, get_selic_rate, rate_suggestions, month_offset
+from app.utils import tenant_user_ids, tenant_users, MONTH_NAMES_SHORT_SHORT, _fetch_json, get_selic_rate, rate_suggestions, month_offset
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/chart')
 
@@ -73,7 +73,7 @@ def monthly_vs_salary():
     n = max(1, min(n, 24))
     end_month, end_year = _get_month_year()
     months = _last_n_months(n, end_month, end_year)
-    labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in months]
+    labels = [f'{MONTH_NAMES_SHORT[m-1]}/{y}' for m, y in months]
     uids = tenant_user_ids()
     gastos = []
     salarios = []
@@ -136,7 +136,7 @@ def payment_methods():
     n = max(1, min(n, 24))
     end_month, end_year = _get_month_year()
     months = _last_n_months(n, end_month, end_year)
-    labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in months]
+    labels = [f'{MONTH_NAMES_SHORT[m-1]}/{y}' for m, y in months]
     methods = list(PAYMENT_COLORS.keys())
     uids = tenant_user_ids()
     datasets = []
@@ -232,7 +232,7 @@ def investments_chart():
 
     future_months = [month_offset(now.month, now.year, i) for i in range(12)]
 
-    labels = [f'{MONTH_NAMES[m-1]}/{y}' for m, y in future_months]
+    labels = [f'{MONTH_NAMES_SHORT[m-1]}/{y}' for m, y in future_months]
     total_invested = sum(float(inv.amount) for inv in all_investments)
     invested_line = [round(total_invested, 2)] * 12
 
