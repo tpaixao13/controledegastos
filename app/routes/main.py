@@ -57,9 +57,9 @@ def index():
               .limit(10).all())
 
     pending = (Expense.query
-               .filter(Expense.user_id.in_(uids))
-               .filter_by(year=year, month=month)
-               .filter(Expense.paid.isnot(True))
+               .filter(Expense.user_id.in_(uids),
+                       Expense.year == year, Expense.month == month,
+                       Expense.paid.isnot(True))
                .order_by(Expense.day.asc(), Expense.created_at.asc())
                .all())
     total_pendente = sum(float(e.amount) for e in pending)
