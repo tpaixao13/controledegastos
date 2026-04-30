@@ -51,8 +51,8 @@ def index():
     saldo_combinado = total_salario - total_gasto
 
     recent = (Expense.query
-              .filter(Expense.user_id.in_(uids))
-              .filter_by(year=year, month=month)
+              .filter(Expense.user_id.in_(uids),
+                      Expense.year == year, Expense.month == month)
               .order_by(Expense.day.desc(), Expense.created_at.desc())
               .limit(10).all())
 
