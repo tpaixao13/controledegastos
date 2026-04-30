@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
-{% block title %}Membros do Grupo — Controle de Gastos{% endblock %}
+{% block title %}Membros do Grupo — FinFam{% endblock %}
 
 {% block content %}
 <div class="row mb-3">
   <div class="col">
     <h2 class="fw-bold"><i class="bi bi-people-fill text-primary"></i> Membros do Grupo</h2>
-    <p class="text-muted mb-0">Grupo: <strong>{{ tenant.name }}</strong> — código: <code>{{ tenant.code }}</code></p>
+    <p class="text-muted mb-0">Grupo: <strong>{{ tenant.name }}</strong></p>
   </div>
 </div>
 
@@ -26,10 +26,17 @@
               {% else %}
               <i class="bi bi-person-circle fs-4 text-secondary"></i>
               {% endif %}
-              <span class="fw-semibold">{{ m.name }}</span>
-              {% if m.id == session.user_id %}
-              <span class="badge bg-primary">você</span>
-              {% endif %}
+              <div>
+                <div class="fw-semibold">
+                  {{ m.name }}
+                  {% if m.id == session.user_id %}
+                  <span class="badge bg-primary ms-1">você</span>
+                  {% endif %}
+                </div>
+                {% if m.email %}
+                <div class="text-muted small">{{ m.email }}</div>
+                {% endif %}
+              </div>
             </div>
             {% if m.id != session.user_id %}
             <form method="POST" action="{{ url_for('auth.delete_member', user_id=m.id) }}"
@@ -60,6 +67,13 @@
             {{ form.user_name(class='form-control' + (' is-invalid' if form.user_name.errors else ''),
                               placeholder='Nome do membro') }}
             {% for e in form.user_name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            {{ form.email.label(class='form-label fw-semibold') }}
+            {{ form.email(class='form-control' + (' is-invalid' if form.email.errors else ''),
+                          placeholder='email@exemplo.com', type='email') }}
+            {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
           </div>
 
           <div class="mb-3">
