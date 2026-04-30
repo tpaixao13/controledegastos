@@ -23,6 +23,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=True)
     name = db.Column(db.Text, nullable=False)
+    email = db.Column(db.Text, nullable=True, unique=True)
     password_hash = db.Column(db.Text, nullable=True)
     avatar = db.Column(db.Text, nullable=True)
 
