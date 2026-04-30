@@ -73,8 +73,6 @@ def logout():
 
 @auth_bp.route('/profile')
 def profile():
-    if not session.get('logged_in'):
-        return redirect(url_for('auth.login'))
     user = User.query.get(session['user_id'])
     return render_template('auth/profile.html', user=user,
                            pwd_form=ChangePasswordForm(prefix='pwd'),
@@ -83,8 +81,6 @@ def profile():
 
 @auth_bp.route('/profile/password', methods=['POST'])
 def change_password():
-    if not session.get('logged_in'):
-        return redirect(url_for('auth.login'))
     user = User.query.get(session['user_id'])
     pwd_form = ChangePasswordForm(prefix='pwd')
     if pwd_form.validate_on_submit():
