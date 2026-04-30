@@ -144,25 +144,24 @@ class InvestmentForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
-    tenant_code = StringField('Código do Grupo', validators=[DataRequired()])
-    user_id = SelectField('Usuário', coerce=int, validators=[DataRequired()])
+    email = StringField('E-mail', validators=[DataRequired(), Email()])
     password = PasswordField('Senha', validators=[DataRequired()])
     submit = SubmitField('Entrar')
 
 
 class RegisterTenantForm(FlaskForm):
-    tenant_name = StringField('Nome do Grupo', validators=[DataRequired(), Length(2, 50)])
-    tenant_code = StringField('Código do Grupo', validators=[DataRequired(), Length(3, 20)])
     user_name = StringField('Seu Nome', validators=[DataRequired(), Length(2, 30)])
+    email = StringField('E-mail', validators=[DataRequired(), Email()])
     password = PasswordField('Senha', validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField('Confirmar Senha', validators=[
         DataRequired(), EqualTo('password', message='As senhas não coincidem.')
     ])
-    submit = SubmitField('Criar Grupo')
+    submit = SubmitField('Criar Conta')
 
 
 class AddMemberForm(FlaskForm):
     user_name = StringField('Nome', validators=[DataRequired(), Length(2, 30)])
+    email = StringField('E-mail', validators=[DataRequired(), Email()])
     password = PasswordField('Senha', validators=[DataRequired(), Length(min=8)])
     confirm_password = PasswordField('Confirmar Senha', validators=[
         DataRequired(), EqualTo('password', message='As senhas não coincidem.')
