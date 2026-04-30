@@ -159,10 +159,15 @@ def cdi_rate():
     return jsonify({'selic': selic, 'suggestions': rate_suggestions(selic)})
 
 
+_COIN_RE = re.compile(r'^[a-z0-9-]+(,[a-z0-9-]+)*$')
+
+
 @api_bp.route('/crypto-price')
 def crypto_price():
     """Retorna cotação atual de uma ou mais criptomoedas em BRL via CoinGecko."""
     coins = request.args.get('coins', 'bitcoin')
+    if not _COIN_RE.match(coins):
+        return jsonify({'error': 'Moeda inválida'}), 400
     data = _fetch_json(
         f'https://api.coingecko.com/api/v3/simple/price?ids={coins}&vs_currencies=brl&include_24hr_change=true',
         f'crypto_{coins}',
