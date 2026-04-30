@@ -151,6 +151,7 @@ def _run_migrations():
                         id INTEGER PRIMARY KEY,
                         tenant_id INTEGER REFERENCES tenants(id),
                         name TEXT NOT NULL,
+                        email TEXT UNIQUE,
                         password_hash TEXT,
                         avatar TEXT
                     )
@@ -162,6 +163,20 @@ def _run_migrations():
                 conn.execute(text("DROP TABLE users"))
                 conn.execute(text("ALTER TABLE users_new RENAME TO users"))
                 conn.commit()
+        except Exception:
+            pass
+
+        # Seed known emails for existing users (safe — no-op if already set or user absent)
+        try:
+            conn.execute(text(
+                "UPDATE users SET email='tiagopedro376@hotmail.com' "
+                "WHERE name='Tiago' AND (email IS NULL OR email='')"
+            ))
+            conn.execute(text(
+                "UPDATE users SET email='jovemgreyce@hotmail.com' "
+                "WHERE name='Greyce' AND (email IS NULL OR email='')"
+            ))
+            conn.commit()
         except Exception:
             pass
 
