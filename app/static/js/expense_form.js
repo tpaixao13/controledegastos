@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateForm() {
     const method = paymentSelect ? paymentSelect.value : '';
 
-    if (method === 'Cartão de Débito') {
+    if (method === 'Cartão de Débito' || method === 'PIX') {
       if (bankRow) bankRow.style.display = '';
       if (installmentSection) installmentSection.style.display = 'none';
       if (numInstallmentsRow) numInstallmentsRow.style.display = 'none';
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (installmentSection) installmentSection.style.display = '';
       updateInstallments();
     } else {
-      // PIX, Dinheiro ou vazio
+      // Dinheiro ou vazio
       if (bankRow) bankRow.style.display = 'none';
       if (installmentSection) installmentSection.style.display = 'none';
       if (numInstallmentsRow) numInstallmentsRow.style.display = 'none';
