@@ -143,15 +143,11 @@ def payment_methods():
 def pending_vs_paid():
     month, year = _get_month_year()
     uids = tenant_user_ids()
-    paid_total = (db.session.query(func.sum(Expense.amount))
-                  .filter(Expense.user_id.in_(uids), Expense.year == year,
-                          Expense.month == month, Expense.paid == True).scalar() or 0)
-    pending_total = (db.session.query(func.sum(Expense.amount))
-                     .filter(Expense.user_id.in_(uids), Expense.year == year,
-                             Expense.month == month, Expense.paid.isnot(True)).scalar() or 0)
+    paid_total    = sum_expenses_month(uids, year, month, Expense.paid == True)
+    pending_total = sum_expenses_month(uids, year, month, Expense.paid.isnot(True))
     return jsonify({
         'labels': ['Pago', 'Pendente'],
-        'data': [float(paid_total), float(pending_total)],
+        'data': [paid_total, pending_total],
         'colors': ['#198754', '#ffc107'],
     })
 
