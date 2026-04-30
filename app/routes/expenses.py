@@ -1,4 +1,3 @@
-import csv
 import io
 from decimal import Decimal, ROUND_HALF_UP
 from urllib.parse import urlparse
@@ -72,6 +71,121 @@ def list():
                                     'category': category, 'payment_method': payment_method})
 
 
+_EXPORT_HEADERS = [
+    'Pessoa', 'Dia', 'Mês', 'Ano', 'Descrição', 'Categoria',
+    'Forma de Pagamento', 'Banco', 'Valor (R$)', 'Parcela', 'Recorrente',
+]
+
+
+def _expense_rows(expenses):
+    rows = []
+    for e in expenses:
+        parcela = ''
+        if e.installment_group_id:
+            parcela = f'{e.installment_number}/{e.installment_group.num_installments}'
+        elif e.recurring_group_id:
+            parcela = f'Recorrente {e.recurring_number}/{e.recurring_group.num_recurrences}'
+        rows.append([
+            e.user.name, e.day, e.month, e.year,
+            e.description, e.category, e.payment_method, e.bank or '',
+            float(e.amount), parcela,
+            'Sim' if e.recurring_group_id else 'Não',
+        ])
+    return rows
+
+
+def _make_xlsx(rows, year, month):
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Despesas'
+    ws.append(_EXPORT_HEADERS)
+
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color='FFFFFF')
+        cell.fill = PatternFill('solid', fgColor='0D6EFD')
+        cell.alignment = Alignment(horizontal='center')
+
+    for row in rows:
+        display = list(row)
+        display[8] = f'R$ {row[8]:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+        ws.append(display)
+
+    col_widths = [14, 6, 6, 7, 42, 16, 20, 16, 16, 13, 11]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = w
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    filename = f'despesas_{year}_{month:02d}.xlsx'
+    return Response(
+        out.getvalue(),
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment; filename={filename}'},
+    )
+
+
+def _make_pdf(rows, year, month):
+    from fpdf import FPDF
+
+    period = 'Todos os meses' if month == 0 else f'{month:02d}/{year}'
+
+    class _PDF(FPDF):
+        def header(self):
+            self.set_font('Helvetica', 'B', 13)
+            self.cell(0, 10, f'Despesas - {period}', align='C', new_x='LMARGIN', new_y='NEXT')
+            self.ln(3)
+
+        def footer(self):
+            self.set_y(-12)
+            self.set_font('Helvetica', 'I', 8)
+            self.cell(0, 10, f'Pagina {self.page_no()}', align='C')
+
+    pdf = _PDF(orientation='L', unit='mm', format='A4')
+    pdf.set_margins(10, 10, 10)
+    pdf.set_auto_page_break(True, margin=15)
+    pdf.add_page()
+
+    cols = [
+        ('Pessoa', 22), ('Dia', 9), ('Mes', 9), ('Ano', 12),
+        ('Descricao', 63), ('Categoria', 24), ('Pagamento', 28),
+        ('Banco', 22), ('Valor (R$)', 24), ('Parcela', 18), ('Recorrente', 14),
+    ]
+    row_h = 7
+
+    pdf.set_font('Helvetica', 'B', 8)
+    pdf.set_fill_color(13, 110, 253)
+    pdf.set_text_color(255, 255, 255)
+    for label, w in cols:
+        pdf.cell(w, row_h, label, border=1, fill=True, align='C')
+    pdf.ln()
+
+    pdf.set_font('Helvetica', size=8)
+    pdf.set_text_color(0, 0, 0)
+    for i, row in enumerate(rows):
+        r, g, b = (240, 244, 255) if i % 2 == 0 else (255, 255, 255)
+        pdf.set_fill_color(r, g, b)
+        display = list(row)
+        display[8] = f'R$ {row[8]:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+        for j, (_, w) in enumerate(cols):
+            pdf.cell(w, row_h, str(display[j]), border=1, fill=True,
+                     align='R' if j == 8 else 'L')
+        pdf.ln()
+
+    out = io.BytesIO()
+    pdf.output(out)
+    out.seek(0)
+    filename = f'despesas_{year}_{month:02d}.pdf'
+    return Response(
+        out.getvalue(),
+        mimetype='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename={filename}'},
+    )
+
+
 @expenses_bp.route('/export')
 def export_csv():
     now = datetime.now()
@@ -80,47 +194,23 @@ def export_csv():
     month = request.args.get('month', now.month, type=int)
     year = request.args.get('year', now.year, type=int)
     category = request.args.get('category', '')
+    fmt = request.args.get('fmt', 'xlsx')
 
-    query = Expense.query.filter(Expense.user_id.in_(uids), Expense.year == year, Expense.month == month)
+    if month == 0:
+        query = Expense.query.filter(Expense.user_id.in_(uids), Expense.year == year)
+    else:
+        query = Expense.query.filter(Expense.user_id.in_(uids), Expense.year == year,
+                                     Expense.month == month)
     if user_id and user_id in uids:
         query = query.filter(Expense.user_id == user_id)
     if category:
         query = query.filter(Expense.category == category)
     query = query.order_by(Expense.day.asc(), Expense.created_at.asc())
 
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['Pessoa', 'Dia', 'Mês', 'Ano', 'Descrição', 'Categoria',
-                     'Forma de Pagamento', 'Banco', 'Valor (R$)', 'Parcela', 'Recorrente'])
-
-    for e in query.all():
-        parcela = ''
-        if e.installment_group_id:
-            parcela = f'{e.installment_number}/{e.installment_group.num_installments}'
-        elif e.recurring_group_id:
-            parcela = f'Recorrente {e.recurring_number}/{e.recurring_group.num_recurrences}'
-
-        writer.writerow([
-            e.user.name,
-            e.day,
-            e.month,
-            e.year,
-            e.description,
-            e.category,
-            e.payment_method,
-            e.bank or '',
-            f'{float(e.amount):.2f}'.replace('.', ','),
-            parcela,
-            'Sim' if e.recurring_group_id else 'Não',
-        ])
-
-    output.seek(0)
-    filename = f'despesas_{year}_{month:02d}.csv'
-    return Response(
-        '\ufeff' + output.getvalue(),  # BOM para Excel reconhecer UTF-8
-        mimetype='text/csv; charset=utf-8',
-        headers={'Content-Disposition': f'attachment; filename={filename}'}
-    )
+    rows = _expense_rows(query.all())
+    if fmt == 'pdf':
+        return _make_pdf(rows, year, month)
+    return _make_xlsx(rows, year, month)
 
 
 @expenses_bp.route('/add', methods=['GET', 'POST'])
