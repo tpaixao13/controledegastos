@@ -244,6 +244,96 @@ def delete_recurring(group_id):
     return redirect(url_for('expenses.list'))
 
 
+@expenses_bp.route('/import-c6', methods=['GET'])
+def import_c6():
+    users = tenant_users().order_by(User.name).all()
+    return render_template('expenses/import_c6_upload.html', users=users)
+
+
+@expenses_bp.route('/import-c6/parse', methods=['POST'])
+def import_c6_parse():
+    from app.importers.c6 import parse_c6_pdf
+
+    users = tenant_users().order_by(User.name).all()
+    uids = [u.id for u in users]
+
+    user_id = request.form.get('user_id', type=int)
+    if not user_id or user_id not in uids:
+        flash('Selecione um usuário válido.', 'danger')
+        return redirect(url_for('expenses.import_c6'))
+
+    pdf_file = request.files.get('pdf_file')
+    if not pdf_file or not pdf_file.filename.lower().endswith('.pdf'):
+        flash('Selecione um arquivo PDF válido.', 'danger')
+        return redirect(url_for('expenses.import_c6'))
+
+    pdf_bytes = pdf_file.read()
+    try:
+        transactions = parse_c6_pdf(pdf_bytes)
+    except Exception:
+        flash('Erro ao processar o PDF. Verifique se é um extrato C6 válido.', 'danger')
+        return redirect(url_for('expenses.import_c6'))
+
+    if not transactions:
+        flash('Nenhuma transação encontrada no PDF. Verifique se é um extrato C6 válido.', 'warning')
+        return redirect(url_for('expenses.import_c6'))
+
+    selected_user = next(u for u in users if u.id == user_id)
+    return render_template(
+        'expenses/import_c6_preview.html',
+        transactions=transactions,
+        users=users,
+        selected_user=selected_user,
+        user_id=user_id,
+        categories=CATEGORIES,
+    )
+
+
+@expenses_bp.route('/import-c6/confirm', methods=['POST'])
+def import_c6_confirm():
+    uids = tenant_user_ids()
+    indices = request.form.getlist('idx')
+    count = 0
+
+    for idx in indices:
+        if not request.form.get(f'include_{idx}'):
+            continue
+        try:
+            user_id = int(request.form[f'user_id_{idx}'])
+            if user_id not in uids:
+                continue
+            day = int(request.form[f'day_{idx}'])
+            month = int(request.form[f'month_{idx}'])
+            year = int(request.form[f'year_{idx}'])
+            description = request.form[f'desc_{idx}'].strip()
+            amount_raw = request.form[f'amount_{idx}'].replace(',', '.')
+            amount = float(amount_raw)
+            category = request.form.get(f'category_{idx}', 'Outros')
+        except (KeyError, ValueError):
+            continue
+
+        if not description or amount <= 0:
+            continue
+
+        expense = Expense(
+            user_id=user_id,
+            description=description,
+            amount=amount,
+            category=category,
+            payment_method='Cartão de Crédito',
+            bank='C6',
+            year=year,
+            month=month,
+            day=day,
+        )
+        db.session.add(expense)
+        count += 1
+
+    db.session.commit()
+    flash(f'{count} despesa(s) importada(s) com sucesso!', 'success')
+    return redirect(url_for('expenses.list'))
+
+
 def _create_installments(form, bank):
     n = form.num_installments.data
     total = Decimal(str(form.amount.data))
