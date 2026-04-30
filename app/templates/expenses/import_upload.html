@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% block title %}Importar Extrato — FinFam{% endblock %}
+
+{% block content %}
+<div class="row mb-3 align-items-center">
+  <div class="col">
+    <h2 class="fw-bold"><i class="bi bi-cloud-upload text-primary"></i> Importar Extrato</h2>
+    <p class="text-muted mb-0">Importe transações diretamente do arquivo exportado pelo seu banco.</p>
+  </div>
+  <div class="col-auto">
+    <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Coluna do formulário -->
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('expenses.import_bank_parse') }}"
+              enctype="multipart/form-data" id="importForm" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="format" id="formatField" value="">
+
+          <!-- Pessoa -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Responsável pelas despesas</label>
+            <select name="user_id" class="form-select" required>
+              <option value="">Selecione...</option>
+              {% for u in users %}
+              <option value="{{ u.id }}">{{ u.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Seletor de banco/formato -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Banco / Formato</label>
+            <div class="row g-2" id="bankCards">
+
+              <div class="col-6">
+                <div class="bank-card card border-2 h-100 cursor-pointer" data-format="c6pdf"
+                     data-accept=".pdf" data-bank="C6 Bank">
+                  <div class="card-body p-3 text-center">
+                    <div class="fw-bold">C6 Bank</div>
+                    <small class="text-muted">PDF — extrato conta corrente</small>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-6">
+                <div class="bank-card card border-2 h-100 cursor-pointer" data-format="nubank_csv"
+                     data-accept=".csv" data-bank="Nubank">
+                  <div class="card-body p-3 text-center">
+                    <div class="fw-bold">Nubank</div>
+                    <small class="text-muted">CSV — fatura cartão de crédito</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- OFX — ocupa linha inteira -->
+              <div class="col-12">
+                <div class="bank-card card border-2 cursor-pointer" data-format="ofx"
+                     data-accept=".ofx,.ofc" data-bank="">
+                  <div class="card-body p-3">
+                    <div class="fw-bold"><i class="bi bi-bank2 me-1"></i>OFX — vários bancos</div>
+                    <small class="text-muted">
+                      Itaú · Bradesco · Santander · Banco do Brasil · Caixa · Nubank (NuConta) ·
+                      Banco Inter · BTG · XP · Sicoob · Sicredi e outros
+                    </small>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Campo banco (OFX) -->
+          <div id="ofxBankRow" class="mb-4 d-none">
+            <label class="form-label fw-semibold">Banco</label>
+            <select name="bank" class="form-select">
+              <option value="Itaú">Itaú</option>
+              <option value="Bradesco">Bradesco</option>
+              <option value="Santander">Santander</option>
+              <option value="Banco do Brasil">Banco do Brasil</option>
+              <option value="Caixa">Caixa Econômica</option>
+              <option value="Nubank">Nubank (NuConta)</option>
+              <option value="Inter">Banco Inter</option>
+              <option value="BTG">BTG Pactual</option>
+              <option value="XP">XP Investimentos</option>
+              <option value="Sicoob">Sicoob</option>
+              <option value="Sicredi">Sicredi</option>
+              <option value="">Outro</option>
+            </select>
+          </div>
+
+          <!-- Upload do arquivo -->
+          <div id="fileRow" class="mb-4 d-none">
+            <label class="form-label fw-semibold" id="fileLabel">Arquivo</label>
+            <input type="file" name="file" id="fileInput" class="form-control" required>
+            <div class="form-text" id="fileHint"></div>
+          </div>
+
+          <!-- Senha (somente C6 PDF) -->
+          <div id="passwordRow" class="mb-4 d-none">
+            <label class="form-label fw-semibold">
+              Senha do PDF
+              <span class="text-muted fw-normal small">(deixe em branco se não tiver)</span>
+            </label>
+            <input type="password" name="pdf_password" class="form-control"
+                   placeholder="Normalmente o CPF sem pontos e traços"
+                   autocomplete="off">
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" id="btnSubmit" class="btn btn-primary fw-semibold" disabled>
+              <i class="bi bi-search"></i> Analisar arquivo
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Coluna de ajuda -->
+  <div class="col-md-5">
+    <div class="card bg-light border-0 h-100">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary"></i> Como exportar o extrato</h6>
+
+        <div id="helpDefault">
+          <p class="text-muted small">Selecione o banco ao lado para ver as instruções de exportação.</p>
+        </div>
+
+        <div id="helpC6" class="d-none">
+          <p class="small fw-semibold mb-1">C6 Bank — PDF</p>
+          <ol class="small text-muted ps-3">
+            <li>Abra o app do C6 Bank</li>
+            <li>Acesse <strong>Conta → Extrato</strong></li>
+            <li>Selecione o período desejado</li>
+            <li>Toque em <strong>Exportar → PDF</strong></li>
+            <li>A senha padrão é o seu <strong>CPF sem pontos e traços</strong></li>
+          </ol>
+        </div>
+
+        <div id="helpNubank" class="d-none">
+          <p class="small fw-semibold mb-1">Nubank — CSV (fatura cartão)</p>
+          <ol class="small text-muted ps-3">
+            <li>Acesse <strong>nubank.com.br</strong> (versão web)</li>
+            <li>Vá em <strong>Meu NuBank → Faturas</strong></li>
+            <li>Abra a fatura desejada</li>
+            <li>Clique em <strong>Baixar fatura (.csv)</strong></li>
+          </ol>
+        </div>
+
+        <div id="helpOFX" class="d-none">
+          <p class="small fw-semibold mb-1">OFX — Bancos tradicionais</p>
+          <p class="small text-muted">
+            Acesse o Internet Banking do seu banco, vá em
+            <strong>Extrato → Exportar</strong> e selecione o formato
+            <strong>OFX</strong> ou <strong>Money/Quicken</strong>.
+          </p>
+          <table class="table table-sm small mb-0">
+            <tbody>
+              <tr><td>Itaú</td><td class="text-muted">Extrato → Exportar OFX</td></tr>
+              <tr><td>Bradesco</td><td class="text-muted">Extrato → Gerar OFX</td></tr>
+              <tr><td>Santander</td><td class="text-muted">Extrato → Baixar OFX</td></tr>
+              <tr><td>Banco do Brasil</td><td class="text-muted">Extrato → Exportar OFX</td></tr>
+              <tr><td>Caixa</td><td class="text-muted">Extrato → Exportar OFX</td></tr>
+              <tr><td>Inter</td><td class="text-muted">Extrato → OFX</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.bank-card { cursor: pointer; transition: border-color .15s, background .15s; border-color: #dee2e6 !important; }
+.bank-card:hover { border-color: #0d6efd !important; background: #f0f4ff; }
+.bank-card.selected { border-color: #0d6efd !important; background: #e8f0fe; }
+</style>
+
+<script>
+(function () {
+  const cards      = document.querySelectorAll('.bank-card');
+  const formatFld  = document.getElementById('formatField');
+  const fileRow    = document.getElementById('fileRow');
+  const fileInput  = document.getElementById('fileInput');
+  const fileLabel  = document.getElementById('fileLabel');
+  const fileHint   = document.getElementById('fileHint');
+  const pwRow      = document.getElementById('passwordRow');
+  const ofxRow     = document.getElementById('ofxBankRow');
+  const btnSubmit  = document.getElementById('btnSubmit');
+
+  const helpIds    = ['helpDefault', 'helpC6', 'helpNubank', 'helpOFX'];
+  const helpMap    = { c6pdf: 'helpC6', nubank_csv: 'helpNubank', ofx: 'helpOFX' };
+
+  const labels = {
+    c6pdf:       ['Arquivo PDF do extrato', '.pdf · extrato conta corrente C6'],
+    nubank_csv:  ['Arquivo CSV da fatura',  '.csv · exportado do site do Nubank'],
+    ofx:         ['Arquivo OFX do extrato', '.ofx ou .ofc · exportado do internet banking'],
+  };
+
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+
+      const fmt    = card.dataset.format;
+      const accept = card.dataset.accept;
+
+      formatFld.value        = fmt;
+      fileInput.accept       = accept;
+      fileLabel.textContent  = labels[fmt][0];
+      fileHint.textContent   = labels[fmt][1];
+
+      fileRow.classList.remove('d-none');
+      pwRow.classList.toggle('d-none',  fmt !== 'c6pdf');
+      ofxRow.classList.toggle('d-none', fmt !== 'ofx');
+      btnSubmit.disabled = false;
+
+      // Ajuda contextual
+      helpIds.forEach(id => document.getElementById(id).classList.add('d-none'));
+      document.getElementById(helpMap[fmt] || 'helpDefault').classList.remove('d-none');
+    });
+  });
+})();
+</script>
+{% endblock %}
