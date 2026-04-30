@@ -367,11 +367,30 @@ def import_bank_confirm():
     return redirect(url_for('expenses.list'))
 
 
+def _write_expense_series(form, bank, payment, group_id, group_field, number_field, amounts):
+    """Persiste N Expense rows mensais para um grupo já criado e flushado."""
+    mes_inicio, ano_inicio = form.month.data, form.year.data
+    for i, amount in enumerate(amounts):
+        mes, ano = month_offset(mes_inicio, ano_inicio, i)
+        db.session.add(Expense(
+            user_id=form.user_id.data,
+            description=form.description.data,
+            amount=amount,
+            category=form.category.data,
+            payment_method=payment,
+            bank=bank,
+            year=ano,
+            month=mes,
+            day=form.day.data,
+            **{group_field: group_id, number_field: i + 1},
+        ))
+
+
 def _create_installments(form, bank):
     n = form.num_installments.data
     total = Decimal(str(form.amount.data))
     parcela = (total / n).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-    ultima_parcela = total - parcela * (n - 1)
+    amounts = [parcela] * (n - 1) + [total - parcela * (n - 1)]
 
     group = InstallmentGroup(
         user_id=form.user_id.data,
@@ -383,30 +402,11 @@ def _create_installments(form, bank):
     db.session.add(group)
     db.session.flush()
 
-    mes_inicio = form.month.data
-    ano_inicio = form.year.data
-
-    for i in range(n):
-        mes_atual, ano_atual = month_offset(mes_inicio, ano_inicio, i)
-        valor = ultima_parcela if i == n - 1 else parcela
-
-        expense = Expense(
-            user_id=form.user_id.data,
-            description=form.description.data,
-            amount=valor,
-            category=form.category.data,
-            payment_method='Cartão de Crédito',
-            bank=bank,
-            year=ano_atual,
-            month=mes_atual,
-            day=form.day.data,
-            installment_group_id=group.id,
-            installment_number=i + 1,
-        )
-        db.session.add(expense)
-
+    _write_expense_series(form, bank, 'Cartão de Crédito',
+                          group.id, 'installment_group_id', 'installment_number', amounts)
     db.session.commit()
 
+    mes_inicio, ano_inicio = form.month.data, form.year.data
     mes_fim, ano_fim = month_offset(mes_inicio, ano_inicio, n - 1)
     parcela_fmt = f'R$ {float(parcela):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
     flash(
@@ -429,26 +429,8 @@ def _create_recurring(form, bank, payment):
     db.session.add(group)
     db.session.flush()
 
-    mes_inicio = form.month.data
-    ano_inicio = form.year.data
-
-    for i in range(n):
-        mes_atual, ano_atual = month_offset(mes_inicio, ano_inicio, i)
-
-        expense = Expense(
-            user_id=form.user_id.data,
-            description=form.description.data,
-            amount=amount,
-            category=form.category.data,
-            payment_method=payment,
-            bank=bank,
-            year=ano_atual,
-            month=mes_atual,
-            day=form.day.data,
-            recurring_group_id=group.id,
-            recurring_number=i + 1,
-        )
-        db.session.add(expense)
+    _write_expense_series(form, bank, payment,
+                          group.id, 'recurring_group_id', 'recurring_number', [amount] * n)
 
     db.session.commit()
 
