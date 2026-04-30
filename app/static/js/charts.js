@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // 3 — Barras: comparação Tiago vs Greyce
+  // 3 — Barras: comparação por usuário
   fetch('/api/chart/user-comparison' + params)
     .then(r => r.json())
     .then(d => {
