@@ -150,7 +150,6 @@ class LoginForm(FlaskForm):
 
 
 class RegisterTenantForm(FlaskForm):
-    family_name = StringField('Nome da Família', validators=[DataRequired(), Length(2, 50)])
     user_name = StringField('Seu Nome', validators=[DataRequired(), Length(2, 30)])
     email = StringField('E-mail', validators=[DataRequired(), Email()])
     password = PasswordField('Senha', validators=[DataRequired(), Length(min=8)])
