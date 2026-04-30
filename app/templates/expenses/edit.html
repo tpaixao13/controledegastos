@@ -31,7 +31,13 @@
             </div>
             <div class="col-md-6">
               {{ form.category.label(class='form-label fw-semibold') }}
-              {{ form.category(class='form-select') }}
+              {{ form.category(class='form-control' + (' is-invalid' if form.category.errors else ''),
+                               list='category-opts', autocomplete='off') }}
+              <datalist id="category-opts">
+                {% for cat in all_categories %}
+                <option value="{{ cat }}">
+                {% endfor %}
+              </datalist>
             </div>
             <div class="col-12">
               {{ form.description.label(class='form-label fw-semibold') }}
