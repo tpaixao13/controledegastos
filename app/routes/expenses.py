@@ -201,7 +201,12 @@ def edit(expense_id):
         flash('Despesa atualizada com sucesso!', 'success')
         return redirect(url_for('expenses.list'))
 
-    return render_template('expenses/edit.html', form=form, expense=expense, users=users)
+    uids = [u.id for u in users]
+    db_cats = [c[0] for c in db.session.query(Expense.category)
+               .filter(Expense.user_id.in_(uids)).distinct().all()]
+    all_categories = sorted(set(CATEGORIES) | set(db_cats))
+    return render_template('expenses/edit.html', form=form, expense=expense,
+                           users=users, all_categories=all_categories)
 
 
 @expenses_bp.route('/delete/<int:expense_id>', methods=['POST'])
