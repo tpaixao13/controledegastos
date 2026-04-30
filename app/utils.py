@@ -83,3 +83,28 @@ def rate_suggestions(selic: float) -> dict:
         'Criptomoedas':        0,
         'Outros':              0,
     }
+
+
+# ── Helpers de agregação (evitam N queries em loops) ─────────────────────────
+
+def sum_expenses_month(uids: list, year: int, month: int, *extra_filters) -> float:
+    """Soma Expense.amount para o tenant no mês. Aceita filtros SQLAlchemy extras."""
+    from app import db
+    from app.models import Expense
+    from sqlalchemy import func
+    q = (db.session.query(func.sum(Expense.amount))
+         .filter(Expense.user_id.in_(uids), Expense.year == year,
+                 Expense.month == month, *extra_filters))
+    return float(q.scalar() or 0)
+
+
+def sum_salaries_month(uids: list, year: int, month: int) -> float:
+    """Soma Salary.amount para o tenant no mês."""
+    from app import db
+    from app.models import Salary
+    from sqlalchemy import func
+    return float(
+        db.session.query(func.sum(Salary.amount))
+        .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month)
+        .scalar() or 0
+    )
