@@ -136,8 +136,8 @@ document.addEventListener('DOMContentLoaded', function () {
           datasets: [{
             label: 'Acumulado',
             data: d.data,
-            borderColor: '#fd7e14',
-            backgroundColor: 'rgba(253,126,20,0.1)',
+            borderColor: '#dc3545',
+            backgroundColor: 'rgba(220,53,69,0.08)',
             fill: true,
             tension: 0.3,
             pointRadius: 3,
