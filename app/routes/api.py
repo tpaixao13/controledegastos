@@ -91,8 +91,11 @@ def user_comparison():
     labels = [u.name for u in users]
     gastos   = [sum_expenses_month([u.id], year, month) for u in users]
     salarios = [sum_salaries_month([u.id], year, month) for u in users]
+    colors       = [USER_PALETTE[i % len(USER_PALETTE)]['hex_alpha'] for i in range(len(users))]
+    border_colors = [USER_PALETTE[i % len(USER_PALETTE)]['hex']       for i in range(len(users))]
 
-    return jsonify({'labels': labels, 'gastos': gastos, 'salarios': salarios})
+    return jsonify({'labels': labels, 'gastos': gastos, 'salarios': salarios,
+                    'colors': colors, 'border_colors': border_colors})
 
 
 @api_bp.route('/daily')
