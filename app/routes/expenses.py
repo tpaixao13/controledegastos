@@ -13,6 +13,11 @@ expenses_bp = Blueprint('expenses', __name__, url_prefix='/expenses')
 
 ITEMS_PER_PAGE = 20
 
+CATEGORIES = [
+    'Alimentação', 'Transporte', 'Saúde', 'Lazer', 'Moradia',
+    'Educação', 'Vestuário', 'Serviços', 'Compras', 'Outros',
+]
+
 
 @expenses_bp.route('/')
 def list():
