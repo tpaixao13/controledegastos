@@ -8,9 +8,9 @@ Formato do PDF:
 """
 import io
 import re
-from dataclasses import dataclass
 
 import pdfplumber
+from . import BankTransaction
 
 # Tipos que representam despesas e o método de pagamento correspondente
 _TIPO_PAYMENT = {
