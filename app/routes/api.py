@@ -88,16 +88,8 @@ def user_comparison():
     month, year = _get_month_year()
     users = tenant_users().order_by(User.name).all()
     labels = [u.name for u in users]
-    gastos = []
-    salarios = []
-
-    for u in users:
-        total = (db.session.query(func.sum(Expense.amount))
-                 .filter_by(user_id=u.id, year=year, month=month).scalar() or 0)
-        sal = (db.session.query(func.sum(Salary.amount))
-               .filter_by(user_id=u.id, year=year, month=month).scalar() or 0)
-        gastos.append(float(total))
-        salarios.append(float(sal))
+    gastos   = [sum_expenses_month([u.id], year, month) for u in users]
+    salarios = [sum_salaries_month([u.id], year, month) for u in users]
 
     return jsonify({'labels': labels, 'gastos': gastos, 'salarios': salarios})
 
