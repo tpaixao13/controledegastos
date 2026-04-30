@@ -113,8 +113,8 @@ document.addEventListener('DOMContentLoaded', function () {
             {
               label: 'Gastos',
               data: d.gastos,
-              backgroundColor: ['rgba(13,110,253,0.7)', 'rgba(214,51,132,0.7)'],
-              borderColor: ['#0d6efd', '#d63384'],
+              backgroundColor: ['rgba(13,110,253,0.7)', 'rgba(220,53,69,0.7)'],
+              borderColor: ['#0d6efd', '#dc3545'],
               borderWidth: 1,
             }
           ]
