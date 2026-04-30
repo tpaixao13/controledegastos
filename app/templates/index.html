@@ -33,7 +33,7 @@
         <div class="d-flex justify-content-between align-items-start">
           <div>
             <p class="text-muted small mb-1">
-              <span class="badge {{ 'bg-primary' if s.user.name == 'Tiago' else 'bg-danger' }}">
+              <span class="badge {{ user_colors[s.user.id].badge_class }}">
                 {{ s.user.name }}
               </span> — Saldo
             </p>
