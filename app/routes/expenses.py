@@ -139,7 +139,7 @@ def add():
 
     if form.validate_on_submit():
         payment = form.payment_method.data
-        bank = form.bank.data if payment in ('Cartão de Débito', 'Cartão de Crédito') else None
+        bank = (form.bank.data or None) if payment in ('PIX', 'Cartão de Débito', 'Cartão de Crédito') else None
 
         is_parcelado = (payment == 'Cartão de Crédito' and
                         form.credit_type.data == 'parcelado')
