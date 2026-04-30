@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Importar Extrato C6 — FinFam{% endblock %}
+
+{% block content %}
+<div class="row mb-3 align-items-center">
+  <div class="col">
+    <h2 class="fw-bold"><i class="bi bi-cloud-upload text-primary"></i> Importar Extrato C6</h2>
+    <p class="text-muted mb-0">Selecione o PDF da fatura do Cartão C6 para importar as transações.</p>
+  </div>
+  <div class="col-auto">
+    <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Voltar
+    </a>
+  </div>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <form method="POST" action="{{ url_for('expenses.import_c6_parse') }}"
+              enctype="multipart/form-data" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Responsável pelas despesas</label>
+            <select name="user_id" class="form-select" required>
+              <option value="">Selecione...</option>
+              {% for u in users %}
+              <option value="{{ u.id }}">{{ u.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Arquivo PDF da fatura C6</label>
+            <input type="file" name="pdf_file" accept=".pdf" class="form-control" required>
+            <div class="form-text">Apenas arquivos .pdf são aceitos.</div>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary fw-semibold">
+              <i class="bi bi-search"></i> Analisar PDF
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
