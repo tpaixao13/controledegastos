@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 from app import db
 from app.models import Expense, Salary, User, Investment
-from app.utils import tenant_user_ids, tenant_users, MONTH_NAMES_SHORT_SHORT, _fetch_json, get_selic_rate, rate_suggestions, month_offset
+from app.utils import tenant_user_ids, tenant_users, MONTH_NAMES_SHORT, _fetch_json, get_selic_rate, rate_suggestions, month_offset
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/chart')
 
