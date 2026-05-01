@@ -190,10 +190,9 @@ def build_daily_reminder(tenant_users_list: list, today=None) -> str | None:
         lines.append('🔔 <b>Vencimentos de hoje:</b>')
         for e in today_pending:
             lines.append(f'• {user_names.get(e.user_id, "?")} — {e.description} ({e.category}) — {_brl(e.amount)}')
+            lines.append('')
 
     if overdue:
-        if today_pending:
-            lines.append('')
         lines.append('⚠️ <b>Em atraso:</b>')
         for e in overdue:
             exp_date = date_type(e.year, e.month, e.day)
@@ -202,6 +201,7 @@ def build_daily_reminder(tenant_users_list: list, today=None) -> str | None:
                 f'• {user_names.get(e.user_id, "?")} — {e.description} ({e.category})'
                 f' — {_brl(e.amount)} — {dias}d de atraso'
             )
+            lines.append('')
 
     return '\n'.join(lines)
 
