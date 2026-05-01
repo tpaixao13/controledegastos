@@ -333,6 +333,30 @@ def toggle_paid(expense_id):
     return redirect(next_url)
 
 
+@expenses_bp.route('/bulk-paid', methods=['POST'])
+def bulk_paid():
+    uids = tenant_user_ids()
+    ids = request.form.getlist('expense_ids')
+    count = 0
+    for eid in ids:
+        try:
+            expense = Expense.query.filter(
+                Expense.id == int(eid),
+                Expense.user_id.in_(uids)
+            ).first()
+            if expense and not expense.paid:
+                expense.paid = True
+                count += 1
+        except (ValueError, TypeError):
+            pass
+    db.session.commit()
+    next_url = request.form.get('next') or ''
+    if not next_url or urlparse(next_url).netloc:
+        next_url = url_for('main.index')
+    flash(f'{count} despesa(s) marcada(s) como pagas!', 'success')
+    return redirect(next_url)
+
+
 @expenses_bp.route('/delete-recurring/<int:group_id>', methods=['POST'])
 def delete_recurring(group_id):
     uids = tenant_user_ids()
