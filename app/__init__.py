@@ -82,6 +82,20 @@ def create_app(config_name='default'):
         app.register_blueprint(api_bp)
         app.register_blueprint(investments_bp)
 
+    # Scheduler de lembretes Telegram — roda às 8h todos os dias
+    import atexit
+    import os
+    try:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        from app.utils import send_daily_reminders
+        if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            _scheduler = BackgroundScheduler()
+            _scheduler.add_job(send_daily_reminders, 'cron', args=[app], hour=8, minute=0)
+            _scheduler.start()
+            atexit.register(lambda: _scheduler.shutdown(wait=False))
+    except ImportError:
+        logging.warning('APScheduler não instalado — lembretes Telegram desativados.')
+
     @app.before_request
     def require_login():
         exempt = {'auth.login', 'auth.logout', 'auth.register', 'static'}
