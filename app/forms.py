@@ -191,4 +191,6 @@ class TelegramConfigForm(FlaskForm):
     telegram_enabled = BooleanField('Ativar notificações diárias via Telegram')
     telegram_token = StringField('Token do Bot', validators=[Optional(), Length(max=200)])
     telegram_chat_id = StringField('Chat ID', validators=[Optional(), Length(max=100)])
+    telegram_hour = SelectField('Hora', choices=[(i, f'{i:02d}h') for i in range(24)], coerce=int)
+    telegram_minute = SelectField('Minuto', choices=[(i, f'{i:02d}') for i in range(0, 60, 5)], coerce=int)
     submit = SubmitField('Salvar Configurações')
