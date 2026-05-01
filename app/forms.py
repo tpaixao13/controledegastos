@@ -169,6 +169,16 @@ class AddMemberForm(FlaskForm):
     submit_member = SubmitField('Adicionar Membro')
 
 
+class EditMemberForm(FlaskForm):
+    user_name = StringField('Nome', validators=[DataRequired(), Length(2, 30)])
+    email = StringField('E-mail', validators=[DataRequired(), Email()])
+    new_password = PasswordField('Nova Senha', validators=[Optional(), Length(min=8)])
+    confirm_password = PasswordField('Confirmar Nova Senha', validators=[
+        Optional(), EqualTo('new_password', message='As senhas não coincidem.')
+    ])
+    submit_edit = SubmitField('Salvar')
+
+
 class ChangePasswordForm(FlaskForm):
     current_password = PasswordField('Senha Atual', validators=[DataRequired()])
     new_password = PasswordField('Nova Senha', validators=[
