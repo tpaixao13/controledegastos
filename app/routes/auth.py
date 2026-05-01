@@ -179,3 +179,41 @@ def delete_member(user_id):
     db.session.commit()
     flash(f'{user.name} removido do grupo.', 'warning')
     return redirect(url_for('auth.members'))
+
+
+@auth_bp.route('/settings/telegram', methods=['GET', 'POST'])
+def telegram_settings():
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return redirect(url_for('auth.login'))
+    tenant = Tenant.query.get(tenant_id)
+    form = TelegramConfigForm(obj=tenant)
+    if form.validate_on_submit():
+        tenant.telegram_enabled = form.telegram_enabled.data
+        tenant.telegram_token = form.telegram_token.data.strip() or None
+        tenant.telegram_chat_id = form.telegram_chat_id.data.strip() or None
+        db.session.commit()
+        flash('Configurações do Telegram salvas!', 'success')
+        return redirect(url_for('auth.telegram_settings'))
+    return render_template('auth/telegram_settings.html', form=form, tenant=tenant)
+
+
+@auth_bp.route('/settings/telegram/test', methods=['POST'])
+def telegram_test():
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return redirect(url_for('auth.login'))
+    tenant = Tenant.query.get(tenant_id)
+    if not tenant or not tenant.telegram_token or not tenant.telegram_chat_id:
+        flash('Configure o token e o Chat ID antes de testar.', 'warning')
+        return redirect(url_for('auth.telegram_settings'))
+    users = User.query.filter_by(tenant_id=tenant_id).all()
+    msg = build_daily_reminder(users)
+    if not msg:
+        msg = '✅ <b>FinFam</b>\n\nNenhuma despesa pendente ou em atraso hoje! 🎉'
+    ok = send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
+    if ok:
+        flash('Mensagem de teste enviada com sucesso!', 'success')
+    else:
+        flash('Falha ao enviar. Verifique o Token e o Chat ID.', 'danger')
+    return redirect(url_for('auth.telegram_settings'))
