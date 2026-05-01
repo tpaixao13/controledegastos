@@ -17,7 +17,7 @@
         <div class="alert alert-info">
           <i class="bi bi-info-circle"></i>
           Esta é uma despesa parcelada. Editar aqui altera apenas esta parcela.
-          Para eliminar todas as parcelas, <a href="{{ url_for('expenses.list') }}">volte à listagem</a>.
+          Para eliminar todas as parcelas, <a href="{{ url_for('expenses.index') }}">volte à listagem</a>.
         </div>
         {% endif %}
 
@@ -100,7 +100,7 @@
 
           <div class="d-flex gap-2 mt-4">
             {{ form.submit(class='btn btn-primary fw-semibold px-4') }}
-            <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary">Cancelar</a>
+            <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary">Cancelar</a>
           </div>
         </form>
       </div>
