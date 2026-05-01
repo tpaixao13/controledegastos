@@ -217,3 +217,40 @@ def telegram_test():
     else:
         flash(f'Falha ao enviar: {err}', 'danger')
     return redirect(url_for('auth.telegram_settings'))
+
+
+@auth_bp.route('/settings/telegram/chats')
+def telegram_chats():
+    """Retorna os chats disponíveis via getUpdates para facilitar a configuração."""
+    import json as _json
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return redirect(url_for('auth.login'))
+    tenant = Tenant.query.get(tenant_id)
+    if not tenant or not tenant.telegram_token:
+        flash('Informe o Token antes de buscar os chats.', 'warning')
+        return redirect(url_for('auth.telegram_settings'))
+
+    from app.utils import _fetch_json
+    token = tenant.telegram_token.strip()
+    data = _fetch_json(
+        f'https://api.telegram.org/bot{token}/getUpdates',
+        f'tg_updates_{tenant_id}',
+        ttl=0,   # nunca usa cache nesse endpoint
+    )
+    chats = {}
+    if data and data.get('ok'):
+        for upd in data.get('result', []):
+            for key in ('message', 'channel_post', 'my_chat_member'):
+                chat = (upd.get(key) or {}).get('chat')
+                if chat and chat.get('id') not in chats:
+                    chats[chat['id']] = {
+                        'id': chat['id'],
+                        'type': chat.get('type', ''),
+                        'title': chat.get('title') or chat.get('username') or chat.get('first_name', ''),
+                    }
+
+    return render_template('auth/telegram_settings.html',
+                           form=TelegramConfigForm(obj=tenant),
+                           tenant=tenant,
+                           available_chats=list(chats.values()))
