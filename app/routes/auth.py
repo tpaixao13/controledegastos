@@ -268,7 +268,11 @@ def telegram_chats():
                         'title': chat.get('title') or chat.get('username') or chat.get('first_name', ''),
                     }
 
+    form = TelegramConfigForm(obj=tenant)
+    form.telegram_token.data = ''
+    form.telegram_chat_id.data = ''
     return render_template('auth/telegram_settings.html',
-                           form=TelegramConfigForm(obj=tenant),
-                           tenant=tenant,
+                           form=form, tenant=tenant,
+                           token_masked=_mask(tenant.telegram_token),
+                           chat_masked=_mask(tenant.telegram_chat_id),
                            available_chats=list(chats.values()))
