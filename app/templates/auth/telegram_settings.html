@@ -70,31 +70,16 @@
                       onclick="toggleField('chat')">
                 <i class="bi bi-pencil"></i> Alterar
               </button>
-              {% if tenant.telegram_token %}
-              <a href="{{ url_for('auth.telegram_chats') }}" class="btn btn-sm btn-outline-primary" title="Buscar chats">
-                <i class="bi bi-search"></i>
-              </a>
-              {% endif %}
             </div>
             <div id="chat-input" style="display:none">
             {% endif %}
 
-            <div class="input-group">
-              {{ form.telegram_chat_id(class='form-control font-monospace' + (' is-invalid' if form.telegram_chat_id.errors else ''),
-                                       placeholder='-1001234567890', id='chat_id_input') }}
-              {% if not chat_masked and tenant.telegram_token %}
-              <a href="{{ url_for('auth.telegram_chats') }}" class="btn btn-outline-secondary" title="Buscar chats disponíveis">
-                <i class="bi bi-search"></i> Buscar
-              </a>
-              {% endif %}
-            </div>
+            {{ form.telegram_chat_id(class='form-control font-monospace' + (' is-invalid' if form.telegram_chat_id.errors else ''),
+                                     placeholder='-1001234567890', id='chat_id_input') }}
             {% for e in form.telegram_chat_id.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
 
             {% if chat_masked %}
             </div>
-            <div class="form-text">Salve o token, clique em 🔍 e selecione o chat abaixo.</div>
-            {% else %}
-            <div class="form-text">Salve o token, clique em <strong>Buscar</strong> e selecione o chat desejado.</div>
             {% endif %}
           </div>
 
