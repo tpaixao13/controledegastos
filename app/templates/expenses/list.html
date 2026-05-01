@@ -84,7 +84,7 @@
         </select>
       </div>
       <div class="col-auto">
-        <a href="{{ url_for('expenses.list') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-x-lg"></i> Limpar
         </a>
       </div>
@@ -236,7 +236,7 @@
         <ul class="pagination pagination-sm mb-0">
           {% if pagination.has_prev %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('expenses.list', page=pagination.prev_num,
+            <a class="page-link" href="{{ url_for('expenses.index', page=pagination.prev_num,
               user_id=filters.user_id, month=filters.month, year=filters.year, category=filters.category, payment_method=filters.payment_method) }}">
               &laquo;
             </a>
@@ -245,7 +245,7 @@
           {% for p in pagination.iter_pages() %}
             {% if p %}
             <li class="page-item {{ 'active' if p == pagination.page }}">
-              <a class="page-link" href="{{ url_for('expenses.list', page=p,
+              <a class="page-link" href="{{ url_for('expenses.index', page=p,
                 user_id=filters.user_id, month=filters.month, year=filters.year, category=filters.category, payment_method=filters.payment_method) }}">
                 {{ p }}
               </a>
@@ -256,7 +256,7 @@
           {% endfor %}
           {% if pagination.has_next %}
           <li class="page-item">
-            <a class="page-link" href="{{ url_for('expenses.list', page=pagination.next_num,
+            <a class="page-link" href="{{ url_for('expenses.index', page=pagination.next_num,
               user_id=filters.user_id, month=filters.month, year=filters.year, category=filters.category, payment_method=filters.payment_method) }}">
               &raquo;
             </a>
