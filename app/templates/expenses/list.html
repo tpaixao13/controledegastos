@@ -175,6 +175,15 @@
             </td>
             <td class="text-end fw-semibold {{ 'text-muted text-decoration-line-through' if e.paid else '' }}">{{ e.amount|brl }}</td>
             <td class="text-center">
+              {% if not e.paid %}
+              <form method="POST" action="{{ url_for('expenses.toggle_paid', expense_id=e.id) }}" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="next" value="{{ request.url }}">
+                <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como pago">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </form>
+              {% endif %}
               <a href="{{ url_for('expenses.edit', expense_id=e.id) }}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-pencil"></i>
               </a>
