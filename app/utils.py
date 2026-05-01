@@ -123,8 +123,8 @@ def _brl(value) -> str:
     return f'R$ {float(value):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
 
 
-def send_telegram_message(token: str, chat_id: str, text: str) -> bool:
-    """Envia mensagem via Telegram Bot API. Retorna True se enviou com sucesso."""
+def send_telegram_message(token: str, chat_id: str, text: str) -> tuple[bool, str]:
+    """Envia mensagem via Telegram Bot API. Retorna (sucesso, mensagem_erro)."""
     url = f'https://api.telegram.org/bot{token}/sendMessage'
     payload = json.dumps({'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML'}).encode()
     try:
@@ -134,10 +134,18 @@ def send_telegram_message(token: str, chat_id: str, text: str) -> bool:
             method='POST',
         )
         with urllib.request.urlopen(req, timeout=10, context=_ssl_ctx) as resp:
-            return resp.status == 200
+            return resp.status == 200, ''
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        try:
+            detail = json.loads(body).get('description', body)
+        except Exception:
+            detail = body
+        print(f'[Telegram] HTTPError {e.code}: {detail}')
+        return False, f'Telegram API {e.code}: {detail}'
     except Exception as e:
-        print(f'[Telegram] Erro ao enviar: {e}')
-        return False
+        print(f'[Telegram] Erro: {e}')
+        return False, str(e)
 
 
 def build_daily_reminder(tenant_users_list: list, today=None) -> str | None:
