@@ -199,25 +199,40 @@ def edit_member(user_id):
         return redirect(url_for('auth.login'))
 
     user = User.query.filter_by(id=user_id, tenant_id=tenant_id).first_or_404()
-    form = EditMemberForm(prefix=f'em{user_id}')
-    if form.validate_on_submit():
-        new_email = form.email.data.strip().lower()
-        existing = User.query.filter_by(email=new_email).first()
-        if existing and existing.id != user_id:
-            flash('E-mail já está em uso por outro membro.', 'danger')
-        else:
-            user.name = form.user_name.data.strip()
-            user.email = new_email
-            if form.new_password.data:
-                user.set_password(form.new_password.data)
-            db.session.commit()
-            if user_id == session.get('user_id'):
-                session['user_name'] = user.name
-            flash(f'Dados de {user.name} atualizados!', 'success')
-    else:
-        for field_errors in form.errors.values():
-            for err in field_errors:
-                flash(err, 'danger')
+    prefix = f'em{user_id}-'
+    name = request.form.get(f'{prefix}user_name', '').strip()
+    email = request.form.get(f'{prefix}email', '').strip().lower()
+    new_password = request.form.get(f'{prefix}new_password', '').strip()
+    confirm_password = request.form.get(f'{prefix}confirm_password', '').strip()
+
+    if len(name) < 2:
+        flash('Nome deve ter pelo menos 2 caracteres.', 'danger')
+        return redirect(url_for('auth.members'))
+    if '@' not in email or '.' not in email:
+        flash('E-mail inválido.', 'danger')
+        return redirect(url_for('auth.members'))
+
+    existing = User.query.filter_by(email=email).first()
+    if existing and existing.id != user_id:
+        flash('E-mail já está em uso por outro membro.', 'danger')
+        return redirect(url_for('auth.members'))
+
+    if new_password:
+        if len(new_password) < 8:
+            flash('A nova senha deve ter pelo menos 8 caracteres.', 'danger')
+            return redirect(url_for('auth.members'))
+        if new_password != confirm_password:
+            flash('As senhas não coincidem.', 'danger')
+            return redirect(url_for('auth.members'))
+
+    user.name = name
+    user.email = email
+    if new_password:
+        user.set_password(new_password)
+    db.session.commit()
+    if user_id == session.get('user_id'):
+        session['user_name'] = user.name
+    flash(f'Dados de {user.name} atualizados!', 'success')
     return redirect(url_for('auth.members'))
 
 
