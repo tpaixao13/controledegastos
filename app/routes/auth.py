@@ -161,8 +161,17 @@ def members():
             flash(f'{form.user_name.data.strip()} adicionado com sucesso!', 'success')
             return redirect(url_for('auth.members'))
 
+    rename_form = RenameGroupForm(prefix='rn', obj=tenant)
+    if rename_form.submit_rename.data and rename_form.validate():
+        tenant.name = rename_form.group_name.data.strip()
+        db.session.commit()
+        session['tenant_name'] = tenant.name
+        flash('Nome do grupo atualizado!', 'success')
+        return redirect(url_for('auth.members'))
+
     member_list = User.query.filter_by(tenant_id=tenant_id).order_by(User.name).all()
-    return render_template('auth/members.html', form=form, tenant=tenant, members=member_list)
+    return render_template('auth/members.html', form=form, rename_form=rename_form,
+                           tenant=tenant, members=member_list)
 
 
 @auth_bp.route('/members/delete/<int:user_id>', methods=['POST'])
