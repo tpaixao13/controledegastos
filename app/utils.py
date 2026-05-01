@@ -206,13 +206,23 @@ def build_daily_reminder(tenant_users_list: list, today=None) -> str | None:
     return '\n'.join(lines)
 
 
+_reminder_sent: dict = {}  # {tenant_id: date} — evita reenvio no mesmo dia
+
 def send_daily_reminders(app) -> None:
-    """Job do APScheduler: envia lembretes a todos os tenants habilitados."""
+    """Job do APScheduler (intervalo 1min): dispara no horário configurado por tenant."""
     from app.models import Tenant, User
+    now = datetime.now()
+    today = now.date()
     with app.app_context():
         tenants = Tenant.query.filter_by(telegram_enabled=True).all()
         for tenant in tenants:
             if not tenant.telegram_token or not tenant.telegram_chat_id:
+                continue
+            hour = tenant.telegram_hour if tenant.telegram_hour is not None else 8
+            minute = tenant.telegram_minute if tenant.telegram_minute is not None else 0
+            if now.hour != hour or now.minute != minute:
+                continue
+            if _reminder_sent.get(tenant.id) == today:
                 continue
             users = User.query.filter_by(tenant_id=tenant.id).all()
             if not users:
@@ -220,7 +230,9 @@ def send_daily_reminders(app) -> None:
             msg = build_daily_reminder(users)
             if msg:
                 ok, err = send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
-                if not ok:
+                if ok:
+                    _reminder_sent[tenant.id] = today
+                else:
                     print(f'[Telegram] Tenant {tenant.id}: {err}')
 
 
