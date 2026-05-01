@@ -4,7 +4,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from werkzeug.utils import secure_filename
 from app import db
 from app.models import User, Tenant
-from app.forms import LoginForm, ChangePasswordForm, AvatarForm, RegisterTenantForm, AddMemberForm, TelegramConfigForm, RenameGroupForm
+from app.forms import LoginForm, ChangePasswordForm, AvatarForm, RegisterTenantForm, AddMemberForm, EditMemberForm, TelegramConfigForm, RenameGroupForm
 from app.utils import build_daily_reminder, send_telegram_message
 
 auth_bp = Blueprint('auth', __name__)
