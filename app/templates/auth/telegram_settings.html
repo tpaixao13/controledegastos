@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Notificações Telegram — FinFam{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+
+    <h2 class="fw-bold mb-4">
+      <i class="bi bi-telegram text-primary"></i> Notificações Telegram
+    </h2>
+
+    <!-- Card de configuração -->
+    <div class="card mb-4">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-gear"></i> Configuração — {{ tenant.name }}
+      </div>
+      <div class="card-body">
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <!-- Ativar/desativar -->
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              {{ form.telegram_enabled(class='form-check-input', id='telegram_enabled') }}
+              {{ form.telegram_enabled.label(class='form-check-label fw-semibold') }}
+            </div>
+            <div class="form-text">Quando ativo, envia um resumo diário às 8h com contas do dia e atrasos.</div>
+          </div>
+
+          <hr>
+
+          <!-- Token -->
+          <div class="mb-3">
+            {{ form.telegram_token.label(class='form-label fw-semibold') }}
+            {{ form.telegram_token(class='form-control font-monospace' + (' is-invalid' if form.telegram_token.errors else ''),
+                                   placeholder='123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ') }}
+            {% for e in form.telegram_token.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            <div class="form-text">
+              Crie um bot no <a href="https://t.me/BotFather" target="_blank">@BotFather</a> e copie o token gerado.
+            </div>
+          </div>
+
+          <!-- Chat ID -->
+          <div class="mb-3">
+            {{ form.telegram_chat_id.label(class='form-label fw-semibold') }}
+            {{ form.telegram_chat_id(class='form-control font-monospace' + (' is-invalid' if form.telegram_chat_id.errors else ''),
+                                     placeholder='-1001234567890') }}
+            {% for e in form.telegram_chat_id.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            <div class="form-text">
+              ID do chat ou grupo. Adicione o bot ao grupo e use
+              <code>@userinfobot</code> para descobrir o ID.
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            {{ form.submit(class='btn btn-primary fw-semibold px-4') }}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Botão de teste -->
+    {% if tenant.telegram_token and tenant.telegram_chat_id %}
+    <div class="card mb-4 border-success">
+      <div class="card-body d-flex align-items-center justify-content-between">
+        <div>
+          <p class="fw-semibold mb-1"><i class="bi bi-send text-success"></i> Testar agora</p>
+          <p class="text-muted small mb-0">
+            Envia imediatamente o resumo de hoje (contas do dia + atrasadas) para o Telegram.
+          </p>
+        </div>
+        <form method="POST" action="{{ url_for('auth.telegram_test') }}" class="ms-3">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-outline-success fw-semibold">
+            <i class="bi bi-send-fill"></i> Enviar teste
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Instruções -->
+    <div class="card border-0 bg-light">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary"></i> Como configurar</h6>
+        <ol class="mb-0 small text-muted">
+          <li class="mb-2">Abra o Telegram e pesquise <strong>@BotFather</strong>.</li>
+          <li class="mb-2">Envie <code>/newbot</code>, escolha um nome e um username para o bot.</li>
+          <li class="mb-2">Copie o <strong>Token</strong> gerado e cole no campo acima.</li>
+          <li class="mb-2">Adicione o bot ao grupo/chat onde quer receber as notificações.</li>
+          <li class="mb-2">
+            Para descobrir o <strong>Chat ID</strong>: envie uma mensagem no grupo e acesse<br>
+            <code>https://api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code>
+            — o <code>chat.id</code> aparece no JSON.
+          </li>
+          <li>Ative a chave, salve e clique em <strong>Enviar teste</strong>.</li>
+        </ol>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
