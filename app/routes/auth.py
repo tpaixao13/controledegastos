@@ -20,9 +20,6 @@ def _avatar_url(user):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
-    if session.get('logged_in'):
-        return redirect(url_for('main.index'))
-
     form = LoginForm()
     if form.validate_on_submit():
         email = form.email.data.strip().lower()
