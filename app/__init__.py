@@ -105,6 +105,9 @@ def _run_migrations():
         "CREATE TABLE IF NOT EXISTS tenants (id INTEGER PRIMARY KEY, name TEXT NOT NULL, code TEXT NOT NULL UNIQUE, created_at DATETIME)",
         'ALTER TABLE users ADD COLUMN tenant_id INTEGER REFERENCES tenants(id)',
         'ALTER TABLE users ADD COLUMN email TEXT',
+        'ALTER TABLE tenants ADD COLUMN telegram_enabled INTEGER DEFAULT 0',
+        'ALTER TABLE tenants ADD COLUMN telegram_token TEXT',
+        'ALTER TABLE tenants ADD COLUMN telegram_chat_id TEXT',
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
