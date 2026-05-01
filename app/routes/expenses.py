@@ -256,7 +256,7 @@ def add():
             db.session.commit()
             flash('Despesa adicionada com sucesso!', 'success')
 
-        return redirect(url_for('expenses.list'))
+        return redirect(url_for('expenses.index'))
 
     uids = [u.id for u in users]
     db_cats = [c[0] for c in db.session.query(Expense.category)
@@ -290,7 +290,7 @@ def edit(expense_id):
         expense.paid = form.paid.data
         db.session.commit()
         flash('Despesa atualizada com sucesso!', 'success')
-        return redirect(url_for('expenses.list'))
+        return redirect(url_for('expenses.index'))
 
     uids = [u.id for u in users]
     db_cats = [c[0] for c in db.session.query(Expense.category)
@@ -307,7 +307,7 @@ def delete(expense_id):
     db.session.delete(expense)
     db.session.commit()
     flash('Despesa eliminada.', 'warning')
-    return redirect(url_for('expenses.list'))
+    return redirect(url_for('expenses.index'))
 
 
 @expenses_bp.route('/delete-group/<int:group_id>', methods=['POST'])
@@ -318,7 +318,7 @@ def delete_group(group_id):
     db.session.delete(group)
     db.session.commit()
     flash(f'Todas as {count} parcelas foram eliminadas.', 'warning')
-    return redirect(url_for('expenses.list'))
+    return redirect(url_for('expenses.index'))
 
 
 @expenses_bp.route('/toggle-paid/<int:expense_id>', methods=['POST'])
@@ -329,7 +329,7 @@ def toggle_paid(expense_id):
     db.session.commit()
     next_url = request.form.get('next') or ''
     if not next_url or urlparse(next_url).netloc:
-        next_url = url_for('expenses.list')
+        next_url = url_for('expenses.index')
     return redirect(next_url)
 
 
@@ -341,7 +341,7 @@ def delete_recurring(group_id):
     db.session.delete(group)
     db.session.commit()
     flash(f'Todas as {count} recorrências foram eliminadas.', 'warning')
-    return redirect(url_for('expenses.list'))
+    return redirect(url_for('expenses.index'))
 
 
 @expenses_bp.route('/import', methods=['GET'])
@@ -466,7 +466,7 @@ def import_bank_confirm():
 
     db.session.commit()
     flash(f'{count} despesa(s) importada(s) com sucesso!', 'success')
-    return redirect(url_for('expenses.list'))
+    return redirect(url_for('expenses.index'))
 
 
 def _write_expense_series(form, bank, payment, group_id, group_field, number_field, amounts):
