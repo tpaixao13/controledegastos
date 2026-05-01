@@ -219,7 +219,9 @@ def send_daily_reminders(app) -> None:
                 continue
             msg = build_daily_reminder(users)
             if msg:
-                send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
+                ok, err = send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
+                if not ok:
+                    print(f'[Telegram] Tenant {tenant.id}: {err}')
 
 
 def sum_salaries_month(uids: list, year: int, month: int) -> float:
