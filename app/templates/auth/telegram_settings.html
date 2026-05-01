@@ -165,17 +165,5 @@ function toggleField(field) {
   }
 }
 
-function selectChat(id) {
-  // Se o campo chat estiver escondido (já tem valor), mostra o input
-  const inputDiv = document.getElementById('chat-input');
-  const display  = document.getElementById('chat-display');
-  if (inputDiv) {
-    inputDiv.style.display = 'block';
-    if (display) display.style.display = 'none';
-  }
-  const input = document.getElementById('chat_id_input');
-  if (input) input.value = id;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
 </script>
 {% endblock %}
