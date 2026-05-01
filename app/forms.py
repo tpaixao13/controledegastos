@@ -187,6 +187,11 @@ class AvatarForm(FlaskForm):
     submit_avatar = SubmitField('Salvar Foto')
 
 
+class RenameGroupForm(FlaskForm):
+    group_name = StringField('Nome do Grupo', validators=[DataRequired(), Length(2, 60)])
+    submit_rename = SubmitField('Salvar Nome')
+
+
 class TelegramConfigForm(FlaskForm):
     telegram_enabled = BooleanField('Ativar notificações diárias via Telegram')
     telegram_token = StringField('Token do Bot', validators=[Optional(), Length(max=200)])
