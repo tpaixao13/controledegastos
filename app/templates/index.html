@@ -381,6 +381,53 @@ document.getElementById('btnResetLayout').addEventListener('click', () => {
   location.reload();
 });
 
+// ── Bulk mark as paid ────────────────────────────────────────────
+function updateBulkBtn() {
+  const checked = document.querySelectorAll('.expense-cb:checked');
+  const total   = document.querySelectorAll('.expense-cb');
+  const btn     = document.getElementById('btnMarcarSelecionadas');
+  const counter = document.getElementById('countSelected');
+  const checkAll = document.getElementById('checkAll');
+  if (!btn) return;
+  if (checked.length > 0) {
+    btn.classList.remove('d-none');
+    counter.textContent = checked.length;
+  } else {
+    btn.classList.add('d-none');
+  }
+  if (checkAll) {
+    checkAll.indeterminate = checked.length > 0 && checked.length < total.length;
+    checkAll.checked = checked.length === total.length && total.length > 0;
+  }
+}
+
+function onCheckAllChange(cb) {
+  document.querySelectorAll('.expense-cb').forEach(el => { el.checked = cb.checked; });
+  updateBulkBtn();
+}
+
+function toggleSelectAll() {
+  const cbs = document.querySelectorAll('.expense-cb');
+  const allChecked = [...cbs].every(c => c.checked);
+  cbs.forEach(el => { el.checked = !allChecked; });
+  const checkAll = document.getElementById('checkAll');
+  if (checkAll) checkAll.checked = !allChecked;
+  updateBulkBtn();
+}
+
+function submitBulkPaid() {
+  const form = document.getElementById('formBulkPaid');
+  form.querySelectorAll('input[name="expense_ids"]').forEach(el => el.remove());
+  document.querySelectorAll('.expense-cb:checked').forEach(cb => {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'expense_ids';
+    input.value = cb.value;
+    form.appendChild(input);
+  });
+  form.submit();
+}
+
 // ── Ordenação de tabelas
 document.querySelectorAll('.sortable-table').forEach(table => {
   const headers = table.querySelectorAll('th.sortable');
