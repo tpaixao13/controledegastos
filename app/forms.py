@@ -185,3 +185,10 @@ class AvatarForm(FlaskForm):
         FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Apenas imagens (jpg, png, gif, webp).')
     ])
     submit_avatar = SubmitField('Salvar Foto')
+
+
+class TelegramConfigForm(FlaskForm):
+    telegram_enabled = BooleanField('Ativar notificações diárias via Telegram')
+    telegram_token = StringField('Token do Bot', validators=[Optional(), Length(max=200)])
+    telegram_chat_id = StringField('Chat ID', validators=[Optional(), Length(max=100)])
+    submit = SubmitField('Salvar Configurações')
