@@ -16,7 +16,7 @@
         <i class="bi bi-gear"></i> Configuração — {{ tenant.name }}
       </div>
       <div class="card-body">
-        <form method="POST" novalidate>
+        <form method="POST" action="{{ url_for('auth.telegram_settings') }}" novalidate>
           {{ form.hidden_tag() }}
 
           <!-- Ativar/desativar -->
