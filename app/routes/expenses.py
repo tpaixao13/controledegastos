@@ -19,7 +19,7 @@ CATEGORIES = [
 
 
 @expenses_bp.route('/')
-def list():
+def index():
     users = tenant_users().order_by(User.name).all()
     uids = [u.id for u in users]
     now = datetime.now()
