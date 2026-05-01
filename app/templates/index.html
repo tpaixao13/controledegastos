@@ -182,6 +182,12 @@
 
 </div>
 
+<!-- Formulário oculto para bulk-paid -->
+<form method="POST" action="{{ url_for('expenses.bulk_paid') }}" id="formBulkPaid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="next" value="{{ url_for('main.index', month=month, year=year) }}">
+</form>
+
 <!-- 5. Despesas Pendentes -->
 {% if pending %}
 <div class="card mb-4 border-warning">
@@ -190,13 +196,27 @@
       <i class="bi bi-clock-fill text-warning"></i> Despesas Pendentes —
       <span class="badge badge-pendente ms-1">{{ pending|length }}</span>
     </span>
-    <span class="fw-bold text-danger">{{ total_pendente|brl }}</span>
+    <div class="d-flex align-items-center gap-2">
+      <span class="fw-bold text-danger">{{ total_pendente|brl }}</span>
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnSelectAll"
+              onclick="toggleSelectAll()">
+        <i class="bi bi-check-all"></i> Selecionar todas
+      </button>
+      <button type="button" class="btn btn-sm btn-success d-none" id="btnMarcarSelecionadas"
+              onclick="submitBulkPaid()">
+        <i class="bi bi-check-lg"></i> Marcar selecionadas como pagas
+        <span class="badge bg-white text-success ms-1" id="countSelected">0</span>
+      </button>
+    </div>
   </div>
   <div class="card-body p-0">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0 sortable-table" id="tablePending">
         <thead class="table-light">
           <tr>
+            <th style="width:36px">
+              <input type="checkbox" id="checkAll" class="form-check-input" onchange="onCheckAllChange(this)">
+            </th>
             <th class="sortable">Pessoa <span class="sort-icon text-muted">⇅</span></th>
             <th class="sortable">Dia <span class="sort-icon text-muted">⇅</span></th>
             <th class="sortable">Descrição <span class="sort-icon text-muted">⇅</span></th>
@@ -208,6 +228,10 @@
         <tbody>
           {% for e in pending %}
           <tr>
+            <td>
+              <input type="checkbox" class="form-check-input expense-cb" value="{{ e.id }}"
+                     onchange="updateBulkBtn()">
+            </td>
             <td>
               <span class="badge {{ user_colors[e.user_id].badge_class }}">
                 {{ e.user.name }}
@@ -238,7 +262,7 @@
                 <input type="hidden" name="next"
                        value="{{ url_for('main.index', month=month, year=year) }}">
                 <button type="submit" class="btn btn-sm btn-success">
-                  <i class="bi bi-check-lg"></i> Marcar Pago
+                  <i class="bi bi-check-lg"></i> Pago
                 </button>
               </form>
             </td>
