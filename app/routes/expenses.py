@@ -350,6 +350,79 @@ def import_bank():
     return render_template('expenses/import_upload.html', users=users)
 
 
+@expenses_bp.route('/import/finfam', methods=['POST'])
+def import_finfam():
+    import openpyxl
+
+    upload = request.files.get('file')
+    if not upload or not upload.filename:
+        flash('Selecione um arquivo .xlsx.', 'danger')
+        return redirect(url_for('expenses.import_bank'))
+    if not upload.filename.lower().endswith('.xlsx'):
+        flash('O arquivo deve ser um .xlsx exportado pelo FinFam.', 'danger')
+        return redirect(url_for('expenses.import_bank'))
+
+    users = tenant_users().order_by(User.name).all()
+    user_map = {u.name.strip().lower(): u for u in users}
+
+    try:
+        wb = openpyxl.load_workbook(filename=upload.stream, read_only=True, data_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(min_row=2, values_only=True))
+    except Exception as e:
+        flash(f'Erro ao ler o arquivo: {e}', 'danger')
+        return redirect(url_for('expenses.import_bank'))
+
+    imported = skipped = 0
+    for row in rows:
+        if not row or not any(row):
+            continue
+        try:
+            nome, dia, mes, ano, descricao, categoria, pagamento, banco, valor_raw = (row + (None,) * 9)[:9]
+
+            user = user_map.get(str(nome or '').strip().lower())
+            if not user:
+                skipped += 1
+                continue
+
+            if isinstance(valor_raw, (int, float)):
+                amount = float(valor_raw)
+            else:
+                s = str(valor_raw).replace('R$', '').strip().replace('.', '').replace(',', '.')
+                amount = float(s)
+
+            if amount <= 0:
+                skipped += 1
+                continue
+
+            dia, mes, ano = int(dia), int(mes), int(ano)
+            if not (1 <= mes <= 12 and 2000 <= ano <= 2100 and 1 <= dia <= 31):
+                skipped += 1
+                continue
+
+            db.session.add(Expense(
+                user_id=user.id,
+                description=str(descricao or '').strip()[:200],
+                amount=amount,
+                category=str(categoria or 'Outros').strip(),
+                payment_method=str(pagamento or 'PIX').strip(),
+                bank=str(banco or '').strip() or None,
+                year=ano,
+                month=mes,
+                day=dia,
+            ))
+            imported += 1
+        except Exception:
+            skipped += 1
+
+    db.session.commit()
+    if imported:
+        flash(f'{imported} despesa(s) importada(s) com sucesso! {skipped} linha(s) ignorada(s).', 'success')
+    else:
+        flash(f'Nenhuma despesa importada. {skipped} linha(s) ignorada(s). Verifique se os nomes dos membros correspondem aos do grupo atual.', 'warning')
+    return redirect(url_for('expenses.index'))
+
+
 # Redireciona rota antiga para nova
 @expenses_bp.route('/import-c6', methods=['GET'])
 def import_c6():
