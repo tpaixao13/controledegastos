@@ -178,6 +178,48 @@
   </div>
 </div>
 
+<!-- Importar base FinFam -->
+<div class="row mt-4">
+  <div class="col-md-7">
+    <div class="card shadow-sm border-success">
+      <div class="card-header fw-semibold text-success bg-success bg-opacity-10">
+        <i class="bi bi-file-earmark-excel"></i> Importar base FinFam (.xlsx)
+      </div>
+      <div class="card-body p-4">
+        <p class="text-muted small mb-3">
+          Use o arquivo <strong>.xlsx</strong> exportado pelo FinFam (Despesas → Exportar → Excel).
+          As despesas serão atribuídas automaticamente ao membro cujo nome constar na coluna <strong>Pessoa</strong>.
+        </p>
+        <form method="POST" action="{{ url_for('expenses.import_finfam') }}"
+              enctype="multipart/form-data" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Arquivo .xlsx</label>
+            <input type="file" name="file" class="form-control" accept=".xlsx" required>
+            <div class="form-text">Somente arquivos <code>.xlsx</code> exportados pelo FinFam.</div>
+          </div>
+          <button type="submit" class="btn btn-success fw-semibold">
+            <i class="bi bi-upload"></i> Importar
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    <div class="card bg-light border-0 h-100">
+      <div class="card-body p-4">
+        <h6 class="fw-bold mb-2"><i class="bi bi-info-circle text-success"></i> Como usar</h6>
+        <ol class="small text-muted mb-0 ps-3">
+          <li class="mb-1">Vá em <strong>Despesas → Exportar → Excel (.xlsx)</strong> na base antiga.</li>
+          <li class="mb-1">Faça upload do arquivo aqui.</li>
+          <li class="mb-1">As despesas são associadas ao membro pelo nome — certifique-se que os nomes batem com os membros do grupo atual.</li>
+          <li>Linhas com nome não reconhecido ou dados inválidos são ignoradas.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
 <style>
 .bank-card { cursor: pointer; transition: border-color .15s, background .15s; border-color: #dee2e6 !important; }
 .bank-card:hover { border-color: #0d6efd !important; background: #f0f4ff; }
