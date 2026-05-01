@@ -192,6 +192,35 @@ def delete_member(user_id):
     return redirect(url_for('auth.members'))
 
 
+@auth_bp.route('/members/edit/<int:user_id>', methods=['POST'])
+def edit_member(user_id):
+    tenant_id = session.get('tenant_id')
+    if not tenant_id:
+        return redirect(url_for('auth.login'))
+
+    user = User.query.filter_by(id=user_id, tenant_id=tenant_id).first_or_404()
+    form = EditMemberForm(prefix=f'em{user_id}')
+    if form.validate_on_submit():
+        new_email = form.email.data.strip().lower()
+        existing = User.query.filter_by(email=new_email).first()
+        if existing and existing.id != user_id:
+            flash('E-mail já está em uso por outro membro.', 'danger')
+        else:
+            user.name = form.user_name.data.strip()
+            user.email = new_email
+            if form.new_password.data:
+                user.set_password(form.new_password.data)
+            db.session.commit()
+            if user_id == session.get('user_id'):
+                session['user_name'] = user.name
+            flash(f'Dados de {user.name} atualizados!', 'success')
+    else:
+        for field_errors in form.errors.values():
+            for err in field_errors:
+                flash(err, 'danger')
+    return redirect(url_for('auth.members'))
+
+
 def _mask(value: str | None, visible: int = 4) -> str:
     if not value:
         return ''
