@@ -172,14 +172,23 @@
       <div class="card-body">
         <h6 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary"></i> Como configurar</h6>
         <ol class="mb-0 small text-muted">
-          <li class="mb-2">Pesquise <strong>@BotFather</strong> no Telegram → envie <code>/newbot</code> → copie o token.</li>
-          <li class="mb-2">Cole o token acima e salve.</li>
           <li class="mb-2">
-            <strong>Chat privado:</strong> abra o bot e envie <code>/start</code>.<br>
-            <strong>Grupo:</strong> adicione o bot ao grupo e envie qualquer mensagem.
+            Pesquise <strong>@BotFather</strong> no Telegram → envie <code>/newbot</code> → copie o <strong>Token</strong> e cole acima → salve.
           </li>
-          <li class="mb-2">Clique em 🔍 para buscar os chats disponíveis e selecione o desejado.</li>
-          <li>Escolha o horário, salve e teste.</li>
+          <li class="mb-2">
+            <strong>Chat privado:</strong> abra o bot (<a href="https://t.me/" target="_blank">t.me/nome_do_bot</a>) e envie <code>/start</code>.<br>
+            <strong>Grupo:</strong> adicione o bot ao grupo e envie qualquer mensagem lá.
+          </li>
+          <li class="mb-2">
+            Clique em <i class="bi bi-search"></i> ao lado do Chat ID para ver os chats disponíveis e selecione o desejado — ou descubra manualmente:<br>
+            <span class="user-select-all font-monospace bg-white border rounded px-1 py-0 mt-1 d-inline-block">
+              https://api.telegram.org/bot<strong>&lt;TOKEN&gt;</strong>/getUpdates
+            </span><br>
+            Abra esse link no navegador (substituindo <code>&lt;TOKEN&gt;</code> pelo seu token) e procure o campo <code>"chat":{"id": ...}</code>.
+            O número (pode ser negativo para grupos) é o Chat ID.
+          </li>
+          <li class="mb-2">Cole o Chat ID, escolha o horário de envio e salve.</li>
+          <li>Clique em <strong>Enviar teste</strong> para confirmar.</li>
         </ol>
       </div>
     </div>
