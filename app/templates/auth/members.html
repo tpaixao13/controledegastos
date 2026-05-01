@@ -40,16 +40,70 @@
                 {% endif %}
               </div>
             </div>
+          <div class="d-flex gap-1">
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="modal" data-bs-target="#modalEdit{{ m.id }}">
+              <i class="bi bi-pencil"></i>
+            </button>
             {% if m.id != session.user_id %}
             <form method="POST" action="{{ url_for('auth.delete_member', user_id=m.id) }}"
                   onsubmit="return confirm('Remover {{ m.name }}? Todas as despesas e dados deste membro serão excluídos.')">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-sm btn-outline-danger">
-                <i class="bi bi-trash"></i> Remover
+                <i class="bi bi-trash"></i>
               </button>
             </form>
             {% endif %}
+          </div>
           </li>
+
+          <!-- Modal editar membro -->
+          <div class="modal fade" id="modalEdit{{ m.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <form method="POST" action="{{ url_for('auth.edit_member', user_id=m.id) }}" novalidate>
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="modal-header">
+                    <h6 class="modal-title fw-bold">
+                      <i class="bi bi-pencil-square"></i> Editar — {{ m.name }}
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Nome</label>
+                      <input type="text" name="em{{ m.id }}-user_name"
+                             class="form-control" value="{{ m.name }}" required minlength="2" maxlength="30">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">E-mail</label>
+                      <input type="email" name="em{{ m.id }}-email"
+                             class="form-control" value="{{ m.email or '' }}" required>
+                    </div>
+                    <hr>
+                    <p class="small text-muted mb-2">Deixe em branco para não alterar a senha.</p>
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Nova Senha</label>
+                      <input type="password" name="em{{ m.id }}-new_password"
+                             class="form-control" minlength="8" placeholder="Mínimo 8 caracteres">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Confirmar Nova Senha</label>
+                      <input type="password" name="em{{ m.id }}-confirm_password"
+                             class="form-control" placeholder="Repita a nova senha">
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                      <i class="bi bi-check-lg"></i> Salvar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
           {% endfor %}
         </ul>
       </div>
