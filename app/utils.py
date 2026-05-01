@@ -118,6 +118,101 @@ def sum_expenses_month(uids: list, year: int, month: int, *extra_filters) -> flo
     return float(q.scalar() or 0)
 
 
+def _brl(value) -> str:
+    return f'R$ {float(value):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+def send_telegram_message(token: str, chat_id: str, text: str) -> bool:
+    """Envia mensagem via Telegram Bot API. Retorna True se enviou com sucesso."""
+    url = f'https://api.telegram.org/bot{token}/sendMessage'
+    payload = json.dumps({'chat_id': chat_id, 'text': text, 'parse_mode': 'HTML'}).encode()
+    try:
+        req = urllib.request.Request(
+            url, data=payload,
+            headers={'Content-Type': 'application/json'},
+            method='POST',
+        )
+        with urllib.request.urlopen(req, timeout=10, context=_ssl_ctx) as resp:
+            return resp.status == 200
+    except Exception as e:
+        print(f'[Telegram] Erro ao enviar: {e}')
+        return False
+
+
+def build_daily_reminder(tenant_users_list: list, today=None) -> str | None:
+    """Monta texto HTML do lembrete diário. Retorna None se não há nada pendente."""
+    from app.models import Expense
+    from sqlalchemy import or_, and_
+
+    if today is None:
+        today = datetime.now().date()
+
+    uids = [u.id for u in tenant_users_list]
+    user_names = {u.id: u.name for u in tenant_users_list}
+
+    today_pending = (Expense.query
+                     .filter(Expense.user_id.in_(uids),
+                             Expense.year == today.year,
+                             Expense.month == today.month,
+                             Expense.day == today.day,
+                             Expense.paid.isnot(True))
+                     .order_by(Expense.user_id, Expense.description)
+                     .all())
+
+    overdue = (Expense.query
+               .filter(Expense.user_id.in_(uids),
+                       Expense.paid.isnot(True),
+                       or_(
+                           Expense.year < today.year,
+                           and_(Expense.year == today.year, Expense.month < today.month),
+                           and_(Expense.year == today.year,
+                                Expense.month == today.month,
+                                Expense.day < today.day),
+                       ))
+               .order_by(Expense.year, Expense.month, Expense.day)
+               .all())
+
+    if not today_pending and not overdue:
+        return None
+
+    lines = [f'📅 <b>FinFam — {today.strftime("%d/%m/%Y")}</b>\n']
+
+    if today_pending:
+        lines.append('🔔 <b>Vencimentos de hoje:</b>')
+        for e in today_pending:
+            lines.append(f'• {user_names.get(e.user_id, "?")} — {e.description} ({e.category}) — {_brl(e.amount)}')
+
+    if overdue:
+        if today_pending:
+            lines.append('')
+        lines.append('⚠️ <b>Em atraso:</b>')
+        for e in overdue:
+            exp_date = date_type(e.year, e.month, e.day)
+            dias = (today - exp_date).days
+            lines.append(
+                f'• {user_names.get(e.user_id, "?")} — {e.description} ({e.category})'
+                f' — {_brl(e.amount)} — {dias}d de atraso'
+            )
+
+    return '\n'.join(lines)
+
+
+def send_daily_reminders(app) -> None:
+    """Job do APScheduler: envia lembretes a todos os tenants habilitados."""
+    from app.models import Tenant, User
+    with app.app_context():
+        tenants = Tenant.query.filter_by(telegram_enabled=True).all()
+        for tenant in tenants:
+            if not tenant.telegram_token or not tenant.telegram_chat_id:
+                continue
+            users = User.query.filter_by(tenant_id=tenant.id).all()
+            if not users:
+                continue
+            msg = build_daily_reminder(users)
+            if msg:
+                send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
+
+
 def sum_salaries_month(uids: list, year: int, month: int) -> float:
     """Soma Salary.amount para o tenant no mês."""
     from app import db
