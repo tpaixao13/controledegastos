@@ -181,6 +181,12 @@ def delete_member(user_id):
     return redirect(url_for('auth.members'))
 
 
+def _mask(value: str | None, visible: int = 4) -> str:
+    if not value:
+        return ''
+    return '•' * max(0, len(value) - visible) + value[-visible:]
+
+
 @auth_bp.route('/settings/telegram', methods=['GET', 'POST'])
 def telegram_settings():
     tenant_id = session.get('tenant_id')
@@ -188,14 +194,26 @@ def telegram_settings():
         return redirect(url_for('auth.login'))
     tenant = Tenant.query.get(tenant_id)
     form = TelegramConfigForm(obj=tenant)
+    # Não pré-preenche os campos sensíveis no form — mostrados mascarados fora dele
+    if request.method == 'GET':
+        form.telegram_token.data = ''
+        form.telegram_chat_id.data = ''
     if form.validate_on_submit():
         tenant.telegram_enabled = form.telegram_enabled.data
-        tenant.telegram_token = form.telegram_token.data.strip() or None
-        tenant.telegram_chat_id = form.telegram_chat_id.data.strip() or None
+        new_token = form.telegram_token.data.strip()
+        new_chat = form.telegram_chat_id.data.strip()
+        if new_token:
+            tenant.telegram_token = new_token
+        if new_chat:
+            tenant.telegram_chat_id = new_chat
+        tenant.telegram_hour = form.telegram_hour.data
+        tenant.telegram_minute = form.telegram_minute.data
         db.session.commit()
         flash('Configurações do Telegram salvas!', 'success')
         return redirect(url_for('auth.telegram_settings'))
-    return render_template('auth/telegram_settings.html', form=form, tenant=tenant)
+    return render_template('auth/telegram_settings.html', form=form, tenant=tenant,
+                           token_masked=_mask(tenant.telegram_token),
+                           chat_masked=_mask(tenant.telegram_chat_id))
 
 
 @auth_bp.route('/settings/telegram/test', methods=['POST'])
