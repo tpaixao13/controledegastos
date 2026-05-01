@@ -54,8 +54,29 @@
     </div>
   </div>
 
-  <!-- Adicionar membro -->
-  <div class="col-md-5">
+  <!-- Coluna direita -->
+  <div class="col-md-5 d-flex flex-column gap-4">
+
+    <!-- Nome do grupo -->
+    <div class="card">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-pencil-square"></i> Nome do Grupo
+      </div>
+      <div class="card-body">
+        <form method="POST" novalidate>
+          {{ rename_form.hidden_tag() }}
+          <div class="mb-3">
+            {{ rename_form.group_name.label(class='form-label fw-semibold') }}
+            {{ rename_form.group_name(class='form-control' + (' is-invalid' if rename_form.group_name.errors else ''),
+                                      value=tenant.name) }}
+            {% for e in rename_form.group_name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+          </div>
+          {{ rename_form.submit_rename(class='btn btn-outline-primary w-100') }}
+        </form>
+      </div>
+    </div>
+
+    <!-- Adicionar membro -->
     <div class="card">
       <div class="card-header fw-semibold">Adicionar Membro</div>
       <div class="card-body">
