@@ -10,6 +10,9 @@ class Tenant(db.Model):
     name = db.Column(db.Text, nullable=False)
     code = db.Column(db.Text, nullable=False, unique=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    telegram_enabled = db.Column(db.Boolean, default=False)
+    telegram_token = db.Column(db.Text, nullable=True)
+    telegram_chat_id = db.Column(db.Text, nullable=True)
 
     users = db.relationship('User', backref='tenant', lazy='dynamic', cascade='all, delete-orphan')
 
