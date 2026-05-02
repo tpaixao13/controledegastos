@@ -45,6 +45,7 @@ class User(db.Model):
     email = db.Column(db.Text, nullable=True, unique=True)
     password_hash = db.Column(db.Text, nullable=True)
     avatar = db.Column(db.Text, nullable=True)
+    is_admin = db.Column(db.Boolean, default=False)
 
     salaries = db.relationship('Salary', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     expenses = db.relationship('Expense', backref='user', lazy='dynamic', cascade='all, delete-orphan')
