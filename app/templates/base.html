@@ -64,11 +64,25 @@
             <i class="bi bi-person-circle fs-5"></i>
             {% endif %}
             {{ session.user_name }}
+            {% if trial_days_left is not none %}
+            <span class="badge bg-warning text-dark" style="font-size:.65rem;">Trial</span>
+            {% endif %}
           </a>
           <ul class="dropdown-menu dropdown-menu-end">
             {% if session.get('tenant_name') %}
             <li><span class="dropdown-item-text text-muted small">
               <i class="bi bi-people"></i> {{ session.tenant_name }}
+            </span></li>
+            <li><hr class="dropdown-divider"></li>
+            {% endif %}
+            {% if trial_days_left is not none %}
+            <li><span class="dropdown-item-text small">
+              <i class="bi bi-hourglass-split text-warning"></i>
+              {% if trial_days_left == 0 %}
+                <span class="text-danger fw-semibold">Trial expira hoje</span>
+              {% else %}
+                Conta trial — <strong>{{ trial_days_left }} dia{{ 's' if trial_days_left != 1 }}</strong> restante{{ 's' if trial_days_left != 1 }}
+              {% endif %}
             </span></li>
             <li><hr class="dropdown-divider"></li>
             {% endif %}
