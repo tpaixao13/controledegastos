@@ -112,7 +112,7 @@ def create_app(config_name='default'):
         from datetime import datetime
         exempt = {'auth.login', 'auth.logout', 'auth.register', 'auth.trial_expired', 'static'}
         endpoint = flask_request.endpoint or ''
-        if endpoint.startswith('admin.'):
+        if endpoint.startswith('admin.') or flask_request.path.startswith('/admin'):
             return
         if endpoint not in exempt and not session.get('logged_in'):
             return redirect(url_for('auth.login'))
