@@ -36,8 +36,9 @@
 
             {% if token_masked %}
             <!-- Valor já salvo — mostrar mascarado com opção de editar -->
-            <div id="token-display" class="d-flex align-items-center gap-2 mb-2" style="min-width:0;">
-              <code class="bg-light px-2 py-1 rounded text-muted text-truncate flex-grow-1" id="token-mask" style="min-width:0;display:block;">{{ token_masked }}</code>
+            <div id="token-display" class="d-flex align-items-center gap-2 mb-2" style="min-width:0;overflow:hidden;">
+              <code class="bg-light px-2 py-1 rounded text-muted flex-grow-1" id="token-mask"
+                    style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;max-width:100%;">{{ token_masked }}</code>
               <button type="button" class="btn btn-sm btn-outline-secondary flex-shrink-0"
                       onclick="toggleField('token')">
                 <i class="bi bi-pencil"></i> Alterar
