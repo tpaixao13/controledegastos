@@ -216,4 +216,36 @@ def _run_migrations():
         except Exception:
             pass
 
+        # Seed admin user (no-op if already exists)
+        try:
+            from werkzeug.security import generate_password_hash
+            existing = conn.execute(text(
+                "SELECT id FROM users WHERE email='admin@finfam.app'"
+            )).fetchone()
+            if not existing:
+                conn.execute(text(
+                    "INSERT INTO users (name, email, password_hash, is_admin) "
+                    "VALUES ('Admin', 'admin@finfam.app', :pw, 1)"
+                ), {'pw': generate_password_hash('FinFam@Admin2025')})
+                conn.commit()
+            else:
+                conn.execute(text(
+                    "UPDATE users SET is_admin=1 WHERE email='admin@finfam.app'"
+                ))
+                conn.commit()
+        except Exception:
+            pass
+
+        # Set test1@teste.com.br tenant trial as expired
+        try:
+            conn.execute(text("""
+                UPDATE tenants SET trial_expires_at='2020-01-01 00:00:00'
+                WHERE id IN (
+                    SELECT tenant_id FROM users WHERE email='teste1@teste.com.br'
+                )
+            """))
+            conn.commit()
+        except Exception:
+            pass
+
 
