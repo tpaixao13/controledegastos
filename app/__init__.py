@@ -96,6 +96,15 @@ def create_app(config_name='default'):
     except ImportError:
         logging.warning('APScheduler não instalado — lembretes Telegram desativados.')
 
+    @app.context_processor
+    def inject_trial():
+        from datetime import datetime
+        expires_str = session.get('trial_expires_at')
+        if not expires_str:
+            return {'trial_days_left': None}
+        delta = (datetime.fromisoformat(expires_str) - datetime.utcnow()).days
+        return {'trial_days_left': max(0, delta)}
+
     @app.before_request
     def require_login():
         from datetime import datetime
