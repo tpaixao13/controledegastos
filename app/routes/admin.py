@@ -1,8 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from werkzeug.security import generate_password_hash
 from app import db
 from app.models import User, Tenant
+
+ONLINE_THRESHOLD = timedelta(minutes=5)
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
