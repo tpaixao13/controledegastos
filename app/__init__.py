@@ -128,6 +128,11 @@ def create_app(config_name='default'):
                 if tenant and tenant.trial_expires_at and datetime.utcnow() > tenant.trial_expires_at:
                     session.clear()
                     return redirect(url_for('auth.trial_expired'))
+            user_id = session.get('user_id')
+            if user_id:
+                from app.models import User
+                User.query.filter_by(id=user_id).update({'last_seen': datetime.utcnow()})
+                db.session.commit()
 
     return app
 
