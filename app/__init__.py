@@ -241,13 +241,14 @@ def _run_migrations():
         except Exception:
             pass
 
-        # Set test1@teste.com.br tenant trial as expired
+        # Set test1@teste.com.br trial to 10 days from now (only if still at expired 2020 value or NULL)
         try:
             conn.execute(text("""
-                UPDATE tenants SET trial_expires_at='2020-01-01 00:00:00'
+                UPDATE tenants SET trial_expires_at=datetime('now', '+10 days')
                 WHERE id IN (
                     SELECT tenant_id FROM users WHERE email='teste1@teste.com.br'
                 )
+                AND (trial_expires_at IS NULL OR trial_expires_at <= '2021-01-01')
             """))
             conn.commit()
         except Exception:
