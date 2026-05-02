@@ -104,6 +104,12 @@
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
+              <a class="dropdown-item text-danger fw-semibold" href="{{ url_for('admin.dashboard') }}">
+                <i class="bi bi-shield-lock"></i> Admin
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
               <form method="POST" action="{{ url_for('auth.logout') }}" class="d-inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="dropdown-item text-danger border-0 bg-transparent w-100 text-start">
