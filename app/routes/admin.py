@@ -106,9 +106,32 @@ def grant_lifetime(tenant_id):
 
 @admin_bp.route('/revoke-lifetime/<int:tenant_id>', methods=['POST'])
 def revoke_lifetime(tenant_id):
-    from datetime import timedelta
     tenant = Tenant.query.get_or_404(tenant_id)
     tenant.trial_expires_at = datetime.utcnow() - timedelta(days=1)
     db.session.commit()
     flash(f'Acesso de "{tenant.name}" revogado.', 'warning')
+    return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/delete-user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    tenant = Tenant.query.get(user.tenant_id) if user.tenant_id else None
+    name = user.name
+    db.session.delete(user)
+    db.session.flush()
+    if tenant and tenant.users.filter(User.is_admin == False).count() == 0:
+        db.session.delete(tenant)
+    db.session.commit()
+    flash(f'Utilizador "{name}" eliminado.', 'warning')
+    return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/delete-tenant/<int:tenant_id>', methods=['POST'])
+def delete_tenant(tenant_id):
+    tenant = Tenant.query.get_or_404(tenant_id)
+    name = tenant.name
+    db.session.delete(tenant)
+    db.session.commit()
+    flash(f'Família "{name}" e todos os seus membros eliminados.', 'danger')
     return redirect(url_for('admin.dashboard'))
