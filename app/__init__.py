@@ -116,7 +116,7 @@ def create_app(config_name='default'):
             return
         if endpoint not in exempt and not session.get('logged_in'):
             return redirect(url_for('auth.login'))
-        if session.get('logged_in') and flask_request.endpoint not in exempt:
+        if session.get('logged_in') and endpoint not in exempt:
             expires_str = session.get('trial_expires_at')
             if expires_str and datetime.utcnow() > datetime.fromisoformat(expires_str):
                 session.clear()
