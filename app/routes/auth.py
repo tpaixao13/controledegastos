@@ -239,6 +239,11 @@ def edit_member(user_id):
     return redirect(url_for('auth.members'))
 
 
+@auth_bp.route('/trial-expired')
+def trial_expired():
+    return render_template('auth/trial_expired.html')
+
+
 def _mask(value: str | None, visible: int = 4) -> str:
     if not value:
         return ''
