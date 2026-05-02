@@ -51,7 +51,10 @@ def logout():
 @admin_bp.route('/')
 def dashboard():
     now = datetime.utcnow()
-    tenants = Tenant.query.order_by(Tenant.created_at.desc()).all()
+    tenants = (Tenant.query
+               .filter(Tenant.users.any(User.is_admin == False))
+               .order_by(Tenant.created_at.desc())
+               .all())
 
     total_tenants = len(tenants)
     total_users = User.query.filter(User.is_admin == False).count()
