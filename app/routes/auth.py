@@ -54,7 +54,8 @@ def register():
 
         code = secrets.token_hex(8)
         first_name = form.user_name.data.strip().split()[0]
-        tenant = Tenant(name=f'Família {first_name}', code=code)
+        trial_expires = datetime.utcnow() + timedelta(days=90)
+        tenant = Tenant(name=f'Família {first_name}', code=code, trial_expires_at=trial_expires)
         db.session.add(tenant)
         db.session.flush()
 
