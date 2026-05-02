@@ -254,12 +254,12 @@ def _run_migrations():
         except Exception:
             pass
 
-        # Set test1@teste.com.br trial to 10 days from now
+        # Set test1@tste.com.br trial to 10 days from now
         try:
             conn.execute(text("""
                 UPDATE tenants SET trial_expires_at=datetime('now', '+10 days')
                 WHERE id IN (
-                    SELECT tenant_id FROM users WHERE email='teste1@teste.com.br'
+                    SELECT tenant_id FROM users WHERE email='teste1@tste.com.br'
                 )
             """))
             conn.commit()
