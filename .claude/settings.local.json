@@ -21,7 +21,9 @@
       "Bash(venv\\\\Scripts\\\\python.exe run.py)",
       "Bash(venv\\\\Scripts\\\\python.exe --version)",
       "PowerShell(Get-Process -Name \"python\" -ErrorAction SilentlyContinue)",
-      "PowerShell(Stop-Process -Force)"
+      "PowerShell(Stop-Process -Force)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

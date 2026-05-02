@@ -15,8 +15,22 @@ class Tenant(db.Model):
     telegram_chat_id = db.Column(db.Text, nullable=True)
     telegram_hour = db.Column(db.Integer, default=8)
     telegram_minute = db.Column(db.Integer, default=0)
+    trial_expires_at = db.Column(db.DateTime, nullable=True)
 
     users = db.relationship('User', backref='tenant', lazy='dynamic', cascade='all, delete-orphan')
+
+    @property
+    def trial_active(self):
+        if self.trial_expires_at is None:
+            return True
+        return datetime.utcnow() <= self.trial_expires_at
+
+    @property
+    def trial_days_left(self):
+        if self.trial_expires_at is None:
+            return None
+        delta = (self.trial_expires_at - datetime.utcnow()).days
+        return max(0, delta)
 
     def __repr__(self):
         return f'<Tenant {self.name} ({self.code})>'
