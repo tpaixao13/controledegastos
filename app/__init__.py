@@ -140,6 +140,7 @@ def _run_migrations():
         'ALTER TABLE tenants ADD COLUMN telegram_hour INTEGER DEFAULT 8',
         'ALTER TABLE tenants ADD COLUMN telegram_minute INTEGER DEFAULT 0',
         'ALTER TABLE tenants ADD COLUMN trial_expires_at DATETIME',
+        'ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0',
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
