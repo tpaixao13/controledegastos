@@ -15,6 +15,7 @@ class Tenant(db.Model):
     telegram_chat_id = db.Column(db.Text, nullable=True)
     telegram_hour = db.Column(db.Integer, default=8)
     telegram_minute = db.Column(db.Integer, default=0)
+    telegram_last_sent = db.Column(db.Date, nullable=True)
     trial_expires_at = db.Column(db.DateTime, nullable=True)
 
     users = db.relationship('User', backref='tenant', lazy='dynamic', cascade='all, delete-orphan')
