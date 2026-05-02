@@ -61,6 +61,12 @@ def dashboard():
     lifetime = [t for t in tenants if t.trial_expires_at is None]
     expiring_soon = [t for t in trial_active if (t.trial_expires_at - now).days <= 7]
 
+    online_cutoff = now - ONLINE_THRESHOLD
+    online_users = User.query.filter(
+        User.is_admin == False,
+        User.last_seen >= online_cutoff
+    ).all()
+
     return render_template('admin/dashboard.html',
                            tenants=tenants,
                            total_tenants=total_tenants,
@@ -69,6 +75,7 @@ def dashboard():
                            trial_expired=trial_expired,
                            lifetime=lifetime,
                            expiring_soon=expiring_soon,
+                           online_users=online_users,
                            now=now)
 
 
