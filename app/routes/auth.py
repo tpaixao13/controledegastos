@@ -26,6 +26,9 @@ def login():
         email = form.email.data.strip().lower()
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(form.password.data):
+            if user.is_admin:
+                flash('Esta conta é de administrador. Acesse em /admin.', 'warning')
+                return redirect(url_for('auth.login'))
             tenant = Tenant.query.get(user.tenant_id) if user.tenant_id else None
             if tenant and not tenant.trial_active:
                 flash('O período de avaliação de 90 dias expirou. Entre em contacto para continuar.', 'danger')
