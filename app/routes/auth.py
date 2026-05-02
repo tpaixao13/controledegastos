@@ -27,12 +27,16 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and user.check_password(form.password.data):
             tenant = Tenant.query.get(user.tenant_id) if user.tenant_id else None
+            if tenant and not tenant.trial_active:
+                flash('O período de avaliação de 90 dias expirou. Entre em contacto para continuar.', 'danger')
+                return redirect(url_for('auth.trial_expired'))
             session['logged_in'] = True
             session['user_name'] = user.name
             session['user_id'] = user.id
             session['user_avatar'] = _avatar_url(user)
             session['tenant_id'] = user.tenant_id
             session['tenant_name'] = tenant.name if tenant else ''
+            session['trial_expires_at'] = tenant.trial_expires_at.isoformat() if tenant and tenant.trial_expires_at else None
             return redirect(url_for('main.index'))
         flash('E-mail ou senha incorretos.', 'danger')
 
