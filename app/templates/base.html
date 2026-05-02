@@ -105,6 +105,18 @@
 </nav>
 
 <div class="container-fluid py-4 px-4">
+  {% if trial_days_left is not none and trial_days_left <= 10 %}
+  <div class="alert alert-warning alert-dismissible fade show py-2 mb-3" role="alert">
+    <i class="bi bi-clock-history"></i>
+    {% if trial_days_left == 0 %}
+      O período de avaliação <strong>expira hoje</strong>.
+    {% else %}
+      O período de avaliação expira em <strong>{{ trial_days_left }} dia{{ 's' if trial_days_left != 1 }}</strong>.
+    {% endif %}
+    Entre em contacto para continuar usando o FinFam.
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
   {% include 'components/flash_messages.html' %}
   {% block content %}{% endblock %}
 </div>
