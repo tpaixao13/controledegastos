@@ -101,15 +101,20 @@ def create_app(config_name='default'):
     @app.context_processor
     def inject_trial():
         from datetime import datetime
-        expires_str = session.get('trial_expires_at')
-        if not expires_str:
+        from app.models import Tenant
+        tenant_id = session.get('tenant_id')
+        if not tenant_id:
             return {'trial_days_left': None}
-        delta = (datetime.fromisoformat(expires_str) - datetime.utcnow()).days
+        tenant = Tenant.query.get(tenant_id)
+        if not tenant or tenant.trial_expires_at is None:
+            return {'trial_days_left': None}
+        delta = (tenant.trial_expires_at - datetime.utcnow()).days
         return {'trial_days_left': max(0, delta)}
 
     @app.before_request
     def require_login():
         from datetime import datetime
+        from app.models import Tenant
         exempt = {'auth.login', 'auth.logout', 'auth.register', 'auth.trial_expired', 'static'}
         endpoint = flask_request.endpoint or ''
         if endpoint.startswith('admin.') or flask_request.path.startswith('/admin'):
@@ -117,10 +122,12 @@ def create_app(config_name='default'):
         if endpoint not in exempt and not session.get('logged_in'):
             return redirect(url_for('auth.login'))
         if session.get('logged_in') and endpoint not in exempt:
-            expires_str = session.get('trial_expires_at')
-            if expires_str and datetime.utcnow() > datetime.fromisoformat(expires_str):
-                session.clear()
-                return redirect(url_for('auth.trial_expired'))
+            tenant_id = session.get('tenant_id')
+            if tenant_id:
+                tenant = Tenant.query.get(tenant_id)
+                if tenant and tenant.trial_expires_at and datetime.utcnow() > tenant.trial_expires_at:
+                    session.clear()
+                    return redirect(url_for('auth.trial_expired'))
 
     return app
 
