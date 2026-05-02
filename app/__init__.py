@@ -74,6 +74,7 @@ def create_app(config_name='default'):
         from app.routes.salaries import salaries_bp
         from app.routes.api import api_bp
         from app.routes.investments import investments_bp
+        from app.routes.admin import admin_bp
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(main_bp)
@@ -81,6 +82,7 @@ def create_app(config_name='default'):
         app.register_blueprint(salaries_bp)
         app.register_blueprint(api_bp)
         app.register_blueprint(investments_bp)
+        app.register_blueprint(admin_bp)
 
     # Scheduler de lembretes Telegram — roda às 8h todos os dias
     import atexit
