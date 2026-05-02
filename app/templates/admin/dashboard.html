@@ -154,6 +154,13 @@
                           title="Redefinir senha">
                     <i class="bi bi-key"></i>
                   </button>
+                  <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.id) }}" class="d-inline"
+                        onsubmit="return confirm('Eliminar utilizador {{ u.name }}?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-link btn-sm text-danger p-0 ms-1" title="Eliminar utilizador">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
                 </div>
                 {% endfor %}
               </td>
