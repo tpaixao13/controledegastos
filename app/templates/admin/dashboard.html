@@ -180,22 +180,31 @@
                 {% endif %}
               </td>
               <td class="text-center">
-                {% if tenant.trial_expires_at is not none %}
-                <form method="POST" action="{{ url_for('admin.grant_lifetime', tenant_id=tenant.id) }}" class="d-inline">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-sm btn-success" title="Conceder acesso vitalício">
-                    <i class="bi bi-infinity"></i> Vitalício
-                  </button>
-                </form>
-                {% else %}
-                <form method="POST" action="{{ url_for('admin.revoke_lifetime', tenant_id=tenant.id) }}" class="d-inline">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Revogar acesso"
-                          onclick="return confirm('Revogar acesso de {{ tenant.name }}?')">
-                    <i class="bi bi-slash-circle"></i> Revogar
-                  </button>
-                </form>
-                {% endif %}
+                <div class="d-flex flex-column gap-1 align-items-center">
+                  {% if tenant.trial_expires_at is not none %}
+                  <form method="POST" action="{{ url_for('admin.grant_lifetime', tenant_id=tenant.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-success">
+                      <i class="bi bi-infinity"></i> Vitalício
+                    </button>
+                  </form>
+                  {% else %}
+                  <form method="POST" action="{{ url_for('admin.revoke_lifetime', tenant_id=tenant.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-outline-warning"
+                            onclick="return confirm('Revogar acesso de {{ tenant.name }}?')">
+                      <i class="bi bi-slash-circle"></i> Revogar
+                    </button>
+                  </form>
+                  {% endif %}
+                  <form method="POST" action="{{ url_for('admin.delete_tenant', tenant_id=tenant.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-sm btn-danger"
+                            onclick="return confirm('Eliminar família {{ tenant.name }} e todos os seus membros?')">
+                      <i class="bi bi-trash"></i> Eliminar
+                    </button>
+                  </form>
+                </div>
               </td>
             </tr>
             {% endfor %}
