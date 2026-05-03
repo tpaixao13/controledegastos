@@ -384,11 +384,8 @@ def bulk_paid():
         except (ValueError, TypeError):
             pass
     db.session.commit()
-    next_url = request.form.get('next') or ''
-    if not next_url or urlparse(next_url).netloc:
-        next_url = url_for('main.index')
     flash(f'{count} despesa(s) marcada(s) como pagas!', 'success')
-    return redirect(next_url)
+    return redirect(_safe_next(request.form.get('next'), url_for('main.index')))
 
 
 @expenses_bp.route('/delete-recurring/<int:group_id>', methods=['POST'])
