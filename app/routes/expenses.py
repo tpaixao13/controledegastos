@@ -120,7 +120,7 @@ def _make_xlsx(rows, year, month):
 
     for row in rows:
         display = list(row)
-        display[8] = f'R$ {row[8]:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+        display[8] = _brl(row[8])
         ws.append(display)
 
     col_widths = [14, 6, 6, 7, 42, 16, 20, 16, 16, 13, 11]
