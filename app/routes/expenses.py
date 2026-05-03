@@ -30,6 +30,35 @@ def _tenant_categories(uids):
     return sorted(set(CATEGORIES) | db_cats)
 
 
+def _parse_c6pdf(file_bytes, form):
+    from app.importers.c6 import parse_c6_pdf
+    pwd = form.get('pdf_password', '').strip() or None
+    return parse_c6_pdf(file_bytes, password=pwd), 'C6'
+
+
+def _parse_ofx(file_bytes, form):
+    from app.importers.ofx import parse_ofx
+    return parse_ofx(file_bytes), None
+
+
+def _parse_nubank(file_bytes, form):
+    from app.importers.nubank import parse_nubank_csv
+    return parse_nubank_csv(file_bytes), 'Nubank'
+
+
+_PARSERS = {
+    'c6pdf':      _parse_c6pdf,
+    'ofx':        _parse_ofx,
+    'nubank_csv': _parse_nubank,
+}
+
+
+def _tenant_categories_placeholder():  # remover linha duplicada abaixo
+    db_cats = {c[0] for c in db.session.query(Expense.category)
+               .filter(Expense.user_id.in_(uids)).distinct()}
+    return sorted(set(CATEGORIES) | db_cats)
+
+
 @expenses_bp.route('/')
 def index():
     users = tenant_users().order_by(User.name).all()
