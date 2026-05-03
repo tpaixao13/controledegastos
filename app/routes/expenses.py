@@ -25,12 +25,9 @@ def index():
     now = datetime.now()
 
     user_id = request.args.get('user_id', type=int)
-    month = request.args.get('month', now.month, type=int)
-    year = request.args.get('year', now.year, type=int)
-    if not 0 <= month <= 12:  # 0 = todos os meses
-        month = now.month
-    if not 2000 <= year <= 2100:
-        year = now.year
+    month, year = get_month_year()
+    if request.args.get('month', type=int) == 0:
+        month = 0  # 0 = todos os meses
     category = request.args.get('category', '')
     payment_method = request.args.get('payment_method', '')
     page = request.args.get('page', 1, type=int)
