@@ -21,6 +21,9 @@ def _avatar_url(user):
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
+    from app import limiter
+    if limiter:
+        limiter.limit('20 per minute')(lambda: None)()
     form = LoginForm()
     if form.validate_on_submit():
         email = form.email.data.strip().lower()
