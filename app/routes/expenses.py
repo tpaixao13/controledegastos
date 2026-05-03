@@ -179,7 +179,7 @@ def _make_pdf(rows, year, month):
         r, g, b = (240, 244, 255) if i % 2 == 0 else (255, 255, 255)
         pdf.set_fill_color(r, g, b)
         display = list(row)
-        display[8] = f'R$ {row[8]:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+        display[8] = _brl(row[8])
         for j, (_, w) in enumerate(cols):
             pdf.cell(w, row_h, str(display[j]), border=1, fill=True,
                      align='R' if j == 8 else 'L')
