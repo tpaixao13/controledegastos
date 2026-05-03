@@ -236,6 +236,19 @@ def send_daily_reminders(app) -> None:
                     print(f'[Telegram] Tenant {tenant.id}: {err}')
 
 
+def get_month_year():
+    """Lê ?month=&year= da request atual e valida os valores."""
+    from flask import request as _req
+    now = datetime.now()
+    month = _req.args.get('month', now.month, type=int)
+    year = _req.args.get('year', now.year, type=int)
+    if not 1 <= month <= 12:
+        month = now.month
+    if not 2000 <= year <= 2100:
+        year = now.year
+    return month, year
+
+
 def sum_salaries_month(uids: list, year: int, month: int) -> float:
     """Soma Salary.amount para o tenant no mês."""
     from app import db
