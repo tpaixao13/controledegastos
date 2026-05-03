@@ -144,8 +144,12 @@ def create_app(config_name='default'):
             user_id = session.get('user_id')
             if user_id:
                 from app.models import User
-                User.query.filter_by(id=user_id).update({'last_seen': datetime.utcnow()})
-                db.session.commit()
+                from datetime import timedelta
+                user = User.query.get(user_id)
+                if user and (not user.last_seen or
+                             datetime.utcnow() - user.last_seen > timedelta(minutes=1)):
+                    user.last_seen = datetime.utcnow()
+                    db.session.commit()
 
     return app
 
