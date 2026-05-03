@@ -42,7 +42,7 @@ def _last_n_months(n=6, end_month=None, end_year=None):
 
 @api_bp.route('/doughnut')
 def doughnut():
-    month, year = _get_month_year()
+    month, year = get_month_year()
     uids = tenant_user_ids()
     rows = (db.session.query(Expense.category, func.sum(Expense.amount))
             .filter(Expense.user_id.in_(uids), Expense.year == year, Expense.month == month)
@@ -64,7 +64,7 @@ def doughnut():
 def monthly_vs_salary():
     n = request.args.get('months', 6, type=int)
     n = max(1, min(n, 24))
-    end_month, end_year = _get_month_year()
+    end_month, end_year = get_month_year()
     months = _last_n_months(n, end_month, end_year)
     labels = [f'{MONTH_NAMES_SHORT[m-1]}/{y}' for m, y in months]
     uids = tenant_user_ids()
@@ -76,7 +76,7 @@ def monthly_vs_salary():
 
 @api_bp.route('/user-comparison')
 def user_comparison():
-    month, year = _get_month_year()
+    month, year = get_month_year()
     users = tenant_users().order_by(User.name).all()
     labels = [u.name for u in users]
     gastos   = [sum_expenses_month([u.id], year, month) for u in users]
@@ -90,7 +90,7 @@ def user_comparison():
 
 @api_bp.route('/daily')
 def daily():
-    month, year = _get_month_year()
+    month, year = get_month_year()
     _, days_in_month = calendar.monthrange(year, month)
     uids = tenant_user_ids()
 
@@ -114,7 +114,7 @@ def daily():
 def payment_methods():
     n = request.args.get('months', 6, type=int)
     n = max(1, min(n, 24))
-    end_month, end_year = _get_month_year()
+    end_month, end_year = get_month_year()
     months = _last_n_months(n, end_month, end_year)
     labels = [f'{MONTH_NAMES_SHORT[m-1]}/{y}' for m, y in months]
     methods = list(PAYMENT_COLORS.keys())
@@ -135,7 +135,7 @@ def payment_methods():
 
 @api_bp.route('/pending-vs-paid')
 def pending_vs_paid():
-    month, year = _get_month_year()
+    month, year = get_month_year()
     uids = tenant_user_ids()
     paid_total    = sum_expenses_month(uids, year, month, Expense.paid == True)
     pending_total = sum_expenses_month(uids, year, month, Expense.paid.isnot(True))
