@@ -17,6 +17,18 @@ CATEGORIES = [
     'Educação', 'Vestuário', 'Serviços', 'Compras', 'Outros',
 ]
 
+_BANK_PAYMENTS = {'PIX', 'Cartão de Débito', 'Cartão de Crédito'}
+
+
+def _bank_from_form(form, payment):
+    return (form.bank.data or None) if payment in _BANK_PAYMENTS else None
+
+
+def _tenant_categories(uids):
+    db_cats = {c[0] for c in db.session.query(Expense.category)
+               .filter(Expense.user_id.in_(uids)).distinct()}
+    return sorted(set(CATEGORIES) | db_cats)
+
 
 @expenses_bp.route('/')
 def index():
