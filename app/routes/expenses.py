@@ -611,7 +611,7 @@ def _create_installments(form, bank):
 
     mes_inicio, ano_inicio = form.month.data, form.year.data
     mes_fim, ano_fim = month_offset(mes_inicio, ano_inicio, n - 1)
-    parcela_fmt = f'R$ {float(parcela):,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+    parcela_fmt = _brl(parcela)
     flash(
         f'{n} parcelas criadas de {parcela_fmt} cada '
         f'({MONTH_NAMES_SHORT[mes_inicio-1]}/{ano_inicio} → {MONTH_NAMES_SHORT[mes_fim-1]}/{ano_fim})',
