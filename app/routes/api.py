@@ -33,17 +33,6 @@ PAYMENT_COLORS = {
 }
 
 
-def _get_month_year():
-    now = datetime.now()
-    month = request.args.get('month', now.month, type=int)
-    year = request.args.get('year', now.year, type=int)
-    if not 1 <= month <= 12:
-        month = now.month
-    if not 2000 <= year <= 2100:
-        year = now.year
-    return month, year
-
-
 def _last_n_months(n=6, end_month=None, end_year=None):
     now = datetime.now()
     em = end_month or now.month
