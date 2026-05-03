@@ -364,10 +364,7 @@ def toggle_paid(expense_id):
     expense = Expense.query.filter(Expense.id == expense_id, Expense.user_id.in_(uids)).first_or_404()
     expense.paid = not bool(expense.paid)
     db.session.commit()
-    next_url = request.form.get('next') or ''
-    if not next_url or urlparse(next_url).netloc:
-        next_url = url_for('expenses.index')
-    return redirect(next_url)
+    return redirect(_safe_next(request.form.get('next'), url_for('expenses.index')))
 
 
 @expenses_bp.route('/bulk-paid', methods=['POST'])
