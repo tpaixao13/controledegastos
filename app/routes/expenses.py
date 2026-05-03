@@ -476,28 +476,16 @@ def import_bank_parse():
         return redirect(url_for('expenses.import_bank'))
 
     file_bytes = upload.read()
-    transactions = []
+
+    parser = _PARSERS.get(fmt)
+    if parser is None:
+        flash('Formato não reconhecido.', 'danger')
+        return redirect(url_for('expenses.import_bank'))
 
     try:
-        if fmt == 'c6pdf':
-            from app.importers.c6 import parse_c6_pdf
-            pwd = request.form.get('pdf_password', '').strip() or None
-            transactions = parse_c6_pdf(file_bytes, password=pwd)
-            bank = 'C6'
-
-        elif fmt == 'ofx':
-            from app.importers.ofx import parse_ofx
-            transactions = parse_ofx(file_bytes)
-
-        elif fmt == 'nubank_csv':
-            from app.importers.nubank import parse_nubank_csv
-            transactions = parse_nubank_csv(file_bytes)
-            bank = 'Nubank'
-
-        else:
-            flash('Formato não reconhecido.', 'danger')
-            return redirect(url_for('expenses.import_bank'))
-
+        transactions, bank_override = parser(file_bytes, request.form)
+        if bank_override:
+            bank = bank_override
     except Exception as e:
         msg = str(e).lower()
         if 'password' in msg or 'encrypt' in msg or 'decrypt' in msg:
