@@ -109,17 +109,36 @@ document.addEventListener('DOMContentLoaded', function () {
         type: 'bar',
         data: {
           labels: d.labels,
-          datasets: [
-            {
-              label: 'Gastos',
-              data: d.gastos,
-              backgroundColor: d.colors,
-              borderColor: d.border_colors,
-              borderWidth: 1,
-            }
-          ]
+          datasets: [{
+            label: 'Gastos',
+            data: d.gastos,
+            backgroundColor: d.colors,
+            borderColor: d.border_colors,
+            borderWidth: 1,
+          }]
         },
-        options: { responsive: true, maintainAspectRatio: false, ...tooltipBRL }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                generateLabels: chart => chart.data.labels.map((name, i) => ({
+                  text: name,
+                  fillStyle: chart.data.datasets[0].backgroundColor[i],
+                  strokeStyle: chart.data.datasets[0].borderColor[i],
+                  lineWidth: 1,
+                  hidden: false,
+                }))
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => brl(ctx.parsed.y ?? ctx.parsed)
+              }
+            }
+          }
+        }
       });
     });
 
