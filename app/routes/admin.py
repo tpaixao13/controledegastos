@@ -114,6 +114,9 @@ def revoke_lifetime(tenant_id):
 @admin_bp.route('/delete-user/<int:user_id>', methods=['POST'])
 def delete_user(user_id):
     user = User.query.get_or_404(user_id)
+    if user.is_admin:
+        flash('Não é possível eliminar um utilizador administrador.', 'danger')
+        return redirect(url_for('admin.dashboard'))
     tenant = Tenant.query.get(user.tenant_id) if user.tenant_id else None
     name = user.name
     db.session.delete(user)
