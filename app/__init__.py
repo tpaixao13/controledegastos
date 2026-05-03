@@ -51,6 +51,8 @@ def create_app(config_name='default'):
 
     db.init_app(app)
     csrf.init_app(app)
+    if limiter:
+        limiter.init_app(app)
 
     # Filtro Jinja2 para formatar moeda BRL
     @app.template_filter('brl')
