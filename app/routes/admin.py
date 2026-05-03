@@ -42,9 +42,7 @@ def login():
 
 @admin_bp.route('/logout', methods=['POST'])
 def logout():
-    session.pop('admin_logged_in', None)
-    session.pop('admin_name', None)
-    session.pop('admin_id', None)
+    session.clear()
     return redirect(url_for('admin.login'))
 
 
