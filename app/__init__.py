@@ -93,6 +93,10 @@ def create_app(config_name='default'):
         app.register_blueprint(investments_bp)
         app.register_blueprint(admin_bp)
 
+        if limiter:
+            limiter.limit('20 per minute')(app.view_functions['auth.login'])
+            limiter.limit('10 per minute')(app.view_functions['admin.login'])
+
     # Scheduler de lembretes Telegram — roda às 8h todos os dias
     import atexit
     import os
