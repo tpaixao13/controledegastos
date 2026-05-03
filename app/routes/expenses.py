@@ -290,7 +290,7 @@ def edit(expense_id):
         expense.amount = form.amount.data
         expense.category = form.category.data
         expense.payment_method = payment
-        expense.bank = (form.bank.data or None) if payment in ('PIX', 'Cartão de Débito', 'Cartão de Crédito') else None
+        expense.bank = _bank_from_form(form, payment)
         expense.year = form.year.data
         expense.month = form.month.data
         expense.day = form.day.data
