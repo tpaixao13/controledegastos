@@ -7,7 +7,8 @@ from app import db
 from app.models import Expense, Salary, User, Investment
 from app.utils import (tenant_user_ids, tenant_users, MONTH_NAMES_SHORT,
                        _fetch_json, get_selic_rate, rate_suggestions, month_offset,
-                       sum_expenses_month, sum_salaries_month, USER_PALETTE)
+                       sum_expenses_month, sum_salaries_month, USER_PALETTE,
+                       get_month_year, user_color_map)
 
 api_bp = Blueprint('api', __name__, url_prefix='/api/chart')
 
