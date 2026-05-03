@@ -53,6 +53,16 @@ _PARSERS = {
 }
 
 
+def _safe_next(url, fallback):
+    """Valida URL de redirect: bloqueia domínios externos e esquemas não-HTTP."""
+    if not url:
+        return fallback
+    p = urlparse(url)
+    if p.netloc or p.scheme not in ('', 'http', 'https'):
+        return fallback
+    return url
+
+
 @expenses_bp.route('/')
 def index():
     users = tenant_users().order_by(User.name).all()
