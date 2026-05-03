@@ -83,6 +83,9 @@ def dashboard():
 @admin_bp.route('/reset-password/<int:user_id>', methods=['POST'])
 def reset_password(user_id):
     user = User.query.get_or_404(user_id)
+    if user.is_admin and user.id != session.get('admin_id'):
+        flash('Não é possível redefinir a senha de outro administrador.', 'danger')
+        return redirect(url_for('admin.dashboard'))
     new_password = request.form.get('new_password', '').strip()
     if len(new_password) < 8:
         flash('A senha deve ter pelo menos 8 caracteres.', 'danger')
