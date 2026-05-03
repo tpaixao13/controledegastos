@@ -53,12 +53,6 @@ _PARSERS = {
 }
 
 
-def _tenant_categories_placeholder():  # remover linha duplicada abaixo
-    db_cats = {c[0] for c in db.session.query(Expense.category)
-               .filter(Expense.user_id.in_(uids)).distinct()}
-    return sorted(set(CATEGORIES) | db_cats)
-
-
 @expenses_bp.route('/')
 def index():
     users = tenant_users().order_by(User.name).all()
