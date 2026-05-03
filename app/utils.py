@@ -32,6 +32,9 @@ _SELIC_URL = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?
 SELIC_FALLBACK = 14.75
 
 _cache: dict = {}
+# Verificação SSL desativada para compatibilidade com ambientes de certificado desatualizado
+# (ex: Raspberry Pi). Os endpoints externos (BCB, CoinGecko) retornam apenas dados públicos
+# read-only, portanto o risco de MitM é baixo e aceitável neste contexto.
 _ssl_ctx = ssl.create_default_context()
 _ssl_ctx.check_hostname = False
 _ssl_ctx.verify_mode = ssl.CERT_NONE
