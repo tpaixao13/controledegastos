@@ -11,6 +11,13 @@ from config import config
 db = SQLAlchemy()
 csrf = CSRFProtect()
 
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    limiter = Limiter(key_func=get_remote_address, default_limits=[])
+except ImportError:
+    limiter = None
+
 
 def create_app(config_name='default'):
     if getattr(sys, 'frozen', False):
