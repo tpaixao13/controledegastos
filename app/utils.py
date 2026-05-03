@@ -213,6 +213,7 @@ def send_daily_reminders(app) -> None:
     """Job do APScheduler (intervalo 1min): dispara no horário configurado por tenant."""
     from app import db
     from app.models import Tenant, User
+    from sqlalchemy import text as _text
     now = datetime.now()
     today = now.date()
     with app.app_context():
@@ -226,16 +227,32 @@ def send_daily_reminders(app) -> None:
                 continue
             if tenant.telegram_last_sent == today:
                 continue
+
+            # UPDATE atômico: garante que só um worker (gunicorn) executa o envio.
+            # Se dois workers chegarem aqui ao mesmo tempo, apenas o primeiro terá rowcount=1.
+            result = db.session.execute(
+                _text("""UPDATE tenants SET telegram_last_sent = :today
+                          WHERE id = :id
+                            AND (telegram_last_sent IS NULL OR telegram_last_sent != :today)"""),
+                {'today': today.isoformat(), 'id': tenant.id}
+            )
+            db.session.commit()
+            if result.rowcount == 0:
+                continue  # outro worker já reservou o envio
+
             users = User.query.filter_by(tenant_id=tenant.id).all()
             if not users:
                 continue
             msg = build_daily_reminder(users)
             if msg:
                 ok, err = send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
-                if ok:
-                    tenant.telegram_last_sent = today
+                if not ok:
+                    # Libera para nova tentativa no próximo minuto
+                    db.session.execute(
+                        _text("UPDATE tenants SET telegram_last_sent = NULL WHERE id = :id"),
+                        {'id': tenant.id}
+                    )
                     db.session.commit()
-                else:
                     print(f'[Telegram] Tenant {tenant.id}: {err}')
 
 
