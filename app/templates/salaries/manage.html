@@ -1,25 +1,120 @@
 {% extends 'base.html' %}
 
-{% block title %}Salários — FinFam{% endblock %}
+{% block title %}Rendas — FinFam{% endblock %}
+
+{% macro income_table(groups, totals, tab) %}
+  {% if groups %}
+    {% for (year, month), items in groups.items() %}
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center"
+           role="button" data-bs-toggle="collapse"
+           data-bs-target="#mes-{{ tab }}-{{ year }}-{{ month }}"
+           aria-expanded="{{ 'true' if loop.first else 'false' }}">
+        <span class="fw-bold">
+          <i class="bi bi-calendar3 text-primary me-1"></i>
+          {{ month|mes_nome }} / {{ year }}
+        </span>
+        <div class="d-flex align-items-center gap-3">
+          <span class="text-muted small">{{ items|length }} entrada{{ 's' if items|length > 1 }}</span>
+          <span class="badge bg-success fs-6">{{ totals[(year, month)]|brl }}</span>
+          <i class="bi bi-chevron-down text-muted"></i>
+        </div>
+      </div>
+      <div class="collapse {{ 'show' if loop.first }}" id="mes-{{ tab }}-{{ year }}-{{ month }}">
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Pessoa</th>
+                <th>{{ 'Empresa' if tab == 'fixa' else 'Fonte' }}</th>
+                <th class="text-end">Valor</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in items %}
+              <tr>
+                <td>
+                  <span class="badge {{ user_colors[s.user_id].badge_class }}">
+                    {{ s.user.name }}
+                  </span>
+                </td>
+                <td class="text-muted small">{{ s.company or '—' }}</td>
+                <td class="text-end fw-semibold">{{ s.amount|brl }}</td>
+                <td class="text-center">
+                  <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}"
+                        onsubmit="return confirm('Remover esta renda?')" style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="tab" value="{{ tab }}">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Remover">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+            {% if items|length > 1 %}
+            <tfoot class="table-light">
+              <tr>
+                <td colspan="2" class="fw-semibold text-end text-muted small">Total combinado:</td>
+                <td class="text-end fw-bold text-success">{{ totals[(year, month)]|brl }}</td>
+                <td></td>
+              </tr>
+            </tfoot>
+            {% endif %}
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="card">
+      <div class="card-body text-center text-muted py-5">
+        <i class="bi bi-inbox fs-1"></i>
+        <p class="mt-2">Nenhuma renda registada ainda.</p>
+      </div>
+    </div>
+  {% endif %}
+{% endmacro %}
 
 {% block content %}
 <div class="row mb-4">
   <div class="col">
-    <h2 class="fw-bold"><i class="bi bi-cash-coin text-primary"></i> Gestão de Salários</h2>
-    <p class="text-muted">Adicione entradas de salário por empresa para cada pessoa.</p>
+    <h2 class="fw-bold"><i class="bi bi-cash-coin text-primary"></i> Rendas</h2>
+    <p class="text-muted">Registe rendas fixas (salários) e variáveis (freelance, dividendos, etc.).</p>
   </div>
 </div>
 
+<!-- Abas -->
+<ul class="nav nav-tabs mb-4" id="rendaTab" role="tablist">
+  <li class="nav-item" role="presentation">
+    <a class="nav-link {{ 'active' if active_tab == 'fixa' }}"
+       href="{{ url_for('salaries.manage', tab='fixa') }}" role="tab">
+      <i class="bi bi-building"></i> Renda Fixa
+    </a>
+  </li>
+  <li class="nav-item" role="presentation">
+    <a class="nav-link {{ 'active' if active_tab == 'variavel' }}"
+       href="{{ url_for('salaries.manage', tab='variavel') }}" role="tab">
+      <i class="bi bi-graph-up-arrow"></i> Renda Variável
+    </a>
+  </li>
+</ul>
+
 <div class="row g-4">
+
   <!-- Formulário -->
   <div class="col-lg-4">
     <div class="card">
       <div class="card-header bg-primary text-white fw-semibold">
-        <i class="bi bi-plus-circle"></i> Adicionar Salário
+        <i class="bi bi-plus-circle"></i>
+        {{ 'Adicionar Renda Fixa' if active_tab == 'fixa' else 'Adicionar Renda Variável' }}
       </div>
       <div class="card-body">
         <form method="POST" novalidate>
           {{ form.hidden_tag() }}
+          <input type="hidden" name="income_type" value="{{ active_tab }}">
 
           <div class="mb-3">
             {{ form.user_id.label(class='form-label fw-semibold') }}
@@ -51,13 +146,24 @@
             {% endfor %}
           </div>
 
+          {% if active_tab == 'fixa' %}
           <div class="mb-3">
-            {{ form.company.label(class='form-label fw-semibold') }}
-            {{ form.company(class='form-control' + (' is-invalid' if form.company.errors else ''), placeholder='Ex: Empresa ABC') }}
-            {% for e in form.company.errors %}
-              <div class="invalid-feedback">{{ e }}</div>
-            {% endfor %}
+            <label class="form-label fw-semibold">Empresa</label>
+            {{ form.company(class='form-control', placeholder='Ex: Empresa ABC') }}
           </div>
+          {% else %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Fonte</label>
+            <input list="sourceList" name="company" class="form-control"
+                   placeholder="Ex: Freelance, Dividendos…"
+                   value="{{ form.company.data or '' }}">
+            <datalist id="sourceList">
+              {% for src in variable_sources %}
+              <option value="{{ src }}">
+              {% endfor %}
+            </datalist>
+          </div>
+          {% endif %}
 
           {{ form.submit(class='btn btn-primary w-100') }}
         </form>
@@ -65,83 +171,14 @@
     </div>
   </div>
 
-  <!-- Histórico agrupado por mês -->
+  <!-- Histórico -->
   <div class="col-lg-8">
-    {% if groups %}
-      {% for (year, month), items in groups.items() %}
-      <div class="card mb-3">
-        <!-- Cabeçalho do mês -->
-        <div class="card-header d-flex justify-content-between align-items-center"
-             role="button" data-bs-toggle="collapse"
-             data-bs-target="#mes-{{ year }}-{{ month }}"
-             aria-expanded="{{ 'true' if loop.first else 'false' }}">
-          <span class="fw-bold">
-            <i class="bi bi-calendar3 text-primary me-1"></i>
-            {{ month|mes_nome }} / {{ year }}
-          </span>
-          <div class="d-flex align-items-center gap-3">
-            <span class="text-muted small">{{ items|length }} entrada{{ 's' if items|length > 1 }}</span>
-            <span class="badge bg-success fs-6">{{ month_totals[(year, month)]|brl }}</span>
-            <i class="bi bi-chevron-down text-muted" style="transition:.2s"></i>
-          </div>
-        </div>
-
-        <!-- Entradas do mês (expansível) -->
-        <div class="collapse {{ 'show' if loop.first }}" id="mes-{{ year }}-{{ month }}">
-          <div class="card-body p-0">
-            <table class="table table-hover mb-0 align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>Pessoa</th>
-                  <th>Empresa / Fonte</th>
-                  <th class="text-end">Valor</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for s in items %}
-                <tr>
-                  <td>
-                    <span class="badge {{ user_colors[s.user_id].badge_class }}">
-                      {{ s.user.name }}
-                    </span>
-                  </td>
-                  <td class="text-muted small">{{ s.company or '—' }}</td>
-                  <td class="text-end fw-semibold">{{ s.amount|brl }}</td>
-                  <td class="text-center">
-                    <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}"
-                          onsubmit="return confirm('Remover este salário?')" style="display:inline">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Remover">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </form>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-              {% if items|length > 1 %}
-              <tfoot class="table-light">
-                <tr>
-                  <td colspan="2" class="fw-semibold text-end text-muted small">Total combinado:</td>
-                  <td class="text-end fw-bold text-success">{{ month_totals[(year, month)]|brl }}</td>
-                  <td></td>
-                </tr>
-              </tfoot>
-              {% endif %}
-            </table>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
+    {% if active_tab == 'fixa' %}
+      {{ income_table(fixed_groups, fixed_totals, 'fixa') }}
     {% else %}
-      <div class="card">
-        <div class="card-body text-center text-muted py-5">
-          <i class="bi bi-inbox fs-1"></i>
-          <p class="mt-2">Nenhum salário registado ainda.</p>
-        </div>
-      </div>
+      {{ income_table(variable_groups, variable_totals, 'variavel') }}
     {% endif %}
   </div>
+
 </div>
 {% endblock %}
