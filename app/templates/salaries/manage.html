@@ -58,26 +58,33 @@
                   {% endif %}
                 </td>
                 <td class="text-center">
-                  <form method="POST"
-                        action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
-                        style="display:inline">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="tab" value="{{ tab }}">
-                    <button type="submit"
-                            class="btn btn-sm {{ 'btn-success' if s.received else 'btn-outline-warning' }}"
-                            title="{{ 'Clique para marcar como Pendente' if s.received else 'Clique para marcar como Recebido' }}">
-                      {% if s.received %}
-                        <i class="bi bi-check-circle-fill"></i> Recebido
-                      {% else %}
-                        <i class="bi bi-clock-fill"></i> Pendente
-                      {% endif %}
-                    </button>
-                  </form>
+                  {% if s.received %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Recebido</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-clock-fill"></i> Pendente</span>
+                  {% endif %}
                 </td>
                 <td class="text-end fw-semibold {{ 'text-muted text-decoration-line-through' if not s.received else '' }}">
                   {{ s.amount|brl }}
                 </td>
                 <td class="text-center">
+                  <form method="POST"
+                        action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
+                        style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="tab" value="{{ tab }}">
+                    {% if s.received %}
+                      <button type="submit" class="btn btn-sm btn-outline-secondary"
+                              title="Marcar como Pendente">
+                        <i class="bi bi-x-circle"></i>
+                      </button>
+                    {% else %}
+                      <button type="submit" class="btn btn-sm btn-success"
+                              title="Marcar como Recebido">
+                        <i class="bi bi-check-lg"></i> Recebido
+                      </button>
+                    {% endif %}
+                  </form>
                   <button class="btn btn-sm btn-outline-secondary"
                           onclick="openEditSalary(this)"
                           data-id="{{ s.id }}"
