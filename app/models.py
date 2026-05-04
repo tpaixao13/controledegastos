@@ -135,22 +135,23 @@ class Salary(db.Model):
     received = db.Column(db.Boolean, default=True)
 
     def expected_payment_date(self):
-        """Returns the expected payment date for this salary entry, or None if not configured."""
+        """Returns the expected payment date, skipping weekends and Brazilian national holidays."""
         if not self.payment_day or not self.payment_day_type:
             return None
         import calendar
-        from datetime import date
         if self.payment_day_type == 'util':
+            holidays = _br_holidays(self.year)
             count = 0
             for d in range(1, calendar.monthrange(self.year, self.month)[1] + 1):
-                if date(self.year, self.month, d).weekday() < 5:
+                dt = _date(self.year, self.month, d)
+                if dt.weekday() < 5 and dt not in holidays:
                     count += 1
                     if count == self.payment_day:
-                        return date(self.year, self.month, d)
+                        return dt
             return None
         else:
             max_day = calendar.monthrange(self.year, self.month)[1]
-            return date(self.year, self.month, min(self.payment_day, max_day))
+            return _date(self.year, self.month, min(self.payment_day, max_day))
 
     def __repr__(self):
         return f'<Salary user={self.user_id} {self.month}/{self.year} R${self.amount}>'
