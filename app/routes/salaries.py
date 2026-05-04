@@ -3,7 +3,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from app import db
 from app.models import User, Salary
 from app.forms import SalaryForm
-from app.utils import tenant_users, tenant_user_ids, user_color_map
+from app.utils import tenant_users, tenant_user_ids, user_color_map, month_offset, MONTH_NAMES_SHORT
 from datetime import datetime
 
 salaries_bp = Blueprint('salaries', __name__, url_prefix='/salaries')
