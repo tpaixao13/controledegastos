@@ -128,6 +128,12 @@ class SalaryForm(FlaskForm):
     recurring_months = SelectField('Repetir por',
                                    choices=[(i, f'{i} meses') for i in range(2, 25)],
                                    coerce=int, validators=[Optional()])
+    payment_day_type = SelectField('Tipo de pagamento',
+                                   choices=[('', 'Sem data definida'),
+                                            ('fixo', 'Dia fixo (1-31)'),
+                                            ('util', 'Nº dia útil (1-22)')],
+                                   validators=[Optional()])
+    payment_day = IntegerField('Dia', validators=[Optional(), NumberRange(min=1, max=31)])
     submit = SubmitField('Adicionar')
 
 
