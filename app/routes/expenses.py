@@ -75,6 +75,7 @@ def index():
         month = 0  # 0 = todos os meses
     category = request.args.get('category', '')
     payment_method = request.args.get('payment_method', '')
+    paid_filter = request.args.get('paid', '')
     page = request.args.get('page', 1, type=int)
 
     # month=0 significa "todos os meses"
@@ -87,6 +88,10 @@ def index():
         query = query.filter(Expense.category == category)
     if payment_method:
         query = query.filter(Expense.payment_method == payment_method)
+    if paid_filter == 'pago':
+        query = query.filter(Expense.paid == True)
+    elif paid_filter == 'pendente':
+        query = query.filter(Expense.paid.isnot(True))
 
     query = query.order_by(Expense.month.desc(), Expense.day.desc(), Expense.created_at.desc())
     pagination = query.paginate(page=page, per_page=ITEMS_PER_PAGE, error_out=False)
