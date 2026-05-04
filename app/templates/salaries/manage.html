@@ -197,3 +197,15 @@
 
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+  const cb = document.getElementById('isRecurring');
+  const field = document.getElementById('recurringMonthsField');
+  if (cb && field) {
+    cb.addEventListener('change', () => {
+      field.style.display = cb.checked ? '' : 'none';
+    });
+  }
+</script>
+{% endblock %}
