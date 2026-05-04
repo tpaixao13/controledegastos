@@ -48,17 +48,39 @@ def manage():
         income_type = request.form.get('income_type', 'fixa')
         if income_type not in ('fixa', 'variavel'):
             income_type = 'fixa'
-        salary = Salary(
-            user_id=form.user_id.data,
-            year=form.year.data,
-            month=form.month.data,
-            amount=form.amount.data,
-            company=form.company.data or None,
-            income_type=income_type,
-        )
-        db.session.add(salary)
-        db.session.commit()
-        flash('Renda adicionada com sucesso!', 'success')
+
+        if income_type == 'fixa' and form.is_recurring.data:
+            n = form.recurring_months.data
+            for i in range(n):
+                m, y = month_offset(form.month.data, form.year.data, i)
+                db.session.add(Salary(
+                    user_id=form.user_id.data,
+                    year=y,
+                    month=m,
+                    amount=form.amount.data,
+                    company=form.company.data or None,
+                    income_type='fixa',
+                ))
+            db.session.commit()
+            m_fim, y_fim = month_offset(form.month.data, form.year.data, n - 1)
+            flash(
+                f'Renda fixa criada por {n} meses '
+                f'({MONTH_NAMES_SHORT[form.month.data-1]}/{form.year.data}'
+                f' → {MONTH_NAMES_SHORT[m_fim-1]}/{y_fim}).',
+                'success'
+            )
+        else:
+            db.session.add(Salary(
+                user_id=form.user_id.data,
+                year=form.year.data,
+                month=form.month.data,
+                amount=form.amount.data,
+                company=form.company.data or None,
+                income_type=income_type,
+            ))
+            db.session.commit()
+            flash('Renda adicionada com sucesso!', 'success')
+
         return redirect(url_for('salaries.manage', tab=income_type))
 
     all_salaries = (Salary.query
