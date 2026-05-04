@@ -54,7 +54,8 @@ def doughnut():
     colors = [CATEGORY_COLORS.get(lbl, '#C9CBCF') for lbl in labels]
 
     total_salary = (db.session.query(func.sum(Salary.amount))
-                    .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month)
+                    .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month,
+                            Salary.received == True)
                     .scalar() or 0)
 
     return jsonify({'labels': labels, 'data': data, 'colors': colors, 'total_salary': float(total_salary)})
