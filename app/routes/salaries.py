@@ -76,7 +76,6 @@ def manage():
 
             for i in range(n):
                 m, y = month_offset(form.month.data, form.year.data, i)
-                is_received = (y < now.year) or (y == now.year and m <= now.month)
                 db.session.add(Salary(
                     user_id=form.user_id.data,
                     year=y,
