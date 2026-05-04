@@ -323,16 +323,54 @@
 
 {% block scripts %}
 <script>
-  // Calcula o Nº dia útil ou dia fixo de um mês e retorna string DD/MM/AAAA
+  // Algoritmo de Butcher: retorna Date da Páscoa para o ano
+  function calcEaster(y) {
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100;
+    const d = Math.floor(b / 4), e = b % 4;
+    const f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4), k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(y, month - 1, day);
+  }
+
+  // Feriados nacionais brasileiros (fixos + móveis via Páscoa)
+  function getBrHolidays(year) {
+    const easter = calcEaster(year);
+    const addDays = (d, n) => new Date(d.getTime() + n * 864e5);
+    const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return new Set([
+      `${year}-01-01`,  // Confraternização Universal
+      `${year}-04-21`,  // Tiradentes
+      `${year}-05-01`,  // Dia do Trabalho
+      `${year}-09-07`,  // Independência
+      `${year}-10-12`,  // N.S. Aparecida
+      `${year}-11-02`,  // Finados
+      `${year}-11-15`,  // Proclamação da República
+      `${year}-12-25`,  // Natal
+      fmt(addDays(easter, -48)),  // Carnaval (segunda)
+      fmt(addDays(easter, -47)),  // Carnaval (terça)
+      fmt(addDays(easter, -2)),   // Sexta-feira Santa
+      fmt(addDays(easter, 60)),   // Corpus Christi
+    ]);
+  }
+
+  // Calcula o Nº dia útil ou dia fixo de um mês (excluindo feriados nacionais)
   function calcPayDate(month, year, type, day) {
     const m = parseInt(month), y = parseInt(year), n = parseInt(day);
     if (!type || !n || isNaN(m) || isNaN(y) || isNaN(n) || n < 1) return '';
     const daysInMonth = new Date(y, m, 0).getDate();
     if (type === 'util') {
+      const holidays = getBrHolidays(y);
       let count = 0;
       for (let d = 1; d <= daysInMonth; d++) {
-        const dow = new Date(y, m - 1, d).getDay(); // 0=Dom, 6=Sáb
-        if (dow >= 1 && dow <= 5) {
+        const dt = new Date(y, m - 1, d);
+        const dow = dt.getDay(); // 0=Dom, 6=Sáb
+        const key = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        if (dow >= 1 && dow <= 5 && !holidays.has(key)) {
           count++;
           if (count === n) {
             return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
