@@ -45,9 +45,13 @@
                 <td class="text-muted small">
                   {% if s.payment_day and s.payment_day_type %}
                     {% if s.payment_day_type == 'util' %}
-                      {{ s.payment_day }}º DU
+                      {{ s.payment_day }}º dia útil
                     {% else %}
                       Dia {{ s.payment_day }}
+                    {% endif %}
+                    {% set expected = s.expected_payment_date() %}
+                    {% if expected %}
+                      <br><span class="text-primary fw-semibold">{{ expected.strftime('%d/%m/%Y') }}</span>
                     {% endif %}
                   {% else %}
                     —
@@ -60,7 +64,7 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="tab" value="{{ tab }}">
                     <button type="submit"
-                            class="badge border-0 {{ 'badge-pago' if s.received else 'badge-pendente' }}"
+                            class="btn btn-sm {{ 'btn-success' if s.received else 'btn-outline-warning' }}"
                             title="{{ 'Clique para marcar como Pendente' if s.received else 'Clique para marcar como Recebido' }}">
                       {% if s.received %}
                         <i class="bi bi-check-circle-fill"></i> Recebido
