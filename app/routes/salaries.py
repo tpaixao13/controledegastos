@@ -86,7 +86,7 @@ def manage():
                     salary_group_id=group.id,
                     payment_day=pay_day,
                     payment_day_type=pay_day_type,
-                    received=is_received,
+                    received=False,
                 ))
             db.session.commit()
             m_fim, y_fim = month_offset(form.month.data, form.year.data, n - 1)
