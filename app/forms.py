@@ -124,7 +124,11 @@ class SalaryForm(FlaskForm):
     month = SelectField('Mês', choices=MONTHS, coerce=int, validators=[DataRequired()])
     amount = DecimalField('Salário (R$)', places=2, validators=[DataRequired(), NumberRange(min=0.01)])
     company = StringField('Empresa / Fonte', validators=[Optional(), Length(max=200)])
-    submit = SubmitField('Adicionar Salário')
+    is_recurring = BooleanField('Repetir nos próximos meses', validators=[Optional()])
+    recurring_months = SelectField('Repetir por',
+                                   choices=[(i, f'{i} meses') for i in range(2, 25)],
+                                   coerce=int, validators=[Optional()])
+    submit = SubmitField('Adicionar')
 
 
 class InvestmentForm(FlaskForm):
