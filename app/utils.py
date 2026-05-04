@@ -270,12 +270,13 @@ def get_month_year():
 
 
 def sum_salaries_month(uids: list, year: int, month: int) -> float:
-    """Soma Salary.amount para o tenant no mês."""
+    """Soma Salary.amount para o tenant no mês (apenas rendas marcadas como recebidas)."""
     from app import db
     from app.models import Salary
     from sqlalchemy import func
     return float(
         db.session.query(func.sum(Salary.amount))
-        .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month)
+        .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month,
+                Salary.received == True)
         .scalar() or 0
     )
