@@ -147,8 +147,8 @@ def create_app(config_name='default'):
                 from datetime import timedelta
                 user = User.query.get(user_id)
                 if user and (not user.last_seen or
-                             datetime.utcnow() - user.last_seen > timedelta(minutes=1)):
-                    user.last_seen = datetime.utcnow()
+                             datetime.now() - user.last_seen > timedelta(minutes=1)):
+                    user.last_seen = datetime.now()
                     db.session.commit()
 
     return app
