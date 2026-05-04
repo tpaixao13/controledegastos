@@ -24,7 +24,8 @@ def index():
     )
     salary_map = dict(
         db.session.query(Salary.user_id, func.sum(Salary.amount))
-        .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month)
+        .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month,
+                Salary.received == True)
         .group_by(Salary.user_id).all()
     )
 
