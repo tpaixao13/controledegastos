@@ -78,18 +78,23 @@
                   {{ s.amount|brl }}
                 </td>
                 <td class="text-center">
-                  {% if not s.received %}
                   <form method="POST"
                         action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
                         style="display:inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="tab" value="{{ tab }}">
-                    <button type="submit" class="btn btn-sm btn-outline-success"
-                            title="Marcar como Recebido">
-                      <i class="bi bi-check-lg"></i>
-                    </button>
+                    {% if s.received %}
+                      <button type="submit" class="btn btn-sm btn-outline-secondary"
+                              title="Marcar como Pendente">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    {% else %}
+                      <button type="submit" class="btn btn-sm btn-outline-success"
+                              title="Marcar como Recebido">
+                        <i class="bi bi-check-lg"></i>
+                      </button>
+                    {% endif %}
                   </form>
-                  {% endif %}
                   <button class="btn btn-sm btn-outline-secondary"
                           onclick="openEditSalary(this)"
                           data-id="{{ s.id }}"
@@ -135,7 +140,6 @@
                   </div>
                 </div>
               </div>
-              </tr>
               {% endfor %}
             </tbody>
             {% if items|length > 1 %}
@@ -235,35 +239,6 @@
             <label class="form-label fw-semibold">Empresa</label>
             {{ form.company(class='form-control', placeholder='Ex: Empresa ABC') }}
           </div>
-
-          <div class="row g-2 mb-2">
-            <div class="col-7">
-              <label class="form-label fw-semibold">Tipo de pagamento</label>
-              {{ form.payment_day_type(class='form-select', id='addPayDayType') }}
-            </div>
-            <div class="col-5" id="addPayDayField" style="display:none">
-              <label class="form-label fw-semibold" id="addPayDayLabel">Dia</label>
-              {{ form.payment_day(class='form-control', id='addPayDay', placeholder='Ex: 5') }}
-            </div>
-          </div>
-          <div class="mb-3">
-            <small id="addPayDatePreview" class="text-primary fw-semibold"></small>
-          </div>
-
-          <div class="mb-3">
-            <div class="form-check">
-              {{ form.is_recurring(class='form-check-input', id='isRecurring') }}
-              <label class="form-check-label fw-semibold" for="isRecurring">
-                Repetir nos próximos meses
-              </label>
-            </div>
-          </div>
-
-          <div class="mb-3" id="recurringMonthsField" style="display:none">
-            <label class="form-label fw-semibold">Repetir por</label>
-            {{ form.recurring_months(class='form-select') }}
-          </div>
-
           {% else %}
           <div class="mb-3">
             <label class="form-label fw-semibold">Fonte</label>
@@ -275,6 +250,36 @@
               <option value="{{ src }}">
               {% endfor %}
             </datalist>
+          </div>
+          {% endif %}
+
+          <!-- Dia de pagamento (ambas as abas) -->
+          <div class="row g-2 mb-2">
+            <div class="col-7">
+              <label class="form-label fw-semibold">Dia de pagamento</label>
+              {{ form.payment_day_type(class='form-select', id='addPayDayType') }}
+            </div>
+            <div class="col-5" id="addPayDayField" style="display:none">
+              <label class="form-label fw-semibold" id="addPayDayLabel">Dia</label>
+              {{ form.payment_day(class='form-control', id='addPayDay', placeholder='Ex: 5') }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <small id="addPayDatePreview" class="text-primary fw-semibold"></small>
+          </div>
+
+          {% if active_tab == 'fixa' %}
+          <div class="mb-3">
+            <div class="form-check">
+              {{ form.is_recurring(class='form-check-input', id='isRecurring') }}
+              <label class="form-check-label fw-semibold" for="isRecurring">
+                Repetir nos próximos meses
+              </label>
+            </div>
+          </div>
+          <div class="mb-3" id="recurringMonthsField" style="display:none">
+            <label class="form-label fw-semibold">Repetir por</label>
+            {{ form.recurring_months(class='form-select') }}
           </div>
           {% endif %}
 
@@ -321,11 +326,11 @@
           </div>
           <div class="row g-2 mb-2">
             <div class="col-7">
-              <label class="form-label fw-semibold">Tipo de pagamento</label>
+              <label class="form-label fw-semibold">Dia de pagamento</label>
               <select name="payment_day_type" id="editPayDayType" class="form-select">
                 <option value="">Sem data definida</option>
-                <option value="fixo">Dia fixo (1-31)</option>
-                <option value="util">Nº dia útil (1-22)</option>
+                <option value="fixo">Dia fixo</option>
+                <option value="util">Dia útil</option>
               </select>
             </div>
             <div class="col-5" id="editPayDayField" style="display:none">
@@ -378,24 +383,16 @@
     const addDays = (d, n) => new Date(d.getTime() + n * 864e5);
     const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const h = new Set([
-      `${year}-01-01`,  // Confraternização Universal
-      `${year}-04-21`,  // Tiradentes
-      `${year}-05-01`,  // Dia do Trabalho
-      `${year}-09-07`,  // Independência
-      `${year}-10-12`,  // N.S. Aparecida
-      `${year}-11-02`,  // Finados
-      `${year}-11-15`,  // Proclamação da República
-      `${year}-12-25`,  // Natal
-      fmt(addDays(easter, -48)),  // Carnaval (segunda)
-      fmt(addDays(easter, -47)),  // Carnaval (terça)
-      fmt(addDays(easter, -2)),   // Sexta-feira Santa
-      fmt(addDays(easter, 60)),   // Corpus Christi
+      `${year}-01-01`, `${year}-04-21`, `${year}-05-01`, `${year}-09-07`,
+      `${year}-10-12`, `${year}-11-02`, `${year}-11-15`, `${year}-12-25`,
+      fmt(addDays(easter, -48)), fmt(addDays(easter, -47)),
+      fmt(addDays(easter, -2)), fmt(addDays(easter, 60)),
     ]);
-    if (year >= 2024) h.add(`${year}-11-20`); // Consciência Negra (Lei 14.759/2023)
+    if (year >= 2024) h.add(`${year}-11-20`);
     return h;
   }
 
-  // Calcula o Nº dia útil ou dia fixo de um mês (excluindo feriados nacionais)
+  // Calcula dia de pagamento (exclui fins de semana e feriados nacionais)
   function calcPayDate(month, year, type, day) {
     const m = parseInt(month), y = parseInt(year), n = parseInt(day);
     if (!type || !n || isNaN(m) || isNaN(y) || isNaN(n) || n < 1) return '';
@@ -404,14 +401,11 @@
       const holidays = getBrHolidays(y);
       let count = 0;
       for (let d = 1; d <= daysInMonth; d++) {
-        const dt = new Date(y, m - 1, d);
-        const dow = dt.getDay(); // 0=Dom, 6=Sáb
+        const dow = new Date(y, m - 1, d).getDay();
         const key = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         if (dow >= 1 && dow <= 5 && !holidays.has(key)) {
-          count++;
-          if (count === n) {
+          if (++count === n)
             return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
-          }
         }
       }
       return '(mês não tem esse nº de dias úteis)';
@@ -421,7 +415,7 @@
     }
   }
 
-  // Recurring months toggle on create form
+  // Recurring months toggle
   const cbRecurring = document.getElementById('isRecurring');
   const fieldRecurring = document.getElementById('recurringMonthsField');
   if (cbRecurring && fieldRecurring) {
@@ -430,8 +424,8 @@
     });
   }
 
-  // Payment day preview on create form
-  const addPayDayType = document.getElementById('addPayDayType');
+  // Preview no formulário de criação
+  const addPayDayType  = document.getElementById('addPayDayType');
   const addPayDayField = document.getElementById('addPayDayField');
   const addPayDayInput = document.getElementById('addPayDay');
   const addPayDayLabel = document.getElementById('addPayDayLabel');
@@ -454,33 +448,27 @@
     addPayDayType.addEventListener('change', () => {
       const t = addPayDayType.value;
       addPayDayField.style.display = t ? '' : 'none';
-      if (t === 'fixo') {
-        addPayDayLabel.textContent = 'Dia (1-31)';
-        addPayDayInput.max = 31;
-      } else {
-        addPayDayLabel.textContent = 'Nº DU (1-22)';
-        addPayDayInput.max = 22;
-      }
+      addPayDayLabel.textContent = t === 'fixo' ? 'Dia (1-31)' : 'Dia útil (1-22)';
+      if (addPayDayInput) addPayDayInput.max = t === 'fixo' ? 31 : 22;
       updateAddPreview();
     });
     if (addPayDayInput) addPayDayInput.addEventListener('input', updateAddPreview);
-    if (addMonthSel) addMonthSel.addEventListener('change', updateAddPreview);
-    if (addYearInput) addYearInput.addEventListener('input', updateAddPreview);
+    if (addMonthSel)    addMonthSel.addEventListener('change', updateAddPreview);
+    if (addYearInput)   addYearInput.addEventListener('input', updateAddPreview);
   }
 
-  // Edit modal logic
-  const editPayDayType = document.getElementById('editPayDayType');
+  // Modal de edição
+  const editPayDayType  = document.getElementById('editPayDayType');
   const editPayDayField = document.getElementById('editPayDayField');
   const editPayDayInput = document.getElementById('editPayDay');
   const editPayDayLabel = document.getElementById('editPayDayLabel');
   const editPayDatePreview = document.getElementById('editPayDatePreview');
-
-  // Month/year stored when opening modal
   let _editMonth = null, _editYear = null;
 
   function updateEditPreview() {
     if (!editPayDayType || !editPayDatePreview) return;
-    const result = calcPayDate(_editMonth, _editYear, editPayDayType.value, editPayDayInput ? editPayDayInput.value : '');
+    const result = calcPayDate(_editMonth, _editYear, editPayDayType.value,
+                               editPayDayInput ? editPayDayInput.value : '');
     editPayDatePreview.textContent = result ? `→ Pagamento em ${result}` : '';
   }
 
@@ -488,40 +476,26 @@
     editPayDayType.addEventListener('change', () => {
       const t = editPayDayType.value;
       editPayDayField.style.display = t ? '' : 'none';
-      if (t === 'fixo') {
-        editPayDayLabel.textContent = 'Dia (1-31)';
-        editPayDayInput.max = 31;
-      } else {
-        editPayDayLabel.textContent = 'Nº DU (1-22)';
-        editPayDayInput.max = 22;
-      }
+      editPayDayLabel.textContent = t === 'fixo' ? 'Dia (1-31)' : 'Dia útil (1-22)';
+      if (editPayDayInput) editPayDayInput.max = t === 'fixo' ? 31 : 22;
       updateEditPreview();
     });
     if (editPayDayInput) editPayDayInput.addEventListener('input', updateEditPreview);
   }
 
   function openEditSalary(btn) {
-    const id = btn.dataset.id;
-    const amount = btn.dataset.amount;
-    const company = btn.dataset.company;
-    const payDayType = btn.dataset.payDayType;
-    const payDay = btn.dataset.payDay;
-    const hasGroup = btn.dataset.hasGroup;
     _editMonth = btn.dataset.month;
-    _editYear = btn.dataset.year;
+    _editYear  = btn.dataset.year;
 
-    const form = document.getElementById('editSalaryForm');
-    form.action = '/salaries/edit/' + id;
-
-    document.getElementById('editAmount').value = parseFloat(amount).toFixed(2);
-    document.getElementById('editCompany').value = company;
-    editPayDayType.value = payDayType;
-    editPayDayInput.value = payDay;
-
+    document.getElementById('editSalaryForm').action = '/salaries/edit/' + btn.dataset.id;
+    document.getElementById('editAmount').value  = parseFloat(btn.dataset.amount).toFixed(2);
+    document.getElementById('editCompany').value = btn.dataset.company;
+    editPayDayType.value  = btn.dataset.payDayType;
+    editPayDayInput.value = btn.dataset.payDay;
     editPayDayType.dispatchEvent(new Event('change'));
 
     const fwdContainer = document.getElementById('editForwardContainer');
-    fwdContainer.style.display = hasGroup ? '' : 'none';
+    fwdContainer.style.display = btn.dataset.hasGroup ? '' : 'none';
     document.getElementById('editForward').checked = false;
 
     new bootstrap.Modal(document.getElementById('editSalaryModal')).show();
