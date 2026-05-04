@@ -76,6 +76,7 @@ class Salary(db.Model):
     month = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
     company = db.Column(db.Text, nullable=True)
+    income_type = db.Column(db.Text, nullable=False, default='fixa')
 
     def __repr__(self):
         return f'<Salary user={self.user_id} {self.month}/{self.year} R${self.amount}>'
