@@ -177,6 +177,7 @@ def _run_migrations():
         'ALTER TABLE tenants ADD COLUMN telegram_last_sent DATE',
         'ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0',
         'ALTER TABLE users ADD COLUMN last_seen DATETIME',
+        "ALTER TABLE salaries ADD COLUMN income_type TEXT NOT NULL DEFAULT 'fixa'",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
