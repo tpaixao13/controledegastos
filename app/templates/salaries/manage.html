@@ -27,8 +27,10 @@
               <tr>
                 <th>Pessoa</th>
                 <th>{{ 'Empresa' if tab == 'fixa' else 'Fonte' }}</th>
+                <th>Dia pag.</th>
+                <th class="text-center">Status</th>
                 <th class="text-end">Valor</th>
-                <th></th>
+                <th class="text-center">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -40,8 +42,49 @@
                   </span>
                 </td>
                 <td class="text-muted small">{{ s.company or '—' }}</td>
-                <td class="text-end fw-semibold">{{ s.amount|brl }}</td>
+                <td class="text-muted small">
+                  {% if s.payment_day and s.payment_day_type %}
+                    {% if s.payment_day_type == 'util' %}
+                      {{ s.payment_day }}º DU
+                    {% else %}
+                      Dia {{ s.payment_day }}
+                    {% endif %}
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
                 <td class="text-center">
+                  <form method="POST"
+                        action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
+                        style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="tab" value="{{ tab }}">
+                    <button type="submit"
+                            class="badge border-0 {{ 'badge-pago' if s.received else 'badge-pendente' }}"
+                            title="{{ 'Clique para marcar como Pendente' if s.received else 'Clique para marcar como Recebido' }}">
+                      {% if s.received %}
+                        <i class="bi bi-check-circle-fill"></i> Recebido
+                      {% else %}
+                        <i class="bi bi-clock-fill"></i> Pendente
+                      {% endif %}
+                    </button>
+                  </form>
+                </td>
+                <td class="text-end fw-semibold {{ 'text-muted text-decoration-line-through' if not s.received else '' }}">
+                  {{ s.amount|brl }}
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-secondary"
+                          onclick="openEditSalary(this)"
+                          data-id="{{ s.id }}"
+                          data-amount="{{ s.amount }}"
+                          data-company="{{ s.company or '' }}"
+                          data-pay-day-type="{{ s.payment_day_type or '' }}"
+                          data-pay-day="{{ s.payment_day or '' }}"
+                          data-has-group="{{ '1' if s.salary_group_id else '' }}"
+                          title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </button>
                   <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}"
                         onsubmit="return confirm('Remover esta renda?')" style="display:inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -57,7 +100,7 @@
             {% if items|length > 1 %}
             <tfoot class="table-light">
               <tr>
-                <td colspan="2" class="fw-semibold text-end text-muted small">Total combinado:</td>
+                <td colspan="4" class="fw-semibold text-end text-muted small">Total combinado:</td>
                 <td class="text-end fw-bold text-success">{{ totals[(year, month)]|brl }}</td>
                 <td></td>
               </tr>
@@ -152,6 +195,17 @@
             {{ form.company(class='form-control', placeholder='Ex: Empresa ABC') }}
           </div>
 
+          <div class="row g-2 mb-3">
+            <div class="col-7">
+              <label class="form-label fw-semibold">Tipo de pagamento</label>
+              {{ form.payment_day_type(class='form-select', id='addPayDayType') }}
+            </div>
+            <div class="col-5" id="addPayDayField" style="display:none">
+              <label class="form-label fw-semibold" id="addPayDayLabel">Dia</label>
+              {{ form.payment_day(class='form-control', id='addPayDay', placeholder='Ex: 5') }}
+            </div>
+          </div>
+
           <div class="mb-3">
             <div class="form-check">
               {{ form.is_recurring(class='form-check-input', id='isRecurring') }}
@@ -196,16 +250,140 @@
   </div>
 
 </div>
+
+<!-- Modal de edição -->
+<div class="modal fade" id="editSalaryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title"><i class="bi bi-pencil-square text-primary"></i> Editar Renda</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="editSalaryForm" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Valor (R$)</label>
+            <div class="input-group">
+              <span class="input-group-text">R$</span>
+              <input type="number" name="amount" id="editAmount" class="form-control"
+                     step="0.01" min="0.01" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Empresa / Fonte</label>
+            <input type="text" name="company" id="editCompany" class="form-control"
+                   placeholder="Opcional">
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-7">
+              <label class="form-label fw-semibold">Tipo de pagamento</label>
+              <select name="payment_day_type" id="editPayDayType" class="form-select">
+                <option value="">Sem data definida</option>
+                <option value="fixo">Dia fixo (1-31)</option>
+                <option value="util">Nº dia útil (1-22)</option>
+              </select>
+            </div>
+            <div class="col-5" id="editPayDayField" style="display:none">
+              <label class="form-label fw-semibold" id="editPayDayLabel">Dia</label>
+              <input type="number" name="payment_day" id="editPayDay" class="form-control"
+                     min="1" max="31" placeholder="Ex: 5">
+            </div>
+          </div>
+          <div id="editForwardContainer" class="form-check" style="display:none">
+            <input type="checkbox" name="update_forward" id="editForward"
+                   class="form-check-input" value="1">
+            <label class="form-check-label" for="editForward">
+              Atualizar todos os meses seguintes desta série
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-  const cb = document.getElementById('isRecurring');
-  const field = document.getElementById('recurringMonthsField');
-  if (cb && field) {
-    cb.addEventListener('change', () => {
-      field.style.display = cb.checked ? '' : 'none';
+  // Recurring months toggle on create form
+  const cbRecurring = document.getElementById('isRecurring');
+  const fieldRecurring = document.getElementById('recurringMonthsField');
+  if (cbRecurring && fieldRecurring) {
+    cbRecurring.addEventListener('change', () => {
+      fieldRecurring.style.display = cbRecurring.checked ? '' : 'none';
     });
+  }
+
+  // Payment day type toggle on create form
+  const addPayDayType = document.getElementById('addPayDayType');
+  const addPayDayField = document.getElementById('addPayDayField');
+  const addPayDayInput = document.getElementById('addPayDay');
+  const addPayDayLabel = document.getElementById('addPayDayLabel');
+  if (addPayDayType) {
+    addPayDayType.addEventListener('change', () => {
+      const t = addPayDayType.value;
+      addPayDayField.style.display = t ? '' : 'none';
+      if (t === 'fixo') {
+        addPayDayLabel.textContent = 'Dia (1-31)';
+        addPayDayInput.max = 31;
+      } else {
+        addPayDayLabel.textContent = 'Nº DU (1-22)';
+        addPayDayInput.max = 22;
+      }
+    });
+  }
+
+  // Edit modal logic
+  const editPayDayType = document.getElementById('editPayDayType');
+  const editPayDayField = document.getElementById('editPayDayField');
+  const editPayDayInput = document.getElementById('editPayDay');
+  const editPayDayLabel = document.getElementById('editPayDayLabel');
+
+  if (editPayDayType) {
+    editPayDayType.addEventListener('change', () => {
+      const t = editPayDayType.value;
+      editPayDayField.style.display = t ? '' : 'none';
+      if (t === 'fixo') {
+        editPayDayLabel.textContent = 'Dia (1-31)';
+        editPayDayInput.max = 31;
+      } else {
+        editPayDayLabel.textContent = 'Nº DU (1-22)';
+        editPayDayInput.max = 22;
+      }
+    });
+  }
+
+  function openEditSalary(btn) {
+    const id = btn.dataset.id;
+    const amount = btn.dataset.amount;
+    const company = btn.dataset.company;
+    const payDayType = btn.dataset.payDayType;
+    const payDay = btn.dataset.payDay;
+    const hasGroup = btn.dataset.hasGroup;
+
+    const form = document.getElementById('editSalaryForm');
+    form.action = '/salaries/edit/' + id;
+
+    document.getElementById('editAmount').value = parseFloat(amount).toFixed(2);
+    document.getElementById('editCompany').value = company;
+    editPayDayType.value = payDayType;
+    editPayDayInput.value = payDay;
+
+    // Trigger change to show/hide pay day field
+    editPayDayType.dispatchEvent(new Event('change'));
+
+    // Show/hide "update forward" checkbox
+    const fwdContainer = document.getElementById('editForwardContainer');
+    fwdContainer.style.display = hasGroup ? '' : 'none';
+    document.getElementById('editForward').checked = false;
+
+    new bootstrap.Modal(document.getElementById('editSalaryModal')).show();
   }
 </script>
 {% endblock %}
