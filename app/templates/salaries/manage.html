@@ -321,6 +321,29 @@
 
 {% block scripts %}
 <script>
+  // Calcula o Nº dia útil ou dia fixo de um mês e retorna string DD/MM/AAAA
+  function calcPayDate(month, year, type, day) {
+    const m = parseInt(month), y = parseInt(year), n = parseInt(day);
+    if (!type || !n || isNaN(m) || isNaN(y) || isNaN(n) || n < 1) return '';
+    const daysInMonth = new Date(y, m, 0).getDate();
+    if (type === 'util') {
+      let count = 0;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dow = new Date(y, m - 1, d).getDay(); // 0=Dom, 6=Sáb
+        if (dow >= 1 && dow <= 5) {
+          count++;
+          if (count === n) {
+            return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
+          }
+        }
+      }
+      return '(mês não tem esse nº de dias úteis)';
+    } else {
+      const d = Math.min(n, daysInMonth);
+      return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}/${y}`;
+    }
+  }
+
   // Recurring months toggle on create form
   const cbRecurring = document.getElementById('isRecurring');
   const fieldRecurring = document.getElementById('recurringMonthsField');
@@ -330,11 +353,26 @@
     });
   }
 
-  // Payment day type toggle on create form
+  // Payment day preview on create form
   const addPayDayType = document.getElementById('addPayDayType');
   const addPayDayField = document.getElementById('addPayDayField');
   const addPayDayInput = document.getElementById('addPayDay');
   const addPayDayLabel = document.getElementById('addPayDayLabel');
+  const addPayDatePreview = document.getElementById('addPayDatePreview');
+  const addMonthSel = document.querySelector('select[name="month"]');
+  const addYearInput = document.querySelector('input[name="year"]');
+
+  function updateAddPreview() {
+    if (!addPayDayType || !addPayDatePreview) return;
+    const result = calcPayDate(
+      addMonthSel ? addMonthSel.value : '',
+      addYearInput ? addYearInput.value : '',
+      addPayDayType.value,
+      addPayDayInput ? addPayDayInput.value : ''
+    );
+    addPayDatePreview.textContent = result ? `→ Pagamento em ${result}` : '';
+  }
+
   if (addPayDayType) {
     addPayDayType.addEventListener('change', () => {
       const t = addPayDayType.value;
@@ -346,7 +384,11 @@
         addPayDayLabel.textContent = 'Nº DU (1-22)';
         addPayDayInput.max = 22;
       }
+      updateAddPreview();
     });
+    if (addPayDayInput) addPayDayInput.addEventListener('input', updateAddPreview);
+    if (addMonthSel) addMonthSel.addEventListener('change', updateAddPreview);
+    if (addYearInput) addYearInput.addEventListener('input', updateAddPreview);
   }
 
   // Edit modal logic
@@ -354,6 +396,16 @@
   const editPayDayField = document.getElementById('editPayDayField');
   const editPayDayInput = document.getElementById('editPayDay');
   const editPayDayLabel = document.getElementById('editPayDayLabel');
+  const editPayDatePreview = document.getElementById('editPayDatePreview');
+
+  // Month/year stored when opening modal
+  let _editMonth = null, _editYear = null;
+
+  function updateEditPreview() {
+    if (!editPayDayType || !editPayDatePreview) return;
+    const result = calcPayDate(_editMonth, _editYear, editPayDayType.value, editPayDayInput ? editPayDayInput.value : '');
+    editPayDatePreview.textContent = result ? `→ Pagamento em ${result}` : '';
+  }
 
   if (editPayDayType) {
     editPayDayType.addEventListener('change', () => {
@@ -366,7 +418,9 @@
         editPayDayLabel.textContent = 'Nº DU (1-22)';
         editPayDayInput.max = 22;
       }
+      updateEditPreview();
     });
+    if (editPayDayInput) editPayDayInput.addEventListener('input', updateEditPreview);
   }
 
   function openEditSalary(btn) {
@@ -376,6 +430,8 @@
     const payDayType = btn.dataset.payDayType;
     const payDay = btn.dataset.payDay;
     const hasGroup = btn.dataset.hasGroup;
+    _editMonth = btn.dataset.month;
+    _editYear = btn.dataset.year;
 
     const form = document.getElementById('editSalaryForm');
     form.action = '/salaries/edit/' + id;
@@ -385,10 +441,8 @@
     editPayDayType.value = payDayType;
     editPayDayInput.value = payDay;
 
-    // Trigger change to show/hide pay day field
     editPayDayType.dispatchEvent(new Event('change'));
 
-    // Show/hide "update forward" checkbox
     const fwdContainer = document.getElementById('editForwardContainer');
     fwdContainer.style.display = hasGroup ? '' : 'none';
     document.getElementById('editForward').checked = false;
