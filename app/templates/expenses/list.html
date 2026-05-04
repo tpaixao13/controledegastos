@@ -83,6 +83,14 @@
           {% endfor %}
         </select>
       </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">Estado</label>
+        <select name="paid" class="form-select form-select-sm auto-filter">
+          <option value="" {{ 'selected' if filters.paid == '' }}>Todos</option>
+          <option value="pendente" {{ 'selected' if filters.paid == 'pendente' }}>Pendente</option>
+          <option value="pago" {{ 'selected' if filters.paid == 'pago' }}>Pago</option>
+        </select>
+      </div>
       <div class="col-auto">
         <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-x-lg"></i> Limpar
