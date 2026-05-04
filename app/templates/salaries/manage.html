@@ -151,6 +151,21 @@
             <label class="form-label fw-semibold">Empresa</label>
             {{ form.company(class='form-control', placeholder='Ex: Empresa ABC') }}
           </div>
+
+          <div class="mb-3">
+            <div class="form-check">
+              {{ form.is_recurring(class='form-check-input', id='isRecurring') }}
+              <label class="form-check-label fw-semibold" for="isRecurring">
+                Repetir nos próximos meses
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-3" id="recurringMonthsField" style="display:none">
+            <label class="form-label fw-semibold">Repetir por</label>
+            {{ form.recurring_months(class='form-select') }}
+          </div>
+
           {% else %}
           <div class="mb-3">
             <label class="form-label fw-semibold">Fonte</label>
