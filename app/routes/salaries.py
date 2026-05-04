@@ -97,7 +97,6 @@ def manage():
                 'success'
             )
         else:
-            is_received = (form.year.data < now.year) or (form.year.data == now.year and form.month.data <= now.month)
             db.session.add(Salary(
                 user_id=form.user_id.data,
                 year=form.year.data,
@@ -107,7 +106,7 @@ def manage():
                 income_type=income_type,
                 payment_day=pay_day,
                 payment_day_type=pay_day_type,
-                received=is_received,
+                received=False,
             ))
             db.session.commit()
             flash('Renda adicionada com sucesso!', 'success')
