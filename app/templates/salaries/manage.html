@@ -58,33 +58,38 @@
                   {% endif %}
                 </td>
                 <td class="text-center">
-                  {% if s.received %}
-                    <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Recebido</span>
-                  {% else %}
-                    <span class="badge bg-warning text-dark"><i class="bi bi-clock-fill"></i> Pendente</span>
-                  {% endif %}
-                </td>
-                <td class="text-end fw-semibold {{ 'text-muted text-decoration-line-through' if not s.received else '' }}">
-                  {{ s.amount|brl }}
-                </td>
-                <td class="text-center">
                   <form method="POST"
                         action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
                         style="display:inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="tab" value="{{ tab }}">
-                    {% if s.received %}
-                      <button type="submit" class="btn btn-sm btn-outline-secondary"
-                              title="Marcar como Pendente">
-                        <i class="bi bi-x-circle"></i>
-                      </button>
-                    {% else %}
-                      <button type="submit" class="btn btn-sm btn-success"
-                              title="Marcar como Recebido">
-                        <i class="bi bi-check-lg"></i> Recebido
-                      </button>
-                    {% endif %}
+                    <button type="submit"
+                            class="badge border-0 {{ 'badge-pago' if s.received else 'badge-pendente' }}"
+                            title="{{ 'Clique para marcar como Pendente' if s.received else 'Clique para marcar como Recebido' }}">
+                      {% if s.received %}
+                        <i class="bi bi-check-circle-fill"></i> Recebido
+                      {% else %}
+                        <i class="bi bi-clock-fill"></i> Pendente
+                      {% endif %}
+                    </button>
                   </form>
+                </td>
+                <td class="text-end fw-semibold {{ 'text-muted text-decoration-line-through' if not s.received else '' }}">
+                  {{ s.amount|brl }}
+                </td>
+                <td class="text-center">
+                  {% if not s.received %}
+                  <form method="POST"
+                        action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
+                        style="display:inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="tab" value="{{ tab }}">
+                    <button type="submit" class="btn btn-sm btn-outline-success"
+                            title="Marcar como Recebido">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                  </form>
+                  {% endif %}
                   <button class="btn btn-sm btn-outline-secondary"
                           onclick="openEditSalary(this)"
                           data-id="{{ s.id }}"
@@ -98,15 +103,38 @@
                           title="Editar">
                     <i class="bi bi-pencil"></i>
                   </button>
-                  <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}"
-                        onsubmit="return confirm('Remover esta renda?')" style="display:inline">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="tab" value="{{ tab }}">
-                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Remover">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </form>
+                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                          data-bs-target="#modalDeleteSalary{{ s.id }}" title="Remover">
+                    <i class="bi bi-trash"></i>
+                  </button>
                 </td>
+              </tr>
+
+              <!-- Modal delete -->
+              <div class="modal fade" id="modalDeleteSalary{{ s.id }}" tabindex="-1">
+                <div class="modal-dialog modal-sm">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h6 class="modal-title">Confirmar exclusão</h6>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body small">
+                      Eliminar renda de {{ s.amount|brl }} ({{ s.month|mes_nome }}/{{ s.year }})?
+                      {% if s.salary_group_id %}
+                      <br><span class="text-muted">Apenas esta entrada da série.</span>
+                      {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="tab" value="{{ tab }}">
+                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
               </tr>
               {% endfor %}
             </tbody>
