@@ -25,7 +25,7 @@ def _easter(year: int) -> _date:
 def _br_holidays(year: int) -> set:
     """Retorna conjunto com feriados nacionais brasileiros do ano (fixos + móveis)."""
     easter = _easter(year)
-    return {
+    holidays = {
         _date(year, 1, 1),               # Confraternização Universal
         _date(year, 4, 21),              # Tiradentes
         _date(year, 5, 1),               # Dia do Trabalho
@@ -39,6 +39,9 @@ def _br_holidays(year: int) -> set:
         easter - timedelta(days=2),      # Sexta-feira Santa
         easter + timedelta(days=60),     # Corpus Christi
     }
+    if year >= 2024:
+        holidays.add(_date(year, 11, 20))  # Consciência Negra (Lei 14.759/2023)
+    return holidays
 
 
 class Tenant(db.Model):
