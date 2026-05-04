@@ -48,7 +48,7 @@ def logout():
 
 @admin_bp.route('/')
 def dashboard():
-    now = datetime.utcnow()
+    now = datetime.now()
     tenants = (Tenant.query
                .filter(Tenant.users.any(User.is_admin == False))
                .order_by(Tenant.created_at.desc())
