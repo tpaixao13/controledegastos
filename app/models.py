@@ -1,6 +1,44 @@
-from datetime import datetime
+from datetime import datetime, date as _date, timedelta
 from app import db
 from werkzeug.security import generate_password_hash, check_password_hash
+
+
+def _easter(year: int) -> _date:
+    """Calcula a data da Páscoa (algoritmo de Butcher)."""
+    a = year % 19
+    b = year // 100
+    c = year % 100
+    d = b // 4
+    e = b % 4
+    f = (b + 8) // 25
+    g = (b - f + 1) // 3
+    h = (19 * a + b - d - g + 15) % 30
+    i = c // 4
+    k = c % 4
+    l = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l) // 451
+    month = (h + l - 7 * m + 114) // 31
+    day = ((h + l - 7 * m + 114) % 31) + 1
+    return _date(year, month, day)
+
+
+def _br_holidays(year: int) -> set:
+    """Retorna conjunto com feriados nacionais brasileiros do ano (fixos + móveis)."""
+    easter = _easter(year)
+    return {
+        _date(year, 1, 1),               # Confraternização Universal
+        _date(year, 4, 21),              # Tiradentes
+        _date(year, 5, 1),               # Dia do Trabalho
+        _date(year, 9, 7),               # Independência do Brasil
+        _date(year, 10, 12),             # N.S. Aparecida
+        _date(year, 11, 2),              # Finados
+        _date(year, 11, 15),             # Proclamação da República
+        _date(year, 12, 25),             # Natal
+        easter - timedelta(days=48),     # Carnaval (segunda-feira)
+        easter - timedelta(days=47),     # Carnaval (terça-feira)
+        easter - timedelta(days=2),      # Sexta-feira Santa
+        easter + timedelta(days=60),     # Corpus Christi
+    }
 
 
 class Tenant(db.Model):
