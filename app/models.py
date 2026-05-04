@@ -67,16 +67,52 @@ class User(db.Model):
         return f'<User {self.name}>'
 
 
+class SalaryGroup(db.Model):
+    __tablename__ = 'salary_groups'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    salaries = db.relationship('Salary', backref='salary_group', lazy='dynamic',
+                               foreign_keys='Salary.salary_group_id')
+
+    def __repr__(self):
+        return f'<SalaryGroup user={self.user_id}>'
+
+
 class Salary(db.Model):
     __tablename__ = 'salaries'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    salary_group_id = db.Column(db.Integer, db.ForeignKey('salary_groups.id'), nullable=True)
     year = db.Column(db.Integer, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     amount = db.Column(db.Numeric(12, 2), nullable=False)
     company = db.Column(db.Text, nullable=True)
     income_type = db.Column(db.Text, nullable=False, default='fixa')
+    payment_day = db.Column(db.Integer, nullable=True)
+    payment_day_type = db.Column(db.Text, nullable=True)  # 'fixo' or 'util'
+    received = db.Column(db.Boolean, default=True)
+
+    def expected_payment_date(self):
+        """Returns the expected payment date for this salary entry, or None if not configured."""
+        if not self.payment_day or not self.payment_day_type:
+            return None
+        import calendar
+        from datetime import date
+        if self.payment_day_type == 'util':
+            count = 0
+            for d in range(1, calendar.monthrange(self.year, self.month)[1] + 1):
+                if date(self.year, self.month, d).weekday() < 5:
+                    count += 1
+                    if count == self.payment_day:
+                        return date(self.year, self.month, d)
+            return None
+        else:
+            max_day = calendar.monthrange(self.year, self.month)[1]
+            return date(self.year, self.month, min(self.payment_day, max_day))
 
     def __repr__(self):
         return f'<Salary user={self.user_id} {self.month}/{self.year} R${self.amount}>'
