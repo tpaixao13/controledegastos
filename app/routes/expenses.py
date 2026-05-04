@@ -116,7 +116,8 @@ def index():
                            today=now.date(),
                            user_colors=user_color_map(users),
                            filters={'user_id': user_id, 'month': month, 'year': year,
-                                    'category': category, 'payment_method': payment_method})
+                                    'category': category, 'payment_method': payment_method,
+                                    'paid': paid_filter})
 
 
 _EXPORT_HEADERS = [
