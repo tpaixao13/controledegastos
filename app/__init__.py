@@ -178,6 +178,11 @@ def _run_migrations():
         'ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0',
         'ALTER TABLE users ADD COLUMN last_seen DATETIME',
         "ALTER TABLE salaries ADD COLUMN income_type TEXT NOT NULL DEFAULT 'fixa'",
+        "CREATE TABLE IF NOT EXISTS salary_groups (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), created_at DATETIME)",
+        "ALTER TABLE salaries ADD COLUMN salary_group_id INTEGER REFERENCES salary_groups(id)",
+        "ALTER TABLE salaries ADD COLUMN payment_day INTEGER",
+        "ALTER TABLE salaries ADD COLUMN payment_day_type TEXT",
+        "ALTER TABLE salaries ADD COLUMN received INTEGER DEFAULT 1",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
