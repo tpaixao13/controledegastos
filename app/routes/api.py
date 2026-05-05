@@ -156,9 +156,10 @@ def suggest_category():
     if len(description) < 3:
         return jsonify({'category': None})
     uids = tenant_user_ids()
+    term = f'%{description.lower()}%'
     row = (db.session.query(Expense.category, func.count('*').label('cnt'))
            .filter(Expense.user_id.in_(uids),
-                   func.lower(Expense.description) == description.lower())
+                   func.lower(Expense.description).like(term))
            .group_by(Expense.category)
            .order_by(func.count('*').desc())
            .first())
