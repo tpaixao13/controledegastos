@@ -111,8 +111,8 @@ class ExpenseForm(FlaskForm):
     num_installments = SelectField('Nº de Parcelas', choices=INSTALLMENTS, coerce=int, validators=[Optional()])
     paid = BooleanField('Marcar como Pago', validators=[Optional()])
     is_recurring = BooleanField('Despesa Recorrente?', validators=[Optional()])
-    recurring_times = SelectField('Repetir por quantos meses', choices=RECURRENCES, coerce=int,
-                                   validators=[Optional()])
+    recurring_times = IntegerField('Repetir por quantos meses',
+                                   validators=[Optional(), NumberRange(min=2, max=120)])
     year = IntegerField('Ano', validators=[DataRequired(), NumberRange(min=2000, max=2100)])
     month = SelectField('Mês', choices=MONTHS, coerce=int, validators=[DataRequired()])
     day = IntegerField('Dia', validators=[DataRequired(), NumberRange(min=1, max=31)])
