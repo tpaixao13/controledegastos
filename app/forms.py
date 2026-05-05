@@ -55,7 +55,6 @@ MONTHS = [
 ]
 
 INSTALLMENTS = [(i, f'{i}x') for i in range(2, 13)]
-RECURRENCES = [(i, f'{i}x') for i in range(2, 25)]
 
 CRYPTO_COINS = [
     ('', '— Selecione a moeda —'),
