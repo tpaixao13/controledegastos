@@ -108,8 +108,8 @@
 
             <div class="col-md-5" id="recurring-times-row" style="display:none">
               {{ form.recurring_times.label(class='form-label fw-semibold') }}
-              {{ form.recurring_times(class='form-select') }}
-              <div class="form-text">O valor total se repete a cada mês.</div>
+              {{ form.recurring_times(class='form-control', placeholder='Ex: 36', min=2, max=120) }}
+              <div class="form-text">Mínimo 2, máximo 120 meses.</div>
             </div>
 
           </div>
