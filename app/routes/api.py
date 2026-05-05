@@ -30,6 +30,8 @@ PAYMENT_COLORS = {
     'Cartão de Débito': '#0d6efd',
     'Cartão de Crédito': '#6f42c1',
     'Dinheiro': '#198754',
+    'VR': '#fd7e14',
+    'VA': '#20c997',
 }
 
 
