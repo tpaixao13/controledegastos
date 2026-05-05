@@ -32,9 +32,10 @@ def _tenant_categories(uids):
 
 
 def _suggest_category(description, uids):
+    term = f'%{description.lower()}%'
     row = (db.session.query(Expense.category, func.count('*').label('cnt'))
            .filter(Expense.user_id.in_(uids),
-                   func.lower(Expense.description) == description.lower())
+                   func.lower(Expense.description).like(term))
            .group_by(Expense.category)
            .order_by(func.count('*').desc())
            .first())
