@@ -23,10 +23,12 @@ body {
 .saldo-positivo { color: #198754; }
 .saldo-negativo { color: #dc3545; }
 
-.badge-pix { background-color: #32bcad; color: #fff; }
-.badge-debito { background-color: #0d6efd; color: #fff; }
+.badge-pix     { background-color: #32bcad; color: #fff; }
+.badge-debito  { background-color: #0d6efd; color: #fff; }
 .badge-credito { background-color: #6f42c1; color: #fff; }
-.badge-dinheiro { background-color: #198754; color: #fff; }
+.badge-dinheiro{ background-color: #198754; color: #fff; }
+.badge-vr      { background-color: #fd7e14; color: #fff; }
+.badge-va      { background-color: #20c997; color: #fff; }
 
 .installment-badge {
   font-size: 0.7rem;
