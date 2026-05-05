@@ -51,4 +51,30 @@ document.addEventListener('DOMContentLoaded', function () {
   // Estado inicial
   updateForm();
   updateRecurring();
+
+  // Sugestão automática de categoria
+  const descInput = document.getElementById('description');
+  const categoryInput = document.getElementById('category');
+  let _suggestTimer = null;
+
+  function _fetchCategoryHint() {
+    if (!descInput || !categoryInput || categoryInput.value.trim()) return;
+    const desc = descInput.value.trim();
+    if (desc.length < 3) return;
+    fetch('/api/chart/suggest-category?description=' + encodeURIComponent(desc))
+      .then(r => r.json())
+      .then(data => {
+        if (data.category && !categoryInput.value.trim()) {
+          categoryInput.value = data.category;
+        }
+      })
+      .catch(() => {});
+  }
+
+  if (descInput) {
+    descInput.addEventListener('input', function () {
+      clearTimeout(_suggestTimer);
+      _suggestTimer = setTimeout(_fetchCategoryHint, 400);
+    });
+  }
 });
