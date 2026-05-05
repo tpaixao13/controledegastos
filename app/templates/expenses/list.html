@@ -155,6 +155,10 @@
                 <span class="badge badge-debito">Débito</span>
               {% elif e.payment_method == 'Cartão de Crédito' %}
                 <span class="badge badge-credito">Crédito</span>
+              {% elif e.payment_method == 'VR' %}
+                <span class="badge badge-vr">VR</span>
+              {% elif e.payment_method == 'VA' %}
+                <span class="badge badge-va">VA</span>
               {% else %}
                 <span class="badge badge-dinheiro">Dinheiro</span>
               {% endif %}
