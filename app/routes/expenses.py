@@ -543,9 +543,12 @@ def import_bank_parse():
         return redirect(url_for('expenses.import_bank'))
 
     selected_user = next(u for u in users if u.id == user_id)
+    all_uids = [u.id for u in users]
+    suggested_cats = [_suggest_category(t.description, all_uids) for t in transactions]
     return render_template(
         'expenses/import_preview.html',
         transactions=transactions,
+        suggested_cats=suggested_cats,
         users=users,
         selected_user=selected_user,
         user_id=user_id,
