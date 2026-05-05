@@ -2,6 +2,7 @@ import io
 from decimal import Decimal, ROUND_HALF_UP
 from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
+from sqlalchemy import func
 from app import db
 from app.models import User, Expense, InstallmentGroup, RecurringGroup
 from app.forms import ExpenseForm
