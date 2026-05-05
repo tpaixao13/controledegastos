@@ -71,9 +71,10 @@
                        class="form-control form-control-sm border-0 bg-transparent px-1" required>
               </td>
               <td>
+                {% set hint = suggested_cats[i] if suggested_cats else None %}
                 <select name="category_{{ i }}" class="form-select form-select-sm">
                   {% for cat in categories %}
-                  <option value="{{ cat }}" {{ 'selected' if cat == 'Outros' }}>{{ cat }}</option>
+                  <option value="{{ cat }}" {{ 'selected' if cat == (hint or 'Outros') }}>{{ cat }}</option>
                   {% endfor %}
                 </select>
               </td>
