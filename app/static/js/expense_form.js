@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateForm() {
     const method = paymentSelect ? paymentSelect.value : '';
 
-    if (method === 'Cartão de Débito' || method === 'PIX') {
+    if (['Cartão de Débito', 'PIX', 'VR', 'VA'].includes(method)) {
       if (bankRow) bankRow.style.display = '';
       if (installmentSection) installmentSection.style.display = 'none';
       if (numInstallmentsRow) numInstallmentsRow.style.display = 'none';
