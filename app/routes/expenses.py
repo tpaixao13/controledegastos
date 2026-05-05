@@ -274,7 +274,7 @@ def add():
         form.month.data = now.month
         form.day.data = now.day
         form.num_installments.data = 2
-        form.recurring_times.data = 2
+        form.recurring_times.data = 12
 
     if form.validate_on_submit():
         payment = form.payment_method.data
