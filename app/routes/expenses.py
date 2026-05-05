@@ -31,6 +31,16 @@ def _tenant_categories(uids):
     return sorted(set(CATEGORIES) | db_cats)
 
 
+def _suggest_category(description, uids):
+    row = (db.session.query(Expense.category, func.count('*').label('cnt'))
+           .filter(Expense.user_id.in_(uids),
+                   func.lower(Expense.description) == description.lower())
+           .group_by(Expense.category)
+           .order_by(func.count('*').desc())
+           .first())
+    return row[0] if row else None
+
+
 def _parse_c6pdf(file_bytes, form):
     from app.importers.c6 import parse_c6_pdf
     pwd = form.get('pdf_password', '').strip() or None
