@@ -150,6 +150,21 @@ def pending_vs_paid():
     })
 
 
+@api_bp.route('/suggest-category')
+def suggest_category():
+    description = request.args.get('description', '').strip()
+    if len(description) < 3:
+        return jsonify({'category': None})
+    uids = tenant_user_ids()
+    row = (db.session.query(Expense.category, func.count('*').label('cnt'))
+           .filter(Expense.user_id.in_(uids),
+                   func.lower(Expense.description) == description.lower())
+           .group_by(Expense.category)
+           .order_by(func.count('*').desc())
+           .first())
+    return jsonify({'category': row[0] if row else None})
+
+
 @api_bp.route('/cdi-rate')
 def cdi_rate():
     selic = get_selic_rate()
