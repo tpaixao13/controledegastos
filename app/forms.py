@@ -23,6 +23,8 @@ PAYMENT_METHODS = [
     ('Cartão de Débito', 'Cartão de Débito'),
     ('Cartão de Crédito', 'Cartão de Crédito'),
     ('Dinheiro', 'Dinheiro'),
+    ('VR', 'VR — Vale Refeição'),
+    ('VA', 'VA — Vale Alimentação'),
 ]
 
 BANKS = [
