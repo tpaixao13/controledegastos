@@ -257,6 +257,13 @@ def trial_expired():
     return render_template('auth/trial_expired.html')
 
 
+@auth_bp.route('/upgrade')
+def upgrade():
+    tenant_id = session.get('tenant_id')
+    tenant = Tenant.query.get(tenant_id) if tenant_id else None
+    return render_template('auth/upgrade.html', tenant=tenant)
+
+
 def _mask(value: str | None, visible: int = 4) -> str:
     if not value:
         return ''
