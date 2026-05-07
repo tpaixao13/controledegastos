@@ -187,7 +187,9 @@ def members():
 
     member_list = User.query.filter_by(tenant_id=tenant_id).order_by(User.name).all()
     return render_template('auth/members.html', form=form, rename_form=rename_form,
-                           tenant=tenant, members=member_list)
+                           tenant=tenant, members=member_list,
+                           member_limit=tenant.member_limit,
+                           member_count=len(member_list))
 
 
 @auth_bp.route('/members/delete/<int:user_id>', methods=['POST'])
