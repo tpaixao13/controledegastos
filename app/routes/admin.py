@@ -57,10 +57,13 @@ def dashboard():
     total_tenants = len(tenants)
     total_users = User.query.filter(User.is_admin == False).count()
 
-    trial_active = [t for t in tenants if t.trial_expires_at and t.trial_expires_at > now]
+    trial_active  = [t for t in tenants if t.plan == 'trial' and t.trial_expires_at and t.trial_expires_at > now]
     trial_expired = [t for t in tenants if t.trial_expires_at and t.trial_expires_at <= now]
-    lifetime = [t for t in tenants if t.trial_expires_at is None]
-    expiring_soon = [t for t in trial_active if (t.trial_expires_at - now).days <= 7]
+    plan_mensal   = [t for t in tenants if t.plan == 'mensal' and t.trial_expires_at and t.trial_expires_at > now]
+    plan_anual    = [t for t in tenants if t.plan == 'anual'  and t.trial_expires_at and t.trial_expires_at > now]
+    lifetime      = [t for t in tenants if t.plan == 'vitalicio']
+    expiring_soon = [t for t in trial_active + plan_mensal + plan_anual
+                     if t.trial_expires_at and (t.trial_expires_at - now).days <= 7]
 
     online_cutoff = now - ONLINE_THRESHOLD
     online_users = User.query.filter(
