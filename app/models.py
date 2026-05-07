@@ -44,6 +44,21 @@ def _br_holidays(year: int) -> set:
     return holidays
 
 
+PLAN_LIMITS = {
+    'trial':    2,
+    'mensal':   2,
+    'anual':    3,
+    'vitalicio': 5,
+}
+
+PLAN_LABELS = {
+    'trial':    'Trial',
+    'mensal':   'Mensal',
+    'anual':    'Anual',
+    'vitalicio': 'Vitalício',
+}
+
+
 class Tenant(db.Model):
     __tablename__ = 'tenants'
 
@@ -58,6 +73,7 @@ class Tenant(db.Model):
     telegram_minute = db.Column(db.Integer, default=0)
     telegram_last_sent = db.Column(db.Date, nullable=True)
     trial_expires_at = db.Column(db.DateTime, nullable=True)
+    plan = db.Column(db.Text, default='trial', nullable=False)
 
     users = db.relationship('User', backref='tenant', lazy='dynamic', cascade='all, delete-orphan')
 
@@ -73,6 +89,14 @@ class Tenant(db.Model):
             return None
         delta = (self.trial_expires_at - datetime.utcnow()).days
         return max(0, delta)
+
+    @property
+    def member_limit(self):
+        return PLAN_LIMITS.get(self.plan or 'trial', 2)
+
+    @property
+    def plan_label(self):
+        return PLAN_LABELS.get(self.plan or 'trial', 'Trial')
 
     def __repr__(self):
         return f'<Tenant {self.name} ({self.code})>'
