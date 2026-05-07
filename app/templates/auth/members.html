@@ -142,7 +142,14 @@
     <div class="card">
       <div class="card-header fw-semibold">Adicionar Membro</div>
       <div class="card-body">
-        <form method="POST" novalidate>
+        {% if member_count >= member_limit %}
+        <div class="alert alert-warning mb-3">
+          <i class="bi bi-lock-fill"></i>
+          Limite do plano <strong>{{ tenant.plan_label }}</strong> atingido ({{ member_limit }} usuários).
+          <a href="mailto:suporte@finfam.net.br" class="alert-link">Faça upgrade</a> para adicionar mais membros.
+        </div>
+        {% endif %}
+        <form method="POST" novalidate {% if member_count >= member_limit %}style="pointer-events:none;opacity:.5;"{% endif %}>
           {{ form.hidden_tag() }}
 
           <div class="mb-3">
