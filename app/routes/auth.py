@@ -157,6 +157,14 @@ def members():
     rename_form = RenameGroupForm(prefix='rn', obj=tenant)
 
     if 'submit_member' in request.form:
+        current_count = User.query.filter_by(tenant_id=tenant_id).count()
+        if current_count >= tenant.member_limit:
+            flash(
+                f'Limite do plano {tenant.plan_label} atingido '
+                f'({tenant.member_limit} usuários). Faça upgrade para adicionar mais membros.',
+                'warning'
+            )
+            return redirect(url_for('auth.members'))
         if form.validate_on_submit():
             email = form.email.data.strip().lower()
             if User.query.filter_by(email=email).first():
