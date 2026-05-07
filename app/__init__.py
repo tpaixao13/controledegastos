@@ -183,6 +183,7 @@ def _run_migrations():
         "ALTER TABLE salaries ADD COLUMN payment_day INTEGER",
         "ALTER TABLE salaries ADD COLUMN payment_day_type TEXT",
         "ALTER TABLE salaries ADD COLUMN received INTEGER DEFAULT 1",
+        "ALTER TABLE tenants ADD COLUMN plan TEXT DEFAULT 'trial'",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
