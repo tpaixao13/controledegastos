@@ -88,12 +88,32 @@ def index():
     category = request.args.get('category', '')
     payment_method = request.args.get('payment_method', '')
     paid_filter = request.args.get('paid', '')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
     page = request.args.get('page', 1, type=int)
 
-    # month=0 significa "todos os meses"
-    query = Expense.query.filter(Expense.user_id.in_(uids)).filter(Expense.year == year)
-    if month != 0:
-        query = query.filter(Expense.month == month)
+    date_int = Expense.year * 10000 + Expense.month * 100 + Expense.day
+    query = Expense.query.filter(Expense.user_id.in_(uids))
+
+    if date_from or date_to:
+        # intervalo de datas explícito substitui o filtro mês/ano
+        if date_from:
+            try:
+                df = datetime.strptime(date_from, '%Y-%m-%d')
+                query = query.filter(date_int >= df.year * 10000 + df.month * 100 + df.day)
+            except ValueError:
+                date_from = ''
+        if date_to:
+            try:
+                dt = datetime.strptime(date_to, '%Y-%m-%d')
+                query = query.filter(date_int <= dt.year * 10000 + dt.month * 100 + dt.day)
+            except ValueError:
+                date_to = ''
+    else:
+        query = query.filter(Expense.year == year)
+        if month != 0:
+            query = query.filter(Expense.month == month)
+
     if user_id and user_id in uids:
         query = query.filter(Expense.user_id == user_id)
     if category:
