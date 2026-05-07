@@ -77,6 +77,8 @@ def dashboard():
                            total_users=total_users,
                            trial_active=trial_active,
                            trial_expired=trial_expired,
+                           plan_mensal=plan_mensal,
+                           plan_anual=plan_anual,
                            lifetime=lifetime,
                            expiring_soon=expiring_soon,
                            online_users=online_users,
