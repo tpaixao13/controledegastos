@@ -55,14 +55,6 @@
     <div class="col-6 col-md-3">
       <div class="card text-center border-0 shadow-sm">
         <div class="card-body py-3">
-          <div class="fs-2 fw-bold text-success">{{ lifetime|length }}</div>
-          <div class="small text-muted"><i class="bi bi-infinity"></i> Acesso Vitalício</div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card text-center border-0 shadow-sm">
-        <div class="card-body py-3">
           <div class="fs-2 fw-bold text-warning">{{ trial_active|length }}</div>
           <div class="small text-muted"><i class="bi bi-hourglass-split"></i> Trial Ativo</div>
         </div>
@@ -71,8 +63,32 @@
     <div class="col-6 col-md-3">
       <div class="card text-center border-0 shadow-sm">
         <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-primary">{{ plan_mensal|length }}</div>
+          <div class="small text-muted"><i class="bi bi-calendar-month"></i> Mensal</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold" style="color:#6f42c1;">{{ plan_anual|length }}</div>
+          <div class="small text-muted"><i class="bi bi-calendar-check"></i> Anual</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
+          <div class="fs-2 fw-bold text-success">{{ lifetime|length }}</div>
+          <div class="small text-muted"><i class="bi bi-infinity"></i> Vitalício</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center border-0 shadow-sm">
+        <div class="card-body py-3">
           <div class="fs-2 fw-bold text-danger">{{ trial_expired|length }}</div>
-          <div class="small text-muted"><i class="bi bi-x-circle"></i> Trial Expirado</div>
+          <div class="small text-muted"><i class="bi bi-x-circle"></i> Expirado</div>
         </div>
       </div>
     </div>
