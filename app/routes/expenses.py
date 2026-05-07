@@ -149,7 +149,8 @@ def index():
                            user_colors=user_color_map(users),
                            filters={'user_id': user_id, 'month': month, 'year': year,
                                     'category': category, 'payment_method': payment_method,
-                                    'paid': paid_filter})
+                                    'paid': paid_filter, 'date_from': date_from,
+                                    'date_to': date_to})
 
 
 _EXPORT_HEADERS = [
