@@ -45,10 +45,10 @@ def _br_holidays(year: int) -> set:
 
 
 PLAN_LIMITS = {
-    'trial':    2,
-    'mensal':   2,
-    'anual':    3,
-    'vitalicio': 5,
+    'trial':     1,
+    'mensal':    1,
+    'anual':     2,
+    'vitalicio': 4,
 }
 
 PLAN_LABELS = {
