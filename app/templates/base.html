@@ -46,6 +46,15 @@
             <i class="bi bi-graph-up-arrow"></i> Investimentos
           </a>
         </li>
+        {% if current_plan and current_plan != 'vitalicio' %}
+        <li class="nav-item">
+          <a class="nav-link fw-semibold {{ 'active' if request.endpoint == 'auth.upgrade' }}"
+             href="{{ url_for('auth.upgrade') }}"
+             style="color:#ffc107;">
+            <i class="bi bi-rocket-takeoff"></i> Upgrade
+          </a>
+        </li>
+        {% endif %}
       </ul>
       <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
         <li class="nav-item">
