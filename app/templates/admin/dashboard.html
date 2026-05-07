@@ -184,13 +184,18 @@
                 {{ tenant.created_at.strftime('%d/%m/%Y') if tenant.created_at else '—' }}
               </td>
               <td class="text-center">
-                {% if tenant.trial_expires_at is none %}
+                {% if tenant.plan == 'vitalicio' %}
                   <span class="badge bg-success"><i class="bi bi-infinity"></i> Vitalício</span>
-                {% elif tenant.trial_expires_at > now %}
+                {% elif tenant.plan == 'mensal' and tenant.trial_expires_at and tenant.trial_expires_at > now %}
+                  <span class="badge bg-primary"><i class="bi bi-calendar-month"></i> Mensal</span>
+                {% elif tenant.plan == 'anual' and tenant.trial_expires_at and tenant.trial_expires_at > now %}
+                  <span class="badge" style="background:#6f42c1;"><i class="bi bi-calendar-check"></i> Anual</span>
+                {% elif tenant.trial_expires_at and tenant.trial_expires_at > now %}
                   <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Trial</span>
                 {% else %}
                   <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Expirado</span>
                 {% endif %}
+                <div class="small text-muted mt-1">{{ tenant.users.filter_by(is_admin=False).count() }}/{{ tenant.member_limit }} membros</div>
               </td>
               <td class="text-center small text-muted">
                 {% if tenant.trial_expires_at %}
