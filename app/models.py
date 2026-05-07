@@ -93,7 +93,8 @@ class Tenant(db.Model):
 
     @property
     def member_limit(self):
-        return PLAN_LIMITS.get(self.plan or 'trial', 2)
+        base = PLAN_LIMITS.get(self.plan or 'trial', 1)
+        return base + (self.extra_members or 0)
 
     @property
     def plan_label(self):
