@@ -117,12 +117,15 @@ def create_app(config_name='default'):
         from app.models import Tenant
         tenant_id = session.get('tenant_id')
         if not tenant_id:
-            return {'trial_days_left': None}
+            return {'trial_days_left': None, 'current_plan': None}
         tenant = Tenant.query.get(tenant_id)
-        if not tenant or tenant.trial_expires_at is None:
-            return {'trial_days_left': None}
+        if not tenant:
+            return {'trial_days_left': None, 'current_plan': None}
+        plan = tenant.plan or 'trial'
+        if tenant.trial_expires_at is None:
+            return {'trial_days_left': None, 'current_plan': plan}
         delta = (tenant.trial_expires_at - datetime.utcnow()).days
-        return {'trial_days_left': max(0, delta)}
+        return {'trial_days_left': max(0, delta), 'current_plan': plan}
 
     @app.before_request
     def require_login():
