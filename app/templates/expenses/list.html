@@ -91,9 +91,22 @@
           <option value="pago" {{ 'selected' if filters.paid == 'pago' }}>Pago</option>
         </select>
       </div>
-      <div class="col-auto">
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">De</label>
+        <input type="date" name="date_from" value="{{ filters.date_from }}"
+               class="form-control form-control-sm" id="date_from">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">Até</label>
+        <input type="date" name="date_to" value="{{ filters.date_to }}"
+               class="form-control form-control-sm" id="date_to">
+      </div>
+      <div class="col-auto d-flex gap-1 align-items-end">
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="bi bi-search"></i>
+        </button>
         <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary btn-sm">
-          <i class="bi bi-x-lg"></i> Limpar
+          <i class="bi bi-x-lg"></i>
         </a>
       </div>
     </form>
