@@ -124,6 +124,28 @@ def set_plan(tenant_id):
     return redirect(url_for('admin.dashboard'))
 
 
+@admin_bp.route('/add-extra-member/<int:tenant_id>', methods=['POST'])
+def add_extra_member(tenant_id):
+    tenant = Tenant.query.get_or_404(tenant_id)
+    if tenant.plan not in ('anual', 'vitalicio'):
+        flash('Slot extra só pode ser concedido para planos Anual ou Vitalício.', 'warning')
+        return redirect(url_for('admin.dashboard'))
+    tenant.extra_members = (tenant.extra_members or 0) + 1
+    db.session.commit()
+    flash(f'+1 slot extra concedido a "{tenant.name}" (novo limite: {tenant.member_limit}).', 'success')
+    return redirect(url_for('admin.dashboard'))
+
+
+@admin_bp.route('/remove-extra-member/<int:tenant_id>', methods=['POST'])
+def remove_extra_member(tenant_id):
+    tenant = Tenant.query.get_or_404(tenant_id)
+    if (tenant.extra_members or 0) > 0:
+        tenant.extra_members -= 1
+        db.session.commit()
+        flash(f'Slot extra removido de "{tenant.name}" (novo limite: {tenant.member_limit}).', 'warning')
+    return redirect(url_for('admin.dashboard'))
+
+
 @admin_bp.route('/revoke-plan/<int:tenant_id>', methods=['POST'])
 def revoke_plan(tenant_id):
     tenant = Tenant.query.get_or_404(tenant_id)
