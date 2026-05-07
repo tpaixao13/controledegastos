@@ -239,6 +239,24 @@
                       </button>
                     </form>
                   </div>
+                  {% if tenant.plan in ('anual', 'vitalicio') %}
+                  <div class="btn-group btn-group-sm mt-1">
+                    <form method="POST" action="{{ url_for('admin.add_extra_member', tenant_id=tenant.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-outline-info" title="+1 slot extra">
+                        <i class="bi bi-person-plus"></i> +1
+                      </button>
+                    </form>
+                    {% if tenant.extra_members > 0 %}
+                    <form method="POST" action="{{ url_for('admin.remove_extra_member', tenant_id=tenant.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-outline-secondary" title="Remover slot extra">
+                        <i class="bi bi-person-dash"></i> -1
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                  {% endif %}
                   <form method="POST" action="{{ url_for('admin.delete_tenant', tenant_id=tenant.id) }}" class="d-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-sm btn-danger"
