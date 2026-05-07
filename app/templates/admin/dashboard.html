@@ -209,23 +209,37 @@
               </td>
               <td class="text-center">
                 <div class="d-flex flex-column gap-1 align-items-center">
-                  {% if tenant.trial_expires_at is not none %}
-                  <form method="POST" action="{{ url_for('admin.grant_lifetime', tenant_id=tenant.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-success">
-                      <i class="bi bi-infinity"></i> Vitalício
-                    </button>
-                  </form>
-                  {% else %}
-                  <form method="POST" action="{{ url_for('admin.revoke_lifetime', tenant_id=tenant.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-outline-warning"
-                            onclick="return confirm('Revogar acesso de {{ tenant.name }}?')">
-                      <i class="bi bi-slash-circle"></i> Revogar
-                    </button>
-                  </form>
-                  {% endif %}
-                  <form method="POST" action="{{ url_for('admin.delete_tenant', tenant_id=tenant.id) }}">
+                  <div class="btn-group btn-group-sm">
+                    <form method="POST" action="{{ url_for('admin.set_plan', tenant_id=tenant.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="plan" value="mensal">
+                      <button type="submit" class="btn btn-sm btn-outline-primary" title="Plano Mensal">
+                        <i class="bi bi-calendar-month"></i>
+                      </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.set_plan', tenant_id=tenant.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="plan" value="anual">
+                      <button type="submit" class="btn btn-sm btn-outline-secondary" title="Plano Anual" style="color:#6f42c1;border-color:#6f42c1;">
+                        <i class="bi bi-calendar-check"></i>
+                      </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.set_plan', tenant_id=tenant.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input type="hidden" name="plan" value="vitalicio">
+                      <button type="submit" class="btn btn-sm btn-outline-success" title="Plano Vitalício">
+                        <i class="bi bi-infinity"></i>
+                      </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin.revoke_plan', tenant_id=tenant.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-outline-warning"
+                              onclick="return confirm('Revogar acesso de {{ tenant.name }}?')" title="Revogar">
+                        <i class="bi bi-slash-circle"></i>
+                      </button>
+                    </form>
+                  </div>
+                  <form method="POST" action="{{ url_for('admin.delete_tenant, tenant_id=tenant.id) }}" class="d-inline">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-sm btn-danger"
                             onclick="return confirm('Eliminar família {{ tenant.name }} e todos os seus membros?')">
