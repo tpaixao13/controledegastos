@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Upgrade de Plano — FinFam{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+  <div class="col">
+    <h2 class="fw-bold"><i class="bi bi-rocket-takeoff text-primary"></i> Upgrade de Plano</h2>
+    <p class="text-muted mb-0">
+      Plano atual:
+      <span class="badge {{ 'bg-warning text-dark' if current_plan == 'trial' else ('bg-primary' if current_plan == 'mensal' else '') }}"
+            style="{{ 'background:#6f42c1!important;' if current_plan == 'anual' }}">
+        {{ {'trial':'Trial','mensal':'Mensal','anual':'Anual'}.get(current_plan, current_plan)|title }}
+      </span>
+    </p>
+  </div>
+</div>
+
+<!-- Imagem dos planos -->
+<div class="card mb-4 border-0 shadow-sm">
+  <div class="card-body p-3 text-center">
+    <img src="{{ url_for('static', filename='images/planos.jpeg') }}"
+         alt="Planos FinFam"
+         class="img-fluid rounded"
+         style="max-height:420px; object-fit:contain;">
+  </div>
+</div>
+
+<!-- Cards de planos -->
+<div class="row g-3 mb-4">
+
+  <div class="col-md-4">
+    <div class="card h-100 {{ 'border-primary border-2' if current_plan == 'mensal' else 'border' }}">
+      <div class="card-header bg-primary text-white text-center fw-semibold">
+        <i class="bi bi-calendar-month"></i> Mensal
+        {% if current_plan == 'mensal' %}<span class="badge bg-white text-primary ms-1 small">Atual</span>{% endif %}
+      </div>
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-primary">R$ 9,90<span class="fs-6 fw-normal text-muted">/mês</span></div>
+        <hr>
+        <ul class="list-unstyled text-start small">
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Acesso completo ao FinFam</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> <strong>1 usuário</strong> (somente o dono)</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Gráficos e relatórios</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Importação de extratos</li>
+          <li class="text-muted"><i class="bi bi-x-circle me-1"></i> Membros da família</li>
+        </ul>
+      </div>
+      <div class="card-footer text-center">
+        {% if current_plan == 'mensal' %}
+        <button class="btn btn-primary w-100" disabled>Plano atual</button>
+        {% else %}
+        <a href="mailto:suporte@finfam.net.br?subject=Upgrade para o plano Mensal"
+           class="btn btn-primary w-100">
+          <i class="bi bi-envelope"></i> Contratar Mensal
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100 {{ 'border-2' if current_plan == 'anual' else 'border' }}"
+         style="border-color:#6f42c1{{ '!important' if current_plan == 'anual' }};">
+      <div class="card-header text-white text-center fw-semibold" style="background:#6f42c1;">
+        <i class="bi bi-calendar-check"></i> Anual
+        {% if current_plan == 'anual' %}
+          <span class="badge bg-white ms-1 small" style="color:#6f42c1;">Atual</span>
+        {% else %}
+          <span class="badge bg-warning text-dark ms-1 small">Mais popular</span>
+        {% endif %}
+      </div>
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold" style="color:#6f42c1;">R$ 89,90<span class="fs-6 fw-normal text-muted">/ano</span></div>
+        <div class="small text-success fw-semibold mb-2">Equivale a R$ 7,49/mês — 25% off</div>
+        <hr>
+        <ul class="list-unstyled text-start small">
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Acesso completo ao FinFam</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Até <strong>2 usuários</strong> (dono + 1 membro)</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Gráficos e relatórios</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Importação de extratos</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> 1 membro da família</li>
+        </ul>
+      </div>
+      <div class="card-footer text-center">
+        {% if current_plan == 'anual' %}
+        <button class="btn w-100 text-white" style="background:#6f42c1;" disabled>Plano atual</button>
+        {% else %}
+        <a href="mailto:suporte@finfam.net.br?subject=Upgrade para o plano Anual"
+           class="btn w-100 text-white" style="background:#6f42c1;">
+          <i class="bi bi-envelope"></i> Contratar Anual
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card h-100 border border-success">
+      <div class="card-header bg-success text-white text-center fw-semibold">
+        <i class="bi bi-infinity"></i> Vitalício
+      </div>
+      <div class="card-body text-center">
+        <div class="fs-2 fw-bold text-success">R$ 199,90<span class="fs-6 fw-normal text-muted"> único</span></div>
+        <div class="small text-muted mb-2">Pague uma vez, use para sempre</div>
+        <hr>
+        <ul class="list-unstyled text-start small">
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Acesso completo ao FinFam</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Até <strong>4 usuários</strong> (dono + 3 membros)</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Gráficos e relatórios</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Importação de extratos</li>
+          <li><i class="bi bi-check-circle-fill text-success me-1"></i> Atualizações vitalícias</li>
+        </ul>
+      </div>
+      <div class="card-footer text-center">
+        <a href="mailto:suporte@finfam.net.br?subject=Upgrade para o plano Vitalicio"
+           class="btn btn-success w-100">
+          <i class="bi bi-envelope"></i> Contratar Vitalício
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="text-center text-muted small">
+  Para adquirir ou mudar de plano, entre em contato pelo e-mail
+  <a href="mailto:suporte@finfam.net.br" class="fw-semibold">suporte@finfam.net.br</a>
+</div>
+{% endblock %}
