@@ -96,18 +96,33 @@ def reset_password(user_id):
     return redirect(url_for('admin.dashboard'))
 
 
-@admin_bp.route('/grant-lifetime/<int:tenant_id>', methods=['POST'])
-def grant_lifetime(tenant_id):
+@admin_bp.route('/set-plan/<int:tenant_id>', methods=['POST'])
+def set_plan(tenant_id):
     tenant = Tenant.query.get_or_404(tenant_id)
-    tenant.trial_expires_at = None
+    plan = request.form.get('plan', '')
+    if plan not in ('trial', 'mensal', 'anual', 'vitalicio'):
+        flash('Plano inválido.', 'danger')
+        return redirect(url_for('admin.dashboard'))
+
+    tenant.plan = plan
+    if plan == 'vitalicio':
+        tenant.trial_expires_at = None
+    elif plan == 'mensal':
+        tenant.trial_expires_at = datetime.utcnow() + timedelta(days=30)
+    elif plan == 'anual':
+        tenant.trial_expires_at = datetime.utcnow() + timedelta(days=365)
+    # 'trial' mantém o trial_expires_at existente
+
     db.session.commit()
-    flash(f'Acesso vitalício concedido a "{tenant.name}".', 'success')
+    labels = {'trial': 'Trial', 'mensal': 'Mensal', 'anual': 'Anual', 'vitalicio': 'Vitalício'}
+    flash(f'Plano de "{tenant.name}" alterado para {labels[plan]}.', 'success')
     return redirect(url_for('admin.dashboard'))
 
 
-@admin_bp.route('/revoke-lifetime/<int:tenant_id>', methods=['POST'])
-def revoke_lifetime(tenant_id):
+@admin_bp.route('/revoke-plan/<int:tenant_id>', methods=['POST'])
+def revoke_plan(tenant_id):
     tenant = Tenant.query.get_or_404(tenant_id)
+    tenant.plan = 'trial'
     tenant.trial_expires_at = datetime.utcnow() - timedelta(days=1)
     db.session.commit()
     flash(f'Acesso de "{tenant.name}" revogado.', 'warning')
