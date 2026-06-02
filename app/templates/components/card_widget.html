@@ -1,0 +1,151 @@
+{# ================================================================
+   Macro: card_widget
+   Parâmetros:
+     d — dict com: card, total, gradient, text_color, limit, pct
+     invoice_month, invoice_year, month_name, form, csrf_token
+   ================================================================ #}
+
+{% macro card_widget(d, invoice_month, invoice_year, month_name, form) %}
+{% set card = d.card %}
+{% set pct  = d.pct or 0 %}
+{% set bar_class = 'bg-success' if pct < 50 else ('bg-warning' if pct < 80 else 'bg-danger') %}
+
+<div class="credit-card-widget" style="background:{{ d.gradient }}; color:{{ d.text_color }}">
+
+  {# ── Topo: banco + dígitos ──────────────────────────────────── #}
+  <div class="ccw-top">
+    <div class="ccw-bank">
+      <span class="ccw-bank-name">{{ card.nickname or card.bank or 'Cartão' }}</span>
+      {% if card.bank and card.nickname %}
+      <span class="ccw-bank-sub">{{ card.bank }}</span>
+      {% endif %}
+    </div>
+    <div class="ccw-digits">•••• {{ card.last_digits }}</div>
+  </div>
+
+  {# ── Mês da fatura + valor ──────────────────────────────────── #}
+  <div class="ccw-invoice-label">Fatura de {{ month_name }}</div>
+  <div class="ccw-total">{{ d.total | brl }}</div>
+
+  {# ── Barra de limite ────────────────────────────────────────── #}
+  {% if d.limit %}
+  <div class="ccw-limit-bar-wrap">
+    <div class="ccw-limit-bar">
+      <div class="{{ bar_class }}" style="width:{{ [pct, 100]|min }}%"></div>
+    </div>
+    <div class="ccw-limit-info">
+      <span>{{ pct }}% utilizado</span>
+      <span>Limite {{ d.limit | brl }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Datas ──────────────────────────────────────────────────── #}
+  <div class="ccw-dates">
+    <span><i class="bi bi-calendar-x me-1 opacity-75"></i>Fecha dia {{ card.best_buy_day }}</span>
+    <span class="ccw-dot">·</span>
+    <span><i class="bi bi-calendar-check me-1 opacity-75"></i>Vence dia {{ card.due_day }}</span>
+  </div>
+
+  {# ── Ações ──────────────────────────────────────────────────── #}
+  <div class="ccw-actions">
+    <a href="{{ url_for('cards.invoice', card_id=card.id, month=invoice_month, year=invoice_year) }}"
+       class="ccw-btn-invoice">
+      Ver fatura <i class="bi bi-arrow-right ms-1"></i>
+    </a>
+    <div class="d-flex gap-1">
+      <button class="ccw-btn-icon"
+              data-bs-toggle="modal"
+              data-bs-target="#editCardModal{{ card.id }}"
+              title="Editar">
+        <i class="bi bi-pencil"></i>
+      </button>
+      <form method="POST" action="{{ url_for('cards.delete', card_id=card.id) }}"
+            onsubmit="return confirm('Excluir cartão •••• {{ card.last_digits }}?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="ccw-btn-icon ccw-btn-del" title="Excluir">
+          <i class="bi bi-trash"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ── Modal de edição ────────────────────────────────────────────── #}
+<div class="modal fade" id="editCardModal{{ card.id }}" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Cartão</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('cards.edit', card_id=card.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          {% include 'components/_card_form_fields.html' ignore missing %}
+          {# Fallback inline se o include falhar #}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Apelido</label>
+              <input name="nickname" class="form-control" value="{{ card.nickname or '' }}"
+                     placeholder="Ex: Nubank principal">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Últimos 4 dígitos</label>
+              <div class="input-group">
+                <span class="input-group-text text-muted">••••</span>
+                <input name="last_digits" class="form-control" value="{{ card.last_digits }}"
+                       maxlength="4" required style="max-width:80px"
+                       oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Bandeira / Banco</label>
+              <select name="bank" class="form-select">
+                {% for val, lbl in [('','— Selecione —'),('Nubank','Nubank'),('Itaú','Itaú'),
+                  ('Bradesco','Bradesco'),('Banco do Brasil','Banco do Brasil'),
+                  ('Caixa Econômica Federal','Caixa Econômica Federal'),('Santander','Santander'),
+                  ('Inter','Inter'),('C6 Bank','C6 Bank'),('BTG Pactual','BTG Pactual'),
+                  ('Sicredi','Sicredi'),('Sicoob','Sicoob'),('Safra','Safra'),
+                  ('Original','Original'),('Neon','Neon'),('PicPay','PicPay'),
+                  ('XP Investimentos','XP Investimentos'),('Outros','Outros')] %}
+                <option value="{{ val }}" {{ 'selected' if (card.bank or '') == val }}>{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Dia de vencimento</label>
+              <div class="input-group">
+                <input name="due_day" type="number" class="form-control"
+                       value="{{ card.due_day }}" min="1" max="31" required>
+                <span class="input-group-text">do mês</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Melhor dia de compra</label>
+              <div class="input-group">
+                <input name="best_buy_day" type="number" class="form-control"
+                       value="{{ card.best_buy_day }}" min="1" max="31" required>
+                <span class="input-group-text">do mês</span>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Limite do Cartão (opcional)</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input name="credit_limit" type="number" class="form-control"
+                       value="{{ card.credit_limit or '' }}" min="0" step="0.01"
+                       placeholder="Ex: 5000,00">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endmacro %}
