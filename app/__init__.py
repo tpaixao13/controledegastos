@@ -114,6 +114,32 @@ def create_app(config_name='default'):
         logging.warning('APScheduler não instalado — lembretes Telegram desativados.')
 
     @app.context_processor
+    def inject_expense_modal():
+        """Dados para o modal de nova despesa (disponível em todas as páginas logadas)."""
+        import json as _json
+        if not session.get('logged_in') or not session.get('tenant_id'):
+            return {}
+        try:
+            from app.utils import tenant_users as _tu
+            from app.models import CreditCard as _CC, User as _U
+            from app.forms import CATEGORIES as _CATS
+            _users = _tu().order_by(_U.name).all()
+            _uids  = [u.id for u in _users]
+            _cards = _CC.query.filter(_CC.user_id.in_(_uids)).order_by(_CC.bank).all()
+            _card_json = _json.dumps({
+                c.id: {'due_day': c.due_day, 'best_buy_day': c.best_buy_day, 'bank': c.bank or ''}
+                for c in _cards
+            })
+            return {
+                'modal_users':         _users,
+                'modal_cards':         _cards,
+                'modal_card_data_json': _card_json,
+                'modal_categories':    sorted(_CATS),
+            }
+        except Exception:
+            return {}
+
+    @app.context_processor
     def inject_globals():
         from datetime import datetime
         from app.models import Tenant
