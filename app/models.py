@@ -253,6 +253,13 @@ class Expense(db.Model):
 class CreditCard(db.Model):
     __tablename__ = 'credit_cards'
 
+    _TYPE_LABELS = {
+        'credit': 'Crédito',
+        'debit':  'Débito',
+        'vr':     'VR',
+        'va':     'VA',
+    }
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     nickname = db.Column(db.Text, nullable=True)
@@ -261,15 +268,31 @@ class CreditCard(db.Model):
     due_day = db.Column(db.Integer, nullable=False)
     best_buy_day = db.Column(db.Integer, nullable=False)
     credit_limit = db.Column(db.Numeric(12, 2), nullable=True)
+    card_type = db.Column(db.String(10), nullable=False, default='credit')
+    is_virtual = db.Column(db.Boolean, default=False, nullable=False)
+    is_additional = db.Column(db.Boolean, default=False, nullable=False)
+    monthly_amount = db.Column(db.Numeric(12, 2), nullable=True)
+    renewal_day = db.Column(db.Integer, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     expenses = db.relationship('Expense', backref='credit_card', lazy='dynamic',
                                foreign_keys='Expense.card_id')
 
     @property
+    def type_label(self):
+        return self._TYPE_LABELS.get(self.card_type or 'credit', 'Crédito')
+
+    @property
     def label(self):
         name = self.nickname or self.bank or 'Cartão'
-        return f'{name} •••• {self.last_digits}'
+        ct = self.card_type or 'credit'
+        if self.is_virtual:
+            suffix = '(Virtual)'
+        elif self.is_additional:
+            suffix = '(Adicional)'
+        else:
+            suffix = f'({self.type_label})'
+        return f'{name} •••• {self.last_digits} {suffix}'
 
     def __repr__(self):
         return f'<CreditCard {self.label}>'
