@@ -190,6 +190,8 @@ def _run_migrations():
         "ALTER TABLE salaries ADD COLUMN received INTEGER DEFAULT 1",
         "ALTER TABLE tenants ADD COLUMN plan TEXT DEFAULT 'trial'",
         "ALTER TABLE tenants ADD COLUMN extra_members INTEGER DEFAULT 0",
+        "CREATE TABLE IF NOT EXISTS credit_cards (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), nickname TEXT, last_digits TEXT NOT NULL, bank TEXT, due_day INTEGER NOT NULL, best_buy_day INTEGER NOT NULL, created_at DATETIME)",
+        "ALTER TABLE expenses ADD COLUMN card_id INTEGER REFERENCES credit_cards(id)",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
