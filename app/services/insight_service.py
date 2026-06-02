@@ -333,6 +333,15 @@ def generate_insights(uids: list, month: int, year: int,
             'value': _brl(future),
         })
 
+    # ── 10. Insights de metas ────────────────────────────────────────
+    active_goals = (Goal.query
+                    .filter(Goal.user_id.in_(uids), Goal.active == True)
+                    .all())
+    if active_goals:
+        from app.services.goal_service import calculate_all as _calc_goals, goals_for_insights
+        goals_data = _calc_goals(active_goals, uids, month, year)
+        insights.extend(goals_for_insights(goals_data))
+
     # ── Ordenar e limitar ────────────────────────────────────────────
     _order = {'danger': 0, 'warning': 1, 'success': 3, 'info': 4}
     insights.sort(key=lambda x: (_order.get(x['type'], 5), x.get('priority', 99)))
