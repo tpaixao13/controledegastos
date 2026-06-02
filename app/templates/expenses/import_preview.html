@@ -71,25 +71,48 @@
           <tbody>
             {% for t in transactions %}
             {% set i = loop.index0 %}
-            <tr>
+            {% set is_dup = i in duplicates %}
+            {% set src = cat_sources[i] if cat_sources else None %}
+            {% set hint = suggested_cats[i] if suggested_cats else None %}
+            <tr class="{{ 'import-row-dup' if is_dup }}">
               <td>
                 <input class="form-check-input row-check" type="checkbox"
-                       name="include_{{ i }}" value="1" checked>
+                       name="include_{{ i }}" value="1" {{ '' if is_dup else 'checked' }}>
               </td>
-              <td class="text-muted small">
+              <td class="text-muted small text-nowrap">
                 {{ '%02d'|format(t.day) }}/{{ '%02d'|format(t.month) }}/{{ t.year }}
+                {% if is_dup %}
+                <div><span class="badge bg-warning text-dark" style="font-size:.6rem">⚠ dup</span></div>
+                {% endif %}
               </td>
               <td>
                 <input type="text" name="desc_{{ i }}" value="{{ t.description }}"
                        class="form-control form-control-sm border-0 bg-transparent px-1" required>
               </td>
               <td>
-                {% set hint = suggested_cats[i] if suggested_cats else None %}
-                <select name="category_{{ i }}" class="form-select form-select-sm">
-                  {% for cat in categories %}
-                  <option value="{{ cat }}" {{ 'selected' if cat == (hint or 'Outros') }}>{{ cat }}</option>
-                  {% endfor %}
-                </select>
+                <div class="d-flex align-items-center gap-1">
+                  {% if src == 'rule' %}
+                  <span class="import-src-badge import-src-rule flex-shrink-0" title="Regra automática">regra</span>
+                  {% elif src == 'history' %}
+                  <span class="import-src-badge import-src-history flex-shrink-0" title="Baseado no histórico">hist.</span>
+                  {% else %}
+                  <span class="import-src-badge import-src-manual flex-shrink-0" title="Selecione manualmente">—</span>
+                  {% endif %}
+                  <select name="category_{{ i }}" class="form-select form-select-sm">
+                    {% for cat in categories %}
+                    <option value="{{ cat }}" {{ 'selected' if cat == (hint or 'Outros') }}>{{ cat }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                {# Checkbox para criar regra automática #}
+                {% if not is_dup %}
+                <div class="mt-1">
+                  <label class="small text-muted d-flex align-items-center gap-1" style="cursor:pointer">
+                    <input type="checkbox" name="criar_regra_{{ i }}" value="1" class="form-check-input" style="width:.75rem;height:.75rem">
+                    Criar regra automática
+                  </label>
+                </div>
+                {% endif %}
               </td>
               <td>
                 {% if t.payment_method == 'PIX' %}
