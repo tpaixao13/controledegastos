@@ -253,6 +253,11 @@ def _run_migrations():
         "ALTER TABLE credit_cards ADD COLUMN credit_limit NUMERIC(12,2)",
         "CREATE TABLE IF NOT EXISTS goals (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), title TEXT NOT NULL, type TEXT NOT NULL, target_amount NUMERIC(12,2) NOT NULL, category TEXT, due_date DATE, start_date DATE NOT NULL, created_at DATETIME, completed_at DATETIME, active INTEGER NOT NULL DEFAULT 1)",
         "CREATE TABLE IF NOT EXISTS category_rules (id INTEGER PRIMARY KEY, tenant_id INTEGER NOT NULL REFERENCES tenants(id), keyword TEXT NOT NULL, category TEXT NOT NULL, match_count INTEGER NOT NULL DEFAULT 0, created_at DATETIME)",
+        "ALTER TABLE credit_cards ADD COLUMN card_type TEXT NOT NULL DEFAULT 'credit'",
+        "ALTER TABLE credit_cards ADD COLUMN is_virtual INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE credit_cards ADD COLUMN is_additional INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE credit_cards ADD COLUMN monthly_amount NUMERIC(12,2)",
+        "ALTER TABLE credit_cards ADD COLUMN renewal_day INTEGER",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
