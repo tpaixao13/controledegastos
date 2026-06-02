@@ -388,7 +388,13 @@ def add():
         return jsonify({'status': 'error', 'errors': errors}), 422
 
     card_data_json = json.dumps({
-        c.id: {'due_day': c.due_day, 'best_buy_day': c.best_buy_day, 'bank': c.bank or ''}
+        c.id: {
+            'due_day':      c.due_day,
+            'best_buy_day': c.best_buy_day,
+            'bank':         c.bank or '',
+            'label':        c.label,
+            'credit_limit': float(c.credit_limit) if c.credit_limit else None,
+        }
         for c in credit_cards
     })
     return render_template('expenses/add.html', form=form, users=users,
