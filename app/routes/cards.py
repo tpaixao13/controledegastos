@@ -197,3 +197,53 @@ def api_card_info(card_id):
         'due_day': card.due_day, 'best_buy_day': card.best_buy_day,
         'label': card.label,
     })
+
+
+@cards_bp.route('/api/invoice-preview')
+def api_invoice_preview():
+    """
+    Retorna preview da fatura para uma compra específica.
+    Params: card_id, day, month, year, amount (opcional)
+    """
+    from datetime import date as _date
+    uids    = tenant_user_ids()
+    card_id = request.args.get('card_id', type=int)
+    day     = request.args.get('day',   type=int)
+    month   = request.args.get('month', type=int)
+    year    = request.args.get('year',  type=int)
+    amount  = request.args.get('amount', type=float, default=0.0)
+
+    if not all([card_id, day, month, year]):
+        return jsonify({'error': 'params required'}), 400
+
+    card = CreditCard.query.filter(
+        CreditCard.id == card_id,
+        CreditCard.user_id.in_(uids),
+    ).first()
+    if not card:
+        return jsonify({'error': 'card not found'}), 404
+
+    try:
+        purchase_date = _date(year, month, day)
+    except ValueError:
+        return jsonify({'error': 'invalid date'}), 400
+
+    inv_year, inv_month = get_invoice_reference(purchase_date, card.best_buy_day)
+    is_open = purchase_date.day <= card.best_buy_day
+    days_to_closing = (card.best_buy_day - purchase_date.day) if is_open else None
+
+    credit_limit   = float(card.credit_limit) if card.credit_limit else None
+    current_usage  = invoice_total(card.id, inv_month, inv_year) if credit_limit else None
+    projected      = (current_usage + amount) if (current_usage is not None and amount) else current_usage
+
+    return jsonify({
+        'invoice_month':    get_invoice_label(inv_year, inv_month),
+        'invoice_year':     inv_year,
+        'invoice_month_num': inv_month,
+        'is_open':          is_open,
+        'days_to_closing':  days_to_closing,
+        'due_day':          card.due_day,
+        'current_usage':    current_usage,
+        'credit_limit':     credit_limit,
+        'projected_usage':  projected,
+    })
