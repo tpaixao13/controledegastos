@@ -237,4 +237,13 @@
     </div>
   </div>
 </div>
+<script>
+function toggleCardEditFields(sel, cardId) {
+  const ct = sel.value;
+  const creditDiv = document.getElementById('credit_fields_' + cardId);
+  const vrvaDiv   = document.getElementById('vrva_fields_'  + cardId);
+  if (creditDiv) creditDiv.classList.toggle('d-none', ct !== 'credit');
+  if (vrvaDiv)   vrvaDiv.classList.toggle('d-none', ct !== 'vr' && ct !== 'va');
+}
+</script>
 {% endmacro %}
