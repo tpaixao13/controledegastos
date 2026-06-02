@@ -1,0 +1,30 @@
+{% macro kpi(label, value, icon, color, delta=None, inverse=False) %}
+{#
+  label   — texto do label
+  value   — valor numérico (será formatado por |brl)
+  icon    — classe Bootstrap Icon (ex: 'bi-cash-coin')
+  color   — hex color (ex: '#198754')
+  delta   — float %, positivo = subiu, negativo = caiu (None = sem indicador)
+  inverse — True quando subida é ruim (ex: gastos)
+#}
+{% set _good = (delta >= 0 and not inverse) or (delta < 0 and inverse) if delta is not none else true %}
+<div class="col-6 col-xl-3">
+  <div class="card kpi-card h-100">
+    <div class="card-body">
+      <div class="d-flex align-items-start justify-content-between mb-3">
+        <div class="kpi-icon" style="background:{{ color }}18;color:{{ color }}">
+          <i class="bi {{ icon }}"></i>
+        </div>
+        {% if delta is not none %}
+        <span class="kpi-delta {{ 'kpi-delta-good' if _good else 'kpi-delta-bad' }}">
+          <i class="bi bi-arrow-{{ 'up' if delta >= 0 else 'down' }}-short"></i>
+          {{ '%+.1f'|format(delta) }}%
+        </span>
+        {% endif %}
+      </div>
+      <div class="kpi-value">{{ value | brl }}</div>
+      <div class="kpi-label">{{ label }}</div>
+    </div>
+  </div>
+</div>
+{% endmacro %}
