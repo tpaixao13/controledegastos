@@ -2,11 +2,36 @@
 card_service.py — Lógica de negócio para cartões de crédito e faturas.
 """
 
-from datetime import datetime
+import calendar as _calendar
+from datetime import datetime, date as _date
 from sqlalchemy import func, or_, and_
 from app import db
 from app.models import Expense, InstallmentGroup, CreditCard
 from app.utils import month_offset
+
+_PT_MONTHS = [
+    '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
+
+
+def get_invoice_reference(purchase_date: _date, best_buy_day: int) -> tuple[int, int]:
+    """
+    Retorna (year, month) da fatura em que a compra será lançada.
+
+    Regra: se o dia da compra é posterior ao melhor dia de compra (best_buy_day),
+    ela cai na fatura do próximo mês; caso contrário, cai na fatura do mês atual.
+    """
+    if purchase_date.day > best_buy_day:
+        if purchase_date.month == 12:
+            return purchase_date.year + 1, 1
+        return purchase_date.year, purchase_date.month + 1
+    return purchase_date.year, purchase_date.month
+
+
+def get_invoice_label(year: int, month: int) -> str:
+    """Retorna rótulo legível da fatura, ex: 'Julho 2026'."""
+    return f"{_PT_MONTHS[month]} {year}"
 
 # ── Gradientes por banco ────────────────────────────────────────────
 BANK_GRADIENTS = {
