@@ -1,0 +1,81 @@
+{# ================================================================
+   Macro: insights_panel
+   Parâmetros:
+     insights   — lista de dicts gerada por insight_service
+     month_name — nome do mês (ex: "Junho")
+     year       — ano (ex: 2026)
+   ================================================================ #}
+
+{% macro insights_panel(insights, month_name, year) %}
+
+{% set n_danger  = insights | selectattr('type', 'eq', 'danger')  | list | length %}
+{% set n_warning = insights | selectattr('type', 'eq', 'warning') | list | length %}
+{% set n_success = insights | selectattr('type', 'eq', 'success') | list | length %}
+{% set n_neg     = n_danger + n_warning %}
+
+<div class="card mb-4 insights-card">
+
+  {# ── Header ──────────────────────────────────────────────────── #}
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <span class="fw-semibold d-flex align-items-center gap-2">
+      <span class="insights-bulb">💡</span>
+      Insights — {{ month_name }} {{ year }}
+    </span>
+    <div class="d-flex align-items-center gap-2">
+      {% if n_danger > 0 %}
+      <span class="badge bg-danger rounded-pill">{{ n_danger }} alerta{{ 's' if n_danger > 1 }}</span>
+      {% endif %}
+      {% if n_warning > 0 %}
+      <span class="badge bg-warning text-dark rounded-pill">{{ n_warning }} atenção</span>
+      {% endif %}
+      {% if n_neg == 0 and insights %}
+      <span class="badge bg-success rounded-pill">✓ Saudável</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Body ────────────────────────────────────────────────────── #}
+  <div class="card-body p-0">
+
+    {% if not insights %}
+    {# Empty state #}
+    <div class="insights-empty">
+      <i class="bi bi-bar-chart-line opacity-25 fs-1 d-block mb-2"></i>
+      <p class="mb-0 text-muted small">
+        Continue registrando suas despesas para receber insights personalizados.
+      </p>
+    </div>
+
+    {% else %}
+    <div class="insight-list">
+      {% for ins in insights %}
+      <div class="insight-item insight-item-{{ ins.type }}"
+           title="{{ ins.message }}">
+
+        {# Ícone #}
+        <div class="insight-icon insight-icon-{{ ins.type }}">
+          <i class="bi {{ ins.icon }}"></i>
+        </div>
+
+        {# Texto #}
+        <div class="insight-body">
+          <div class="insight-title">{{ ins.title }}</div>
+          <div class="insight-msg">{{ ins.message }}</div>
+        </div>
+
+        {# Valor em destaque #}
+        {% if ins.value %}
+        <div class="insight-value insight-value-{{ ins.type }}">
+          {{ ins.value }}
+        </div>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endmacro %}
