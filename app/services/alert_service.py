@@ -263,8 +263,8 @@ def generate_alerts(uids: list, month: int, year: int,
             'title': 'Parcelas comprometidas',
             'message': (f'{_brl(future_high)} em parcelas já estão comprometidas '
                         f'para os próximos meses.'),
-            'action_label': 'Ver despesas',
-            'action_url': url_for('expenses.index'),
+            'action_label': 'Ver parcelas',
+            'action_url': url_for('expenses.index', month=next_m, year=next_y),
         })
 
     # ── 10. Alertas de metas ─────────────────────────────────────────
