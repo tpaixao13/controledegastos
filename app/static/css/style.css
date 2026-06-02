@@ -528,6 +528,119 @@ body {
 
 
 /* ================================================================
+   ALERT BELL (topbar)
+   ================================================================ */
+
+.topbar-alert-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border-radius: var(--radius-sm);
+  color: #6c757d;
+  text-decoration: none;
+  font-size: 1.05rem;
+  transition: background .15s, color .15s;
+  flex-shrink: 0;
+}
+.topbar-alert-btn:hover { background: #f0f0f0; color: #dc3545; }
+
+.topbar-alert-badge {
+  position: absolute;
+  top: 2px; right: 2px;
+  min-width: 16px; height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #dc3545;
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* Badge animado quando há alertas críticos */
+@keyframes bell-shake {
+  0%, 100% { transform: rotate(0); }
+  15%       { transform: rotate(8deg); }
+  30%       { transform: rotate(-8deg); }
+  45%       { transform: rotate(5deg); }
+  60%       { transform: rotate(-5deg); }
+}
+.topbar-alert-btn:has(.topbar-alert-badge) i {
+  animation: bell-shake 3s ease infinite;
+  transform-origin: top center;
+}
+
+
+/* ================================================================
+   ALERTS PAGE
+   ================================================================ */
+
+/* All-clear */
+.alert-allclear {
+  text-align: center;
+  padding: 3.5rem 1rem;
+}
+.alert-allclear-icon {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(25,135,84,.10);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.2rem;
+  color: #198754;
+  margin: 0 auto 1.25rem;
+}
+
+/* Alert cards */
+.alert-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--radius-md);
+  border-left: 4px solid;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .15s;
+}
+.alert-card:hover { box-shadow: var(--shadow-md); }
+
+.alert-card-danger  { border-color: #dc3545; }
+.alert-card-warning { border-color: #ffc107; }
+.alert-card-info    { border-color: #0d6efd; }
+
+.alert-card-icon {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+.alert-card-icon-danger  { background: rgba(220,53,69,.10);  color: #dc3545; }
+.alert-card-icon-warning { background: rgba(255,193,7,.15);  color: #a07800; }
+.alert-card-icon-info    { background: rgba(13,110,253,.10); color: #0d6efd; }
+
+.alert-card-body   { flex: 1; min-width: 0; }
+.alert-card-title  { font-size: .9rem; font-weight: 700; color: #212529; margin-bottom: .25rem; }
+.alert-card-message{ font-size: .83rem; color: #6c757d; }
+
+.alert-card-btn {
+  border-radius: var(--radius-sm) !important;
+  font-size: .8rem !important;
+  white-space: nowrap;
+}
+.alert-card-btn-danger  { color: #dc3545; border-color: #dc3545; }
+.alert-card-btn-danger:hover  { background: #dc3545; color: #fff; }
+.alert-card-btn-warning { color: #a07800; border-color: #ffc107; }
+.alert-card-btn-warning:hover { background: #ffc107; color: #212529; }
+.alert-card-btn-info    { color: #0d6efd; border-color: #0d6efd; }
+.alert-card-btn-info:hover    { background: #0d6efd; color: #fff; }
+
+
+/* ================================================================
    IMPORT + RULES
    ================================================================ */
 
