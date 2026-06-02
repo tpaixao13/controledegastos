@@ -70,6 +70,16 @@
               {{ form.bank.label(class='form-label fw-semibold') }}
               {{ form.bank(class='form-select') }}
             </div>
+
+            {# Cartão cadastrado (só Crédito) #}
+            {% if credit_cards %}
+            <div class="col-12" id="card-row" style="display:none">
+              <label class="form-label fw-semibold" for="card_id">Cartão Cadastrado</label>
+              {{ form.card_id(class='form-select', id='card_id') }}
+              <div id="billing-hint" class="mt-2" style="display:none"></div>
+            </div>
+            {% endif %}
+
             <div class="col-12" id="installment-section" style="display:none">
               <label class="form-label fw-semibold">Modalidade</label>
               <div class="d-flex gap-4">
