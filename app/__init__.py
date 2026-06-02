@@ -162,7 +162,7 @@ def create_app(config_name='default'):
                 'modal_users':         _users,
                 'modal_cards':         _cards,
                 'modal_card_data_json': _card_json,
-                'modal_categories':    sorted(_CATS),
+                'modal_categories':    sorted([c[0] for c in _CATS]),
             }
         except Exception:
             return {}
