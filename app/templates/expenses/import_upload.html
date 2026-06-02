@@ -266,7 +266,25 @@
     c6pdf:       ['Arquivo PDF do extrato', '.pdf · extrato conta corrente C6'],
     nubank_csv:  ['Arquivo CSV da fatura',  '.csv · exportado do site do Nubank'],
     ofx:         ['Arquivo OFX do extrato', '.ofx ou .ofc · exportado do internet banking'],
+    csv_generic: ['Arquivo CSV', '.csv · qualquer banco (colunas detectadas automaticamente)'],
   };
+
+  const helpCSVGeneric = document.createElement('div');
+  helpCSVGeneric.id = 'helpCSVGeneric';
+  helpCSVGeneric.className = 'd-none';
+  helpCSVGeneric.innerHTML = `
+    <p class="small fw-semibold mb-1">CSV Genérico — Como exportar</p>
+    <p class="small text-muted">Exporte o extrato em formato CSV no Internet Banking do seu banco.
+    O sistema detecta automaticamente as colunas de data, descrição e valor.</p>
+    <p class="small fw-semibold mb-1">Dicas para melhor resultado:</p>
+    <ul class="small text-muted ps-3">
+      <li>O arquivo deve ter pelo menos 3 colunas (data, descrição, valor)</li>
+      <li>Valores negativos representam débitos (saídas)</li>
+      <li>Datas nos formatos <code>DD/MM/AAAA</code> ou <code>AAAA-MM-DD</code></li>
+    </ul>`;
+  document.querySelector('.card.bg-light.border-0 .card-body').appendChild(helpCSVGeneric);
+  helpIds.push('helpCSVGeneric');
+  helpMap['csv_generic'] = 'helpCSVGeneric';
 
   cards.forEach(card => {
     card.addEventListener('click', () => {
