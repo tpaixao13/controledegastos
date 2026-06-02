@@ -59,10 +59,16 @@ def _parse_nubank(file_bytes, form):
     return parse_nubank_csv(file_bytes), 'Nubank'
 
 
+def _parse_csv_generic(file_bytes, form):
+    from app.importers.csv_generic import parse_csv_generic
+    return parse_csv_generic(file_bytes), None
+
+
 _PARSERS = {
-    'c6pdf':      _parse_c6pdf,
-    'ofx':        _parse_ofx,
-    'nubank_csv': _parse_nubank,
+    'c6pdf':       _parse_c6pdf,
+    'ofx':         _parse_ofx,
+    'nubank_csv':  _parse_nubank,
+    'csv_generic': _parse_csv_generic,
 }
 
 
