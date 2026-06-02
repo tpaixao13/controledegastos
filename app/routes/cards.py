@@ -5,7 +5,8 @@ from app.models import CreditCard, Expense
 from app.forms import CreditCardForm
 from app.utils import tenant_user_ids, tenant_users, month_offset
 from app.services.card_service import (
-    card_gradient, invoice_total, get_invoice, CATEGORY_ICONS
+    card_gradient, invoice_total, get_invoice, CATEGORY_ICONS,
+    get_invoice_reference, get_invoice_label,
 )
 from datetime import datetime
 
