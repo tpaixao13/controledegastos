@@ -1,0 +1,87 @@
+{% set _nav_main = [
+  ('main.index',         'main',        'bi-speedometer2',        'Dashboard'),
+  ('salaries.manage',    'salaries',    'bi-cash-coin',           'Rendas'),
+  ('cards.index',        'cards',       'bi-credit-card-2-front', 'Cartões'),
+  ('expenses.index',     'expenses',    'bi-list-ul',             'Despesas'),
+  ('investments.manage', 'investments', 'bi-graph-up-arrow',      'Investimentos'),
+] %}
+
+<aside class="sidebar" id="sidebar">
+
+  {# ── Brand ───────────────────────────────────────────────────── #}
+  <div class="sidebar-brand">
+    <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="FinFam" width="30" height="30">
+    <span class="sidebar-brand-name">FinFam</span>
+  </div>
+
+  {# ── Nav principal ───────────────────────────────────────────── #}
+  <nav class="sidebar-nav flex-grow-1">
+    <span class="sidebar-label">Principal</span>
+
+    {% for endpoint, blueprint, icon, label in _nav_main %}
+    {% set is_active = (request.endpoint == endpoint) or (request.blueprint == blueprint and blueprint != 'main') %}
+    <a href="{{ url_for(endpoint) }}" class="sidebar-link {{ 'active' if is_active }}">
+      <i class="bi {{ icon }}"></i>
+      <span>{{ label }}</span>
+    </a>
+    {% endfor %}
+
+    {% if current_plan and current_plan != 'vitalicio' %}
+    <a href="{{ url_for('auth.upgrade') }}"
+       class="sidebar-link sidebar-link-upgrade {{ 'active' if request.endpoint == 'auth.upgrade' }}">
+      <i class="bi bi-rocket-takeoff"></i>
+      <span>Upgrade</span>
+      {% set _badge = {'trial': 'Trial', 'mensal': 'Mensal', 'anual': 'Anual'}.get(current_plan) %}
+      {% if _badge %}<span class="sidebar-plan-badge">{{ _badge }}</span>{% endif %}
+    </a>
+    {% endif %}
+
+    <span class="sidebar-label mt-3">Conta</span>
+
+    <a href="{{ url_for('auth.members') }}"
+       class="sidebar-link {{ 'active' if request.endpoint == 'auth.members' }}">
+      <i class="bi bi-people-fill"></i>
+      <span>Família</span>
+    </a>
+
+    <a href="{{ url_for('auth.profile') }}"
+       class="sidebar-link {{ 'active' if request.endpoint == 'auth.profile' }}">
+      <i class="bi bi-gear"></i>
+      <span>Configurações</span>
+    </a>
+
+    <a href="{{ url_for('auth.telegram_settings') }}"
+       class="sidebar-link {{ 'active' if request.endpoint == 'auth.telegram_settings' }}">
+      <i class="bi bi-telegram"></i>
+      <span>Telegram</span>
+    </a>
+  </nav>
+
+  {# ── Rodapé: usuário + sair ───────────────────────────────────── #}
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      {% if session.get('user_avatar') %}
+      <img src="{{ session.user_avatar }}" alt="avatar" class="sidebar-avatar">
+      {% else %}
+      <div class="sidebar-avatar-placeholder">
+        <i class="bi bi-person-fill"></i>
+      </div>
+      {% endif %}
+      <div class="sidebar-user-info">
+        <span class="sidebar-user-name">{{ session.get('user_name', '') }}</span>
+        {% if session.get('tenant_name') %}
+        <span class="sidebar-user-tenant">{{ session.tenant_name }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="sidebar-link sidebar-link-logout w-100 border-0 bg-transparent text-start">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Sair</span>
+      </button>
+    </form>
+  </div>
+
+</aside>
