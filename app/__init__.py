@@ -114,20 +114,24 @@ def create_app(config_name='default'):
         logging.warning('APScheduler não instalado — lembretes Telegram desativados.')
 
     @app.context_processor
-    def inject_trial():
+    def inject_globals():
         from datetime import datetime
         from app.models import Tenant
+        now = datetime.now()
+        base = {'now': now, 'trial_days_left': None, 'current_plan': None}
         tenant_id = session.get('tenant_id')
         if not tenant_id:
-            return {'trial_days_left': None, 'current_plan': None}
+            return base
         tenant = Tenant.query.get(tenant_id)
         if not tenant:
-            return {'trial_days_left': None, 'current_plan': None}
+            return base
         plan = tenant.plan or 'trial'
         if tenant.trial_expires_at is None:
-            return {'trial_days_left': None, 'current_plan': plan}
+            base.update({'current_plan': plan})
+            return base
         delta = (tenant.trial_expires_at - datetime.utcnow()).days
-        return {'trial_days_left': max(0, delta), 'current_plan': plan}
+        base.update({'trial_days_left': max(0, delta), 'current_plan': plan})
+        return base
 
     @app.before_request
     def require_login():
