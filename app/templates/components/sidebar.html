@@ -55,6 +55,20 @@
       <i class="bi bi-telegram"></i>
       <span>Telegram</span>
     </a>
+
+    <span class="sidebar-label mt-3">Automação</span>
+
+    <a href="{{ url_for('expenses.import_bank') }}"
+       class="sidebar-link {{ 'active' if request.endpoint in ('expenses.import_bank', 'expenses.import_bank_parse') }}">
+      <i class="bi bi-cloud-upload"></i>
+      <span>Importar Extrato</span>
+    </a>
+
+    <a href="{{ url_for('rules.index') }}"
+       class="sidebar-link {{ 'active' if request.blueprint == 'rules' }}">
+      <i class="bi bi-tags"></i>
+      <span>Regras de Categoria</span>
+    </a>
   </nav>
 
   {# ── Rodapé: usuário + sair ───────────────────────────────────── #}
