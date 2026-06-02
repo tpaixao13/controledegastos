@@ -333,6 +333,8 @@ def add():
         form.recurring_times.data = 12
         form.card_id.data = 0
 
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     if form.validate_on_submit():
         payment = form.payment_method.data
         bank = _bank_from_form(form, payment)
@@ -366,9 +368,17 @@ def add():
             )
             db.session.add(expense)
             db.session.commit()
-            flash('Despesa adicionada com sucesso!', 'success')
 
+        if is_ajax:
+            return jsonify({'status': 'ok', 'message': 'Despesa adicionada com sucesso!'})
+
+        flash('Despesa adicionada com sucesso!', 'success')
         return redirect(url_for('expenses.index'))
+
+    # Erros de validação
+    if is_ajax:
+        errors = {f.name: f.errors[0] for f in form if f.errors}
+        return jsonify({'status': 'error', 'errors': errors}), 422
 
     card_data_json = json.dumps({
         c.id: {'due_day': c.due_day, 'best_buy_day': c.best_buy_day, 'bank': c.bank or ''}
