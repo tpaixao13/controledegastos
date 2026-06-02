@@ -619,11 +619,30 @@ def import_bank_parse():
 
     selected_user = next(u for u in users if u.id == user_id)
     all_uids = [u.id for u in users]
-    suggested_cats = [_suggest_category(t.description, all_uids) for t in transactions]
+    tenant_id = request.args.get('_tid') or getattr(selected_user, 'tenant_id', None)
+    if not tenant_id:
+        from flask import session as _s
+        tenant_id = _s.get('tenant_id')
+
+    # Categorização automática (regras + histórico)
+    cat_results = categorize_batch(
+        [t.description for t in transactions], all_uids, tenant_id
+    )
+    suggested_cats = [r[0] for r in cat_results]
+    cat_sources    = [r[1] for r in cat_results]
+
+    # Detecção de duplicatas
+    duplicates = set()
+    for i, t in enumerate(transactions):
+        if is_duplicate(user_id, t.year, t.month, t.day, t.amount, t.description):
+            duplicates.add(i)
+
     return render_template(
         'expenses/import_preview.html',
         transactions=transactions,
         suggested_cats=suggested_cats,
+        cat_sources=cat_sources,
+        duplicates=duplicates,
         users=users,
         selected_user=selected_user,
         user_id=user_id,
