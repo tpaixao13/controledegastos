@@ -149,10 +149,12 @@
               <div class="col-12 d-none" id="m_card_row">
                 <label class="form-label fw-semibold" for="m_card_id">Cartão Cadastrado</label>
                 <select id="m_card_id" name="card_id" class="form-select">
-                  <option value="0">— Nenhum (usar banco acima) —</option>
+                  <option value="0">— Nenhum —</option>
                   {% for c in modal_cards %}
                   <option value="{{ c.id }}" data-due="{{ c.due_day }}"
-                          data-best="{{ c.best_buy_day }}">
+                          data-best="{{ c.best_buy_day }}"
+                          data-type="{{ c.card_type or 'credit' }}"
+                          data-bank="{{ c.bank or '' }}">
                     {{ c.label }}
                   </option>
                   {% endfor %}
