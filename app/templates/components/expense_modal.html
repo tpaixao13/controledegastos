@@ -155,7 +155,31 @@
                   </option>
                   {% endfor %}
                 </select>
-                <div id="m_billing_hint" class="form-text text-primary fw-semibold mt-1" style="display:none"></div>
+
+                {# ── Invoice Preview ── #}
+                <div id="invoicePreview" class="mt-2" style="display:none">
+                  <div id="invoicePreviewInner"
+                       class="d-flex align-items-start gap-2 p-2 rounded border">
+                    <i id="invoicePreviewIcon"
+                       class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"
+                       style="margin-top:2px"></i>
+                    <div class="flex-grow-1">
+                      <div id="invoicePreviewMain" class="fw-semibold small"></div>
+                      <div id="invoicePreviewSub" class="text-muted"
+                           style="font-size:.78rem"></div>
+                      <div id="invoicePreviewLimit" style="display:none">
+                        <div class="progress mt-2" style="height:5px;border-radius:3px">
+                          <div id="invoicePreviewBar" class="progress-bar bg-success"
+                               role="progressbar"
+                               style="width:0%;transition:width .5s ease"></div>
+                        </div>
+                        <div id="invoicePreviewLimitText" class="text-muted mt-1"
+                             style="font-size:.78rem"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
               {% endif %}
 
