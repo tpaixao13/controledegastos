@@ -21,7 +21,7 @@ from datetime import datetime, date as _date, timedelta
 from sqlalchemy import func, or_, and_
 from flask import url_for
 from app import db
-from app.models import Expense, Salary, CreditCard
+from app.models import Expense, Salary, CreditCard, Goal
 from app.utils import sum_expenses_month, sum_salaries_month, month_offset, _brl
 
 # ── Thresholds ──────────────────────────────────────────────────────
