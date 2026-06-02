@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% from 'components/transaction_item.html' import transaction_item %}
+
+{% block title %}Fatura {{ month_name }} — {{ card.label }} — FinFam{% endblock %}
+{% block page_title %}Fatura do Cartão{% endblock %}
+
+{% block content %}
+
+{# ── Breadcrumb ──────────────────────────────────────────────────── #}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item">
+      <a href="{{ url_for('cards.index') }}" class="text-decoration-none">
+        <i class="bi bi-credit-card-2-front me-1"></i>Cartões
+      </a>
+    </li>
+    <li class="breadcrumb-item active">{{ card.label }}</li>
+  </ol>
+</nav>
+
+{# ── Hero: visual do cartão ──────────────────────────────────────── #}
+<div class="invoice-hero mb-4" style="background:{{ gradient }}; color:{{ text_color }}">
+  <div class="invoice-hero-card">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div>
+        <div class="fw-bold fs-6 opacity-90">{{ card.nickname or card.bank or 'Cartão' }}</div>
+        <div class="opacity-60 small">•••• {{ card.last_digits }}</div>
+      </div>
+      {# Status badge #}
+      {% set status_cfg = {
+        'aberta':  ('Aberta',  'bg-success'),
+        'fechada': ('Fechada', 'bg-secondary'),
+        'futura':  ('Futura',  'bg-info text-dark'),
+      } %}
+      {% set s_label, s_class = status_cfg.get(inv.status, ('—', 'bg-secondary')) %}
+      <span class="badge {{ s_class }} fs-7">{{ s_label }}</span>
+    </div>
+
+    <div class="invoice-hero-label">Fatura de {{ month_name }} {{ year }}</div>
+    <div class="invoice-hero-total">{{ inv.total | brl }}</div>
+
+    <div class="invoice-hero-meta mt-2">
+      <span><i class="bi bi-receipt me-1 opacity-75"></i>{{ inv.expenses | length }} transaç{{ 'ão' if inv.expenses | length == 1 else 'ões' }}</span>
+      <span class="mx-2 opacity-40">·</span>
+      <span><i class="bi bi-calendar-check me-1 opacity-75"></i>Vence dia {{ card.due_day }}</span>
+    </div>
+  </div>
+
+  {# ── Navegação de fatura ─────────────────────────────────────── #}
+  <div class="invoice-nav">
+    <a href="{{ url_for('cards.invoice', card_id=card.id, month=inv.prev_month, year=inv.prev_year) }}"
+       class="invoice-nav-btn">
+      <i class="bi bi-chevron-left"></i>
+      {{ ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][inv.prev_month-1] }}
+    </a>
+    <span class="invoice-nav-current">{{ month_name }} {{ year }}</span>
+    <a href="{{ url_for('cards.invoice', card_id=card.id, month=inv.next_month, year=inv.next_year) }}"
+       class="invoice-nav-btn">
+      {{ ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][inv.next_month-1] }}
+      <i class="bi bi-chevron-right"></i>
+    </a>
+  </div>
+</div>
+
+{% if not inv.expenses %}
+{# ── Empty state ─────────────────────────────────────────────────── #}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-inbox fs-1 d-block mb-3 opacity-30"></i>
+  <h5 class="fw-semibold mb-1">Nenhuma compra nessa fatura</h5>
+  <p class="small">Use o botão "+ Nova Despesa" e selecione este cartão para registrar uma compra.</p>
+</div>
+
+{% else %}
+
+{# ── Grid: gráfico + resumo rápido ──────────────────────────────── #}
+<div class="row g-4 mb-4">
+
+  {# Doughnut de categorias #}
+  {% if chart_json %}
+  <div class="col-md-5">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-pie-chart text-primary me-1"></i>Por Categoria
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <div style="height:220px; width:100%">
+          <canvas id="chartInvoiceCategory"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Resumo da fatura #}
+  <div class="{{ 'col-md-7' if chart_json else 'col-12' }}">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-list-check text-success me-1"></i>Resumo da Fatura
+      </div>
+      <div class="card-body">
+        <div class="invoice-summary-row">
+          <span>Total da fatura</span>
+          <span class="fw-bold text-danger">{{ inv.total | brl }}</span>
+        </div>
+        <div class="invoice-summary-row">
+          <span>Pagamentos realizados</span>
+          <span class="fw-semibold text-success">{{ inv.paid_total | brl }}</span>
+        </div>
+        <div class="invoice-summary-row">
+          <span>A pagar</span>
+          <span class="fw-semibold {{ 'text-danger' if inv.pending_total > 0 else 'text-muted' }}">
+            {{ inv.pending_total | brl }}
+          </span>
+        </div>
+
+        {% if inv.total > 0 %}
+        <div class="mt-3">
+          <div class="d-flex justify-content-between small text-muted mb-1">
+            <span>Pago</span>
+            <span>{{ '%.0f'|format(inv.paid_total / inv.total * 100) }}%</span>
+          </div>
+          <div class="progress" style="height:8px; border-radius:4px">
+            <div class="progress-bar bg-success" style="width:{{ inv.paid_total / inv.total * 100 }}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if inv.future_total > 0 %}
+        <hr class="my-3">
+        <div class="invoice-summary-row">
+          <span class="text-muted">Parcelas em faturas futuras</span>
+          <span class="text-muted">{{ inv.future_total | brl }}</span>
+        </div>
+        {% endif %}
+
+        <hr class="my-3">
+        {# Top categorias #}
+        {% if inv.cat_totals %}
+        <div class="small fw-semibold text-muted mb-2">Por Categoria</div>
+        {% set _max = inv.cat_totals.values() | max %}
+        {% for cat, val in inv.cat_totals.items() | sort(attribute='1', reverse=True) %}
+        <div class="mb-2">
+          <div class="d-flex justify-content-between small mb-1">
+            <span>{{ cat }}</span>
+            <span class="fw-semibold">{{ val | brl }}</span>
+          </div>
+          <div class="progress" style="height:4px; border-radius:2px">
+            <div class="progress-bar"
+                 style="width:{{ val / _max * 100 }}%; background:#6f42c1"></div>
+          </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ── Timeline de transações ──────────────────────────────────────── #}
+<div class="card">
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-clock-history me-1"></i>Transações</span>
+    <span class="badge bg-light text-dark border">{{ inv.expenses | length }}</span>
+  </div>
+  <div class="card-body p-0">
+
+    {% set month_names_short = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'] %}
+
+    {% for day in inv.by_day.keys() | sort %}
+    {# ── Separador de dia ──────────────────────────────────────── #}
+    <div class="txn-day-separator">
+      <span class="txn-day-label">
+        {{ '%02d' | format(day) }} {{ month_names_short[month - 1] }}
+      </span>
+    </div>
+
+    {# ── Transações do dia ────────────────────────────────────── #}
+    {% for e in inv.by_day[day] %}
+    {{ transaction_item(e, category_icons) }}
+    {% endfor %}
+
+    {% endfor %}
+
+  </div>
+</div>
+
+{% endif %}{# /if expenses #}
+
+{% endblock %}
+
+{% block scripts %}
+{% if chart_json %}
+<script>
+(() => {
+  function brl(v) {
+    return 'R$ ' + parseFloat(v).toLocaleString('pt-BR',
+      {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  const ctx = document.getElementById('chartInvoiceCategory');
+  if (!ctx) return;
+  const data = {{ chart_json | safe }};
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels:   data.labels,
+      datasets: [{ data: data.data, backgroundColor: data.colors, borderWidth: 2 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = data.data.reduce((a,b) => a+b, 0);
+              const pct = (ctx.parsed / total * 100).toFixed(1);
+              return `${brl(ctx.parsed)} (${pct}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}
