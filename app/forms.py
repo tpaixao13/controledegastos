@@ -106,6 +106,7 @@ class ExpenseForm(FlaskForm):
     payment_method = SelectField('Forma de Pagamento', choices=PAYMENT_METHODS,
                                   validators=[validate_payment_method])
     bank = SelectField('Banco / Cartão', choices=BANKS, validators=[Optional()])
+    card_id = SelectField('Cartão Cadastrado', coerce=int, validators=[Optional()])
     credit_type = RadioField('Tipo', choices=[('avista', 'À vista'), ('parcelado', 'Parcelado')],
                              default='avista', validators=[Optional()])
     num_installments = SelectField('Nº de Parcelas', choices=INSTALLMENTS, coerce=int, validators=[Optional()])
@@ -117,6 +118,15 @@ class ExpenseForm(FlaskForm):
     month = SelectField('Mês', choices=MONTHS, coerce=int, validators=[DataRequired()])
     day = IntegerField('Dia', validators=[DataRequired(), NumberRange(min=1, max=31)])
     submit = SubmitField('Salvar')
+
+
+class CreditCardForm(FlaskForm):
+    nickname = StringField('Apelido (opcional)', validators=[Optional(), Length(max=50)])
+    last_digits = StringField('Últimos 4 dígitos', validators=[DataRequired(), Length(min=4, max=4)])
+    bank = SelectField('Bandeira / Banco', choices=BANKS, validators=[Optional()])
+    due_day = IntegerField('Dia de vencimento', validators=[DataRequired(), NumberRange(min=1, max=31)])
+    best_buy_day = IntegerField('Melhor dia de compra', validators=[DataRequired(), NumberRange(min=1, max=31)])
+    submit_card = SubmitField('Salvar Cartão')
 
 
 class SalaryForm(FlaskForm):
