@@ -32,23 +32,23 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {{ 'active' if request.blueprint == 'expenses' }}" href="{{ url_for('expenses.index') }}">
-            <i class="bi bi-list-ul"></i> Despesas
-          </a>
-        </li>
-        <li class="nav-item">
           <a class="nav-link {{ 'active' if request.blueprint == 'salaries' }}" href="{{ url_for('salaries.manage') }}">
             <i class="bi bi-cash-coin"></i> Rendas
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {{ 'active' if request.blueprint == 'investments' }}" href="{{ url_for('investments.manage') }}">
-            <i class="bi bi-graph-up-arrow"></i> Investimentos
+          <a class="nav-link {{ 'active' if request.blueprint == 'cards' }}" href="{{ url_for('cards.index') }}">
+            <i class="bi bi-credit-card-2-front"></i> Cartões
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link {{ 'active' if request.blueprint == 'cards' }}" href="{{ url_for('cards.index') }}">
-            <i class="bi bi-credit-card-2-front"></i> Cartões
+          <a class="nav-link {{ 'active' if request.blueprint == 'expenses' }}" href="{{ url_for('expenses.index') }}">
+            <i class="bi bi-list-ul"></i> Despesas
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.blueprint == 'investments' }}" href="{{ url_for('investments.manage') }}">
+            <i class="bi bi-graph-up-arrow"></i> Investimentos
           </a>
         </li>
         {% if current_plan and current_plan != 'vitalicio' %}
