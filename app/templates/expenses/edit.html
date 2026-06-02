@@ -108,6 +108,57 @@
               </div>
             </div>
 
+          {# ── Aplicar a todas as parcelas / recorrências ── #}
+          {% if expense.installment_group_id %}
+          <div class="alert alert-primary border-primary bg-primary bg-opacity-10 mt-4 mb-0">
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-collection fs-4 text-primary flex-shrink-0 mt-1"></i>
+              <div>
+                <div class="fw-semibold small mb-1">
+                  Parcela {{ expense.installment_number }}/{{ expense.installment_group.num_installments }}
+                  &nbsp;·&nbsp; {{ expense.installment_group.description }}
+                </div>
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox"
+                         name="apply_all" value="1" id="apply_all">
+                  <label class="form-check-label small" for="apply_all">
+                    Aplicar alterações a
+                    <strong>todas as {{ expense.installment_group.num_installments }} parcelas</strong>
+                    <span class="text-muted d-block">
+                      Atualiza: descrição, categoria, forma de pagamento, banco e cartão.
+                      Mantém: mês, valor e status de cada parcela.
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% elif expense.recurring_group_id %}
+          <div class="alert alert-primary border-primary bg-primary bg-opacity-10 mt-4 mb-0">
+            <div class="d-flex align-items-start gap-3">
+              <i class="bi bi-arrow-repeat fs-4 text-primary flex-shrink-0 mt-1"></i>
+              <div>
+                <div class="fw-semibold small mb-1">
+                  Recorrência {{ expense.recurring_number }}/{{ expense.recurring_group.num_recurrences }}
+                  &nbsp;·&nbsp; {{ expense.recurring_group.description }}
+                </div>
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox"
+                         name="apply_all" value="1" id="apply_all">
+                  <label class="form-check-label small" for="apply_all">
+                    Aplicar alterações a
+                    <strong>todas as {{ expense.recurring_group.num_recurrences }} recorrências</strong>
+                    <span class="text-muted d-block">
+                      Atualiza: descrição, categoria, forma de pagamento, banco, cartão e valor.
+                      Mantém: mês e status de cada ocorrência.
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
           <div class="d-flex gap-2 mt-4">
             {{ form.submit(class='btn btn-primary fw-semibold px-4') }}
             <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary">Cancelar</a>
