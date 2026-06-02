@@ -12,55 +12,44 @@
 </head>
 <body>
 
-{% if session.get('logged_in') %}
+{# ── Overlay mobile ──────────────────────────────────────────── #}
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-  {# ── Overlay mobile ─────────────────────────────────────────── #}
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+{# ── Sidebar ─────────────────────────────────────────────────── #}
+{% include 'components/sidebar.html' %}
 
-  {# ── Sidebar ─────────────────────────────────────────────────── #}
-  {% include 'components/sidebar.html' %}
+{# ── Wrapper principal ───────────────────────────────────────── #}
+<div class="main-wrapper">
 
-  {# ── Wrapper principal ───────────────────────────────────────── #}
-  <div class="main-wrapper">
+  {# ── Topbar ─────────────────────────────────────────────────── #}
+  {% include 'components/topbar.html' %}
 
-    {# ── Topbar ──────────────────────────────────────────────────── #}
-    {% include 'components/topbar.html' %}
+  {# ── Conteúdo ────────────────────────────────────────────────── #}
+  <main class="main-content">
 
-    {# ── Conteúdo ────────────────────────────────────────────────── #}
-    <main class="main-content">
-
-      {# Banner de trial ─────────────────────────────────────────── #}
-      {% if trial_days_left is not none and trial_days_left <= 10 %}
-      <div class="alert alert-warning alert-dismissible fade show py-2 mb-4 rounded-3" role="alert">
-        <i class="bi bi-clock-history me-1"></i>
-        {% if trial_days_left == 0 %}
-          O período de avaliação <strong>expira hoje</strong>.
-        {% else %}
-          O período de avaliação expira em <strong>{{ trial_days_left }} dia{{ 's' if trial_days_left != 1 }}</strong>.
-        {% endif %}
-        Entre em contacto para continuar usando o FinFam.
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
+    {# Banner de trial ─────────────────────────────────────────── #}
+    {% if trial_days_left is not none and trial_days_left <= 10 %}
+    <div class="alert alert-warning alert-dismissible fade show py-2 mb-4 rounded-3" role="alert">
+      <i class="bi bi-clock-history me-1"></i>
+      {% if trial_days_left == 0 %}
+        O período de avaliação <strong>expira hoje</strong>.
+      {% else %}
+        O período de avaliação expira em <strong>{{ trial_days_left }} dia{{ 's' if trial_days_left != 1 }}</strong>.
       {% endif %}
+      Entre em contacto para continuar usando o FinFam.
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
 
-      {% block content %}{% endblock %}
-    </main>
-  </div>
-
-{% else %}
-  {# Páginas sem sidebar (não deveria chegar aqui — login é self-contained) #}
-  <div class="container py-5">
-    {% block content_public %}{% block content %}{% endblock %}{% endblock %}
-  </div>
-{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
 
 {# ── Toast container ─────────────────────────────────────────── #}
 <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999"></div>
 
-{# ── Flash messages → toasts (via JS) ───────────────────────── #}
-<script>
-  window._flashMessages = {{ get_flashed_messages(with_categories=true) | tojson }};
-</script>
+{# ── Flash messages → toasts ────────────────────────────────── #}
+<script>window._flashMessages = {{ get_flashed_messages(with_categories=true) | tojson }};</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
