@@ -121,6 +121,8 @@ class User(db.Model):
     installment_groups = db.relationship('InstallmentGroup', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     recurring_groups = db.relationship('RecurringGroup', backref='user', lazy='dynamic', cascade='all, delete-orphan')
     investments = db.relationship('Investment', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    credit_cards = db.relationship('CreditCard', backref='owner', lazy='dynamic', cascade='all, delete-orphan',
+                                   foreign_keys='CreditCard.user_id')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
