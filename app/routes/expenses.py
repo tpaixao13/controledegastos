@@ -627,7 +627,7 @@ def import_bank_confirm():
     return redirect(url_for('expenses.index'))
 
 
-def _write_expense_series(form, bank, payment, group_id, group_field, number_field, amounts):
+def _write_expense_series(form, bank, payment, group_id, group_field, number_field, amounts, card_id=None):
     """Persiste N Expense rows mensais para um grupo já criado e flushado."""
     mes_inicio, ano_inicio = form.month.data, form.year.data
     for i, amount in enumerate(amounts):
@@ -642,6 +642,7 @@ def _write_expense_series(form, bank, payment, group_id, group_field, number_fie
             year=ano,
             month=mes,
             day=form.day.data,
+            card_id=card_id,
             **{group_field: group_id, number_field: i + 1},
         ))
 
