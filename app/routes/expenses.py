@@ -695,6 +695,26 @@ def import_bank_confirm():
         count += 1
 
     db.session.commit()
+
+    # Criar regras solicitadas pelo usuário na tela de preview
+    from flask import session as _sess
+    tid = _sess.get('tenant_id')
+    if tid:
+        rules_created = 0
+        for idx in indices:
+            if not request.form.get(f'criar_regra_{idx}'):
+                continue
+            desc = request.form.get(f'desc_{idx}', '').strip()
+            cat  = request.form.get(f'category_{idx}', '').strip()
+            # Usar a primeira palavra significativa como keyword
+            words = [w for w in desc.upper().split() if len(w) >= 3]
+            if words and cat:
+                kw = words[0][:30]
+                if create_rule_if_missing(kw, cat, tid):
+                    rules_created += 1
+        if rules_created:
+            flash(f'{rules_created} regra(s) de categorização criada(s) automaticamente!', 'info')
+
     flash(f'{count} despesa(s) importada(s) com sucesso!', 'success')
     return redirect(url_for('expenses.index'))
 
