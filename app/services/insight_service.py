@@ -15,7 +15,7 @@ prioridade. Cada insight tem:
 from datetime import datetime, date as _date
 from sqlalchemy import func, or_, and_
 from app import db
-from app.models import Expense, RecurringGroup
+from app.models import Expense, RecurringGroup, Goal
 from app.utils import sum_expenses_month, sum_salaries_month, month_offset, _brl
 
 
