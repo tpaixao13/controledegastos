@@ -46,6 +46,11 @@
             <i class="bi bi-graph-up-arrow"></i> Investimentos
           </a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link {{ 'active' if request.blueprint == 'cards' }}" href="{{ url_for('cards.index') }}">
+            <i class="bi bi-credit-card-2-front"></i> Cartões
+          </a>
+        </li>
         {% if current_plan and current_plan != 'vitalicio' %}
         <li class="nav-item">
           <a class="nav-link fw-semibold {{ 'active' if request.endpoint == 'auth.upgrade' }}"
