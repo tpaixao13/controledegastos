@@ -31,7 +31,10 @@
   {{ kpi('Saldo Livre',       saldo_combinado,  'bi-wallet2',             '#0d6efd', kpi_deltas.balance)             }}
 </div>
 
-{# ── 2. Resumo por pessoa + barra de progresso ─────────────────── #}
+{# ── 2. Insights financeiros ──────────────────────────────────── #}
+{{ insights_panel(insights, month_name, year) }}
+
+{# ── 3. Resumo por pessoa + barra de progresso ─────────────────── #}
 {% if user_summaries | length > 1 %}
 <div class="row g-3 mb-4">
   {% for s in user_summaries %}
