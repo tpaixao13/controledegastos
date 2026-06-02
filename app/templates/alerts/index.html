@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Alertas — FinFam{% endblock %}
+{% block page_title %}Alertas Financeiros{% endblock %}
+
+{% block content %}
+
+{# ── Header ──────────────────────────────────────────────────────── #}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold">
+      <i class="bi bi-bell text-danger me-2"></i>Alertas Financeiros
+    </h4>
+    <p class="text-muted small mb-0">{{ month_name }} {{ year }}</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    {% if n_danger > 0 %}
+    <span class="badge bg-danger fs-7 rounded-pill">
+      <i class="bi bi-exclamation-circle me-1"></i>{{ n_danger }} crítico{{ 's' if n_danger > 1 }}
+    </span>
+    {% endif %}
+    {% if n_warning > 0 %}
+    <span class="badge bg-warning text-dark fs-7 rounded-pill">
+      {{ n_warning }} atenção
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+{% if not alerts %}
+{# ── All clear ──────────────────────────────────────────────────── #}
+<div class="alert-allclear">
+  <div class="alert-allclear-icon">
+    <i class="bi bi-shield-check"></i>
+  </div>
+  <h5 class="fw-bold mb-2">Tudo em ordem!</h5>
+  <p class="text-muted mb-4">
+    Nenhum alerta ativo para {{ month_name }} {{ year }}.<br>
+    Continue monitorando suas finanças para manter esse status.
+  </p>
+  <a href="{{ url_for('main.index') }}" class="btn btn-success fw-semibold">
+    <i class="bi bi-speedometer2 me-1"></i>Ver Dashboard
+  </a>
+</div>
+
+{% else %}
+
+{# ── Lista de alertas ────────────────────────────────────────────── #}
+<div class="row g-3">
+  {% for alert in alerts %}
+  <div class="col-12">
+    <div class="alert-card alert-card-{{ alert.type }}">
+
+      {# Ícone #}
+      <div class="alert-card-icon alert-card-icon-{{ alert.type }}">
+        <i class="bi {{ alert.icon }}"></i>
+      </div>
+
+      {# Conteúdo #}
+      <div class="alert-card-body">
+        <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+          <div>
+            <div class="alert-card-title">
+              {% if alert.type == 'danger' %}
+              <span class="badge bg-danger me-1" style="font-size:.65rem">Crítico</span>
+              {% elif alert.type == 'warning' %}
+              <span class="badge bg-warning text-dark me-1" style="font-size:.65rem">Atenção</span>
+              {% else %}
+              <span class="badge bg-info text-dark me-1" style="font-size:.65rem">Info</span>
+              {% endif %}
+              {{ alert.title }}
+            </div>
+            <div class="alert-card-message">{{ alert.message }}</div>
+          </div>
+          {% if alert.action_url %}
+          <a href="{{ alert.action_url }}"
+             class="btn btn-sm alert-card-btn alert-card-btn-{{ alert.type }} flex-shrink-0">
+            {{ alert.action_label or 'Ver' }}
+            <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{# ── Dica de boas práticas ───────────────────────────────────────── #}
+<div class="card mt-4 border-0 bg-light">
+  <div class="card-body py-3">
+    <div class="d-flex gap-3 align-items-start">
+      <i class="bi bi-lightbulb text-warning fs-4 flex-shrink-0 mt-1"></i>
+      <div>
+        <div class="fw-semibold small mb-1">Como resolver esses alertas?</div>
+        <ul class="text-muted small mb-0 ps-3">
+          <li>Marque despesas como pagas conforme forem quitadas</li>
+          <li>Cadastre sua renda mensal para cálculos mais precisos</li>
+          <li>Defina limites nos seus cartões de crédito para monitoramento automático</li>
+          <li>Use as <a href="{{ url_for('rules.index') }}">Regras de Categorização</a> para manter o controle</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}
