@@ -62,6 +62,7 @@ def index():
         gradient, text_color = card_gradient(card)
         limit    = float(card.credit_limit) if card.credit_limit else None
         pct      = round(total / limit * 100, 1) if limit else None
+        vr_bal   = vr_va_balance(card, invoice_month, invoice_year)
         card_data.append({
             'card':       card,
             'total':      total,
@@ -69,6 +70,7 @@ def index():
             'text_color': text_color,
             'limit':      limit,
             'pct':        pct,
+            'vr_balance': vr_bal,
         })
 
     prev_month, prev_year = month_offset(invoice_month, invoice_year, -1)
