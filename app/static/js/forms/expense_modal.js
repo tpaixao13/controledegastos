@@ -25,12 +25,12 @@
   const fDay         = form.querySelector('#m_day');
   const fMonth       = form.querySelector('#m_month');
   const fYear        = form.querySelector('#m_year');
+  const fAmount      = form.querySelector('#m_amount');
 
   // Avançados
   const bankRow         = form.querySelector('#m_bank_row');
   const cardRow         = form.querySelector('#m_card_row');
   const cardSelect      = form.querySelector('#m_card_id');
-  const billingHint     = form.querySelector('#m_billing_hint');
   const creditTypeRow   = form.querySelector('#m_credit_type_row');
   const installmentsRow = form.querySelector('#m_installments_row');
   const recurringCheck  = form.querySelector('#m_is_recurring');
@@ -66,47 +66,125 @@
   const _BANK_METHODS = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'VR', 'VA'];
 
   function updateFields() {
-    const method = fPayment?.value || '';
-    const isCredit   = method === 'Cartão de Crédito';
-    const needsBank  = _BANK_METHODS.includes(method);
+    const method      = fPayment?.value || '';
+    const isCredit    = method === 'Cartão de Crédito';
+    const needsBank   = _BANK_METHODS.includes(method);
     const isParcelado = form.querySelector('#m_credit_parcelado')?.checked;
 
-    // Banco
     bankRow?.classList.toggle('d-none', !needsBank);
-
-    // Cartão + tipo crédito
     cardRow?.classList.toggle('d-none', !isCredit);
     creditTypeRow?.classList.toggle('d-none', !isCredit);
-
-    // Parcelas
     installmentsRow?.classList.toggle('d-none', !(isCredit && isParcelado));
 
-    // Hint de fatura
-    updateBillingHint();
+    updateInvoicePreview();
   }
 
-  function updateBillingHint() {
-    if (!billingHint || !cardSelect || !fDay || !fMonth) {
+  // ── Invoice Preview ────────────────────────────────────────────
+  let _invoiceTimer = null;
+
+  function _fmtBrl(v) {
+    return 'R$ ' + v.toFixed(2)
+      .replace('.', ',')
+      .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  function _computeInvoice(cardId, day, month, year) {
+    const card = cardData[parseInt(cardId, 10)];
+    if (!card || !day || !month || !year) return null;
+
+    const isOpen = day <= card.best_buy_day;
+    let invMonth = month;
+    let invYear  = year;
+
+    if (!isOpen) {
+      if (month === 12) { invMonth = 1; invYear = year + 1; }
+      else              { invMonth = month + 1; }
+    }
+
+    return {
+      isOpen,
+      invMonth,
+      invYear,
+      invoiceLabel:   MONTH_NAMES[invMonth - 1] + ' ' + invYear,
+      daysToClosing:  isOpen ? card.best_buy_day - day : null,
+      dueDay:         card.due_day,
+      creditLimit:    card.credit_limit || null,
+    };
+  }
+
+  function _renderInvoice(info, serverData) {
+    const wrap  = document.getElementById('invoicePreview');
+    const inner = document.getElementById('invoicePreviewInner');
+    const icon  = document.getElementById('invoicePreviewIcon');
+    const main  = document.getElementById('invoicePreviewMain');
+    const sub   = document.getElementById('invoicePreviewSub');
+    const limit = document.getElementById('invoicePreviewLimit');
+    const bar   = document.getElementById('invoicePreviewBar');
+    const ltxt  = document.getElementById('invoicePreviewLimitText');
+
+    if (!wrap) return;
+    if (!info) { wrap.style.display = 'none'; return; }
+
+    if (info.isOpen) {
+      icon.className  = 'bi bi-check-circle-fill text-success fs-5 flex-shrink-0';
+      inner.className = 'd-flex align-items-start gap-2 p-2 rounded border border-success bg-success bg-opacity-10';
+      const closing   = info.daysToClosing !== null
+        ? ` · fecha em ${info.daysToClosing} dia${info.daysToClosing !== 1 ? 's' : ''}`
+        : '';
+      main.innerHTML  = `<span class="text-success">✅ Vai cair na fatura de <strong>${info.invoiceLabel}</strong></span>`;
+      sub.textContent = `Vence dia ${info.dueDay}${closing}`;
+    } else {
+      icon.className  = 'bi bi-arrow-right-circle-fill text-warning fs-5 flex-shrink-0';
+      inner.className = 'd-flex align-items-start gap-2 p-2 rounded border border-warning bg-warning bg-opacity-10';
+      main.innerHTML  = `<span class="text-warning">⚠️ Entra na fatura de <strong>${info.invoiceLabel}</strong></span>`;
+      sub.textContent = `Fatura atual já fechou · próxima vence dia ${info.dueDay}`;
+    }
+
+    // Barra de limite (dados do servidor)
+    const usage = serverData?.projected_usage ?? serverData?.current_usage;
+    if (usage !== null && usage !== undefined && info.creditLimit) {
+      const pct    = Math.min(usage / info.creditLimit * 100, 100);
+      const bColor = pct > 80 ? 'bg-danger' : pct > 60 ? 'bg-warning' : 'bg-success';
+      bar.style.width    = pct + '%';
+      bar.className      = 'progress-bar ' + bColor;
+      ltxt.innerHTML     = `Após essa compra: <strong>${_fmtBrl(usage)}</strong> / ${_fmtBrl(info.creditLimit)} (${pct.toFixed(0)}%)`;
+      limit.style.display = '';
+    } else {
+      limit.style.display = 'none';
+    }
+
+    wrap.style.display = '';
+  }
+
+  async function updateInvoicePreview() {
+    const method  = fPayment?.value;
+    const cardId  = cardSelect?.value;
+    const day     = parseInt(fDay?.value,   10);
+    const month   = parseInt(fMonth?.value, 10);
+    const year    = parseInt(fYear?.value,  10);
+    const amount  = parseFloat(fAmount?.value) || 0;
+    const wrap    = document.getElementById('invoicePreview');
+
+    if (method !== 'Cartão de Crédito' || !cardId || !day || !month || !year) {
+      if (wrap) wrap.style.display = 'none';
       return;
     }
-    const id  = parseInt(cardSelect.value, 10);
-    const card = cardData[id];
-    if (!card || !id) { billingHint.style.display = 'none'; return; }
 
-    const day   = parseInt(fDay.value, 10);
-    const month = parseInt(fMonth.value, 10);
-    if (!day || !month) { billingHint.style.display = 'none'; return; }
+    // Preview instantâneo a partir dos dados locais
+    const info = _computeInvoice(cardId, day, month, year);
+    _renderInvoice(info, null);
 
-    const billingMonth = day > card.best_buy_day
-      ? (month === 12 ? 1 : month + 1)
-      : month;
-
-    const icon = day > card.best_buy_day
-      ? '<i class="bi bi-arrow-right-circle"></i>'
-      : '<i class="bi bi-check-circle"></i>';
-
-    billingHint.innerHTML = `${icon} Esta compra entra na fatura de <strong>${MONTH_NAMES[billingMonth - 1]}</strong> (vence dia ${card.due_day}).`;
-    billingHint.style.display = '';
+    // Busca dados de limite no servidor (debounced)
+    clearTimeout(_invoiceTimer);
+    _invoiceTimer = setTimeout(async () => {
+      try {
+        const p = new URLSearchParams({ card_id: cardId, day, month, year, amount });
+        const res = await fetch('/cards/api/invoice-preview?' + p);
+        if (!res.ok) return;
+        const srv = await res.json();
+        _renderInvoice(_computeInvoice(cardId, day, month, year), srv);
+      } catch (_) {}
+    }, 350);
   }
 
   // Listeners de atualização
@@ -116,9 +194,14 @@
     r.addEventListener('change', updateFields);
   });
 
-  cardSelect?.addEventListener('change', updateBillingHint);
-  fDay?.addEventListener('input', updateBillingHint);
-  fMonth?.addEventListener('change', updateBillingHint);
+  cardSelect?.addEventListener('change', updateInvoicePreview);
+  fDay?.addEventListener('input',  updateInvoicePreview);
+  fMonth?.addEventListener('change', updateInvoicePreview);
+  fYear?.addEventListener('change',  updateInvoicePreview);
+  fAmount?.addEventListener('input',  () => {
+    clearTimeout(_invoiceTimer);
+    _invoiceTimer = setTimeout(updateInvoicePreview, 350);
+  });
 
   recurringCheck?.addEventListener('change', () => {
     recurringRow?.classList.toggle('d-none', !recurringCheck.checked);
@@ -146,7 +229,6 @@
   }
 
   function showFieldError(name, message) {
-    // Tenta pelo id (m_<name>) ou pelo name
     const field = form.querySelector(`#m_${name}`) || form.querySelector(`[name="${name}"]`);
     if (field) {
       field.classList.add('is-invalid');
@@ -185,7 +267,6 @@
         window.showToast?.(data.message || 'Despesa adicionada!', 'success');
         setTimeout(() => location.reload(), 800);
       } else {
-        // Erros de validação por campo
         const errors = data.errors || {};
         let hasFieldError = false;
         for (const [field, msg] of Object.entries(errors)) {
@@ -193,7 +274,6 @@
           hasFieldError = true;
         }
         if (!hasFieldError) showGlobalError(data.message);
-        // Abre seção avançada se o erro estiver lá
         const advFields = ['bank','card_id','credit_type','num_installments',
                            'user_id','is_recurring','recurring_times'];
         if (advFields.some(f => errors[f]) && !advancedOpen) openAdvanced();
@@ -217,10 +297,9 @@
   // ── Inicializar data com hoje quando modal abre ────────────────
   modalEl.addEventListener('show.bs.modal', () => {
     const today = new Date();
-    if (fDay && !fDay.value)   fDay.value   = today.getDate();
+    if (fDay   && !fDay.value)   fDay.value   = today.getDate();
     if (fMonth && !fMonth.value) fMonth.value = today.getMonth() + 1;
-    if (fYear && !fYear.value)   fYear.value  = today.getFullYear();
-    // Focar na descrição
+    if (fYear  && !fYear.value)  fYear.value  = today.getFullYear();
     setTimeout(() => fDescription?.focus(), 200);
   });
 
