@@ -40,6 +40,15 @@
       <span class="d-none d-md-inline">Nova Despesa</span>
     </button>
 
+    {# ── Sino de alertas ──────────────────────────────────────── #}
+    <a href="{{ url_for('alerts.index') }}" class="topbar-alert-btn"
+       title="Alertas financeiros">
+      <i class="bi bi-bell"></i>
+      {% if alert_count and alert_count > 0 %}
+      <span class="topbar-alert-badge">{{ alert_count if alert_count < 10 else '9+' }}</span>
+      {% endif %}
+    </a>
+
     {% if session.get('user_name') %}
     <div class="dropdown">
       <button class="topbar-user-btn dropdown-toggle" data-bs-toggle="dropdown">
