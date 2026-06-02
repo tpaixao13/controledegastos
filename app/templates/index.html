@@ -1,137 +1,131 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
+{% from 'components/kpi_card.html' import kpi %}
 
 {% block title %}Dashboard — FinFam{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
-<!-- Navegação de mês -->
-<div class="d-flex align-items-center justify-content-between mb-4 no-print">
-  <h2 class="fw-bold mb-0">
-    <i class="bi bi-speedometer2 text-primary"></i>
-    Dashboard — {{ month_name }} / {{ year }}
-  </h2>
-  <div class="d-flex gap-2">
-    <a href="{{ url_for('main.index', month=prev_month, year=prev_year) }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-chevron-left"></i> Mês anterior
-    </a>
-    <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary btn-sm">Hoje</a>
-    <a href="{{ url_for('main.index', month=next_month, year=next_year) }}" class="btn btn-outline-secondary btn-sm">
-      Próximo mês <i class="bi bi-chevron-right"></i>
-    </a>
-    <button class="btn btn-outline-dark btn-sm" onclick="window.print()">
-      <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
-    </button>
-  </div>
-</div>
 
+{# Inputs ocultos para os gráficos #}
+<input type="hidden" id="chart-month" value="{{ month }}">
+<input type="hidden" id="chart-year"  value="{{ year }}">
+
+{# Formulário oculto para bulk-paid #}
+<form method="POST" action="{{ url_for('expenses.bulk_paid') }}" id="formBulkPaid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="next" value="{{ url_for('main.index', month=month, year=year) }}">
+</form>
+
+{# ── Print header (só no PDF) ──────────────────────────────── #}
 <div class="print-header d-none">
-  <h3 class="fw-bold mb-0">
-    <i class="bi bi-speedometer2"></i> Dashboard FinFam — {{ month_name }} / {{ year }}
-  </h3>
+  <h3 class="fw-bold mb-0">Dashboard FinFam — {{ month_name }} / {{ year }}</h3>
   <small class="text-muted">Gerado em {{ today.strftime('%d/%m/%Y') }}</small>
 </div>
 
-<!-- Inputs ocultos para os gráficos JS -->
-<input type="hidden" id="chart-month" value="{{ month }}">
-<input type="hidden" id="chart-year" value="{{ year }}">
+{# ── 1. KPI CARDS ─────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+  {{ kpi('Receitas do Mês',   total_salario,    'bi-cash-coin',           '#198754', kpi_deltas.income)             }}
+  {{ kpi('Total de Gastos',   total_gasto,      'bi-receipt',             '#dc3545', kpi_deltas.expenses, inverse=True) }}
+  {{ kpi('Faturas de Cartão', credit_total,     'bi-credit-card-2-front', '#6f42c1', kpi_deltas.credit,  inverse=True) }}
+  {{ kpi('Saldo Livre',       saldo_combinado,  'bi-wallet2',             '#0d6efd', kpi_deltas.balance)             }}
+</div>
 
-<!-- 1. Cards de resumo -->
+{# ── 2. Resumo por pessoa + barra de progresso ─────────────────── #}
+{% if user_summaries | length > 1 %}
 <div class="row g-3 mb-4">
   {% for s in user_summaries %}
-  <div class="col-md-3">
-    <div class="card card-summary {{ user_colors[s.user.id].card_class }}">
+  <div class="col-md-6 col-xl-3">
+    <div class="card card-summary {{ user_colors[s.user.id].card_class }} h-100">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
+        <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
-            <p class="text-muted small mb-1">
-              <span class="badge {{ user_colors[s.user.id].badge_class }}">
-                {{ s.user.name }}
-              </span> — Saldo
-            </p>
-            <h4 class="fw-bold {{ 'saldo-positivo' if s.saldo >= 0 else 'saldo-negativo' }}">
-              {{ s.saldo|brl }}
-            </h4>
+            <span class="badge {{ user_colors[s.user.id].badge_class }} mb-1">{{ s.user.name }}</span>
+            <div class="fw-bold fs-5 {{ 'saldo-positivo' if s.saldo >= 0 else 'saldo-negativo' }}">
+              {{ s.saldo | brl }}
+            </div>
           </div>
-          <i class="bi bi-person-circle fs-2 text-muted opacity-50"></i>
+          <i class="bi bi-person-circle fs-2 text-muted opacity-25"></i>
         </div>
-        <div class="mt-2 small text-muted">
-          Salário: {{ s.salario|brl }} | Gastos: {{ s.gasto|brl }}
+        <div class="small text-muted mb-1">
+          Renda: {{ s.salario | brl }} &nbsp;·&nbsp; Gastos: {{ s.gasto | brl }}
         </div>
+        {% if s.salario > 0 %}
+        {% set pct = [(s.gasto / s.salario * 100), 100] | min %}
+        <div class="progress mt-2" style="height:5px">
+          <div class="progress-bar {{ 'bg-danger' if pct > 90 else ('bg-warning' if pct > 70 else 'bg-success') }}"
+               style="width:{{ pct }}%"></div>
+        </div>
+        <div class="small text-muted mt-1">{{ '%.0f' | format(pct) }}% comprometido</div>
+        {% endif %}
       </div>
     </div>
   </div>
   {% endfor %}
 
-  <div class="col-md-3">
-    <div class="card card-summary card-combined">
+  {# Card combinado só aparece se há mais de 1 membro #}
+  <div class="col-md-6 col-xl-3">
+    <div class="card card-summary card-combined h-100">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
+        <div class="d-flex justify-content-between align-items-start mb-2">
           <div>
-            <p class="text-muted small mb-1">Saldo Combinado</p>
-            <h4 class="fw-bold {{ 'saldo-positivo' if saldo_combinado >= 0 else 'saldo-negativo' }}">
-              {{ saldo_combinado|brl }}
-            </h4>
+            <span class="badge bg-success mb-1">Família</span>
+            <div class="fw-bold fs-5 {{ 'saldo-positivo' if saldo_combinado >= 0 else 'saldo-negativo' }}">
+              {{ saldo_combinado | brl }}
+            </div>
           </div>
-          <i class="bi bi-people-fill fs-2 text-muted opacity-50"></i>
+          <i class="bi bi-people-fill fs-2 text-muted opacity-25"></i>
         </div>
-        <div class="mt-2 small text-muted">
-          Salários: {{ total_salario|brl }}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="col-md-3">
-    <div class="card card-summary card-total">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
-          <div>
-            <p class="text-muted small mb-1">Total Gasto no Mês</p>
-            <h4 class="fw-bold text-danger">{{ total_gasto|brl }}</h4>
-          </div>
-          <i class="bi bi-receipt fs-2 text-muted opacity-50"></i>
-        </div>
+        <div class="small text-muted">Saldo combinado do mês</div>
         {% if total_salario > 0 %}
-        <div class="mt-2">
-          <div class="progress" style="height:6px;">
-            {% set pct = [(total_gasto / total_salario * 100), 100]|min %}
-            <div class="progress-bar {{ 'bg-danger' if pct > 90 else ('bg-warning' if pct > 70 else 'bg-success') }}"
-                 style="width:{{ pct }}%"></div>
-          </div>
-          <small class="text-muted">{{ '%.1f'|format(pct) }}% do salário</small>
+        {% set pct = [(total_gasto / total_salario * 100), 100] | min %}
+        <div class="progress mt-2" style="height:5px">
+          <div class="progress-bar {{ 'bg-danger' if pct > 90 else ('bg-warning' if pct > 70 else 'bg-success') }}"
+               style="width:{{ pct }}%"></div>
         </div>
+        <div class="small text-muted mt-1">{{ '%.0f' | format(pct) }}% comprometido</div>
         {% endif %}
       </div>
     </div>
   </div>
 </div>
+{% elif user_summaries | length == 1 %}
+{# 1 único membro: só barra de progresso dentro do KPI card de gastos — sem row extra #}
+{% endif %}
 
-<!-- Gráficos (arrastáveis) -->
-<div class="d-flex justify-content-end mb-2 no-print">
-  <span class="text-muted small"><i class="bi bi-grip-vertical"></i> Arraste os gráficos para reordenar</span>
-  <button class="btn btn-sm btn-outline-secondary ms-3" id="btnResetLayout">
-    <i class="bi bi-arrow-counterclockwise"></i> Restaurar ordem
-  </button>
+{# ── 3. GRÁFICOS ─────────────────────────────────────────────── #}
+<div class="d-flex align-items-center justify-content-between mb-2 no-print">
+  <span class="small text-muted"><i class="bi bi-grip-vertical"></i> Arraste para reordenar</span>
+  <div class="d-flex gap-2">
+    <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+      <i class="bi bi-file-earmark-pdf"></i> PDF
+    </button>
+    <button class="btn btn-sm btn-outline-secondary" id="btnResetLayout">
+      <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+    </button>
+  </div>
 </div>
+
 <div class="row g-4 mb-4" id="chartsGrid">
 
-  <div class="col-md-4 chart-card" data-id="pending">
+  {# Gastos por Categoria #}
+  <div class="col-md-5 chart-card" data-id="doughnut">
     <div class="card h-100">
       <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
-        <i class="bi bi-hourglass-split text-warning"></i> Pago vs Pendente no Mês
+        <i class="bi bi-pie-chart text-primary me-1"></i> Gastos por Categoria
       </div>
       <div class="card-body">
-        <div class="chart-container"><canvas id="chartPending"></canvas></div>
+        <div class="chart-container"><canvas id="chartDoughnut"></canvas></div>
       </div>
     </div>
   </div>
 
-  <div class="col-md-8 chart-card" data-id="monthly">
+  {# Receita vs Gastos #}
+  <div class="col-md-7 chart-card" data-id="monthly">
     <div class="card h-100">
       <div class="card-header fw-semibold chart-drag-handle d-flex justify-content-between align-items-center" style="cursor:grab">
-        <span><i class="bi bi-bar-chart text-success"></i> Gastos vs Salário</span>
+        <span><i class="bi bi-bar-chart text-success me-1"></i> Receita vs Gastos</span>
         <div class="btn-group btn-group-sm" onclick="event.stopPropagation()" id="monthlyPeriod">
-          <button class="btn btn-outline-secondary active" data-months="1">1m</button>
-          <button class="btn btn-outline-secondary" data-months="6">6m</button>
+          <button class="btn btn-outline-secondary active" data-months="6">6m</button>
           <button class="btn btn-outline-secondary" data-months="12">12m</button>
         </div>
       </div>
@@ -141,32 +135,23 @@
     </div>
   </div>
 
-  <div class="col-md-6 chart-card" data-id="doughnut">
+  {# Evolução Diária — linha do tempo #}
+  <div class="col-12 chart-card" data-id="daily">
     <div class="card h-100">
       <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
-        <i class="bi bi-pie-chart text-primary"></i> Gastos por Categoria
+        <i class="bi bi-graph-up text-danger me-1"></i> Evolução Diária de Gastos — {{ month_name }}
       </div>
       <div class="card-body">
-        <div class="chart-container"><canvas id="chartDoughnut"></canvas></div>
+        <div class="chart-container" style="height:200px"><canvas id="chartDaily"></canvas></div>
       </div>
     </div>
   </div>
 
-  <div class="col-md-6 chart-card" data-id="daily">
-    <div class="card h-100">
-      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
-        <i class="bi bi-graph-up text-danger"></i> Evolução Diária
-      </div>
-      <div class="card-body">
-        <div class="chart-container"><canvas id="chartDaily"></canvas></div>
-      </div>
-    </div>
-  </div>
-
+  {# Formas de Pagamento #}
   <div class="col-md-8 chart-card" data-id="payments">
     <div class="card h-100">
       <div class="card-header fw-semibold chart-drag-handle d-flex justify-content-between align-items-center" style="cursor:grab">
-        <span><i class="bi bi-credit-card text-primary"></i> Formas de Pagamento</span>
+        <span><i class="bi bi-credit-card text-primary me-1"></i> Formas de Pagamento</span>
         <div class="btn-group btn-group-sm" onclick="event.stopPropagation()" id="paymentsPeriod">
           <button class="btn btn-outline-secondary active" data-months="1">1m</button>
           <button class="btn btn-outline-secondary" data-months="6">6m</button>
@@ -179,42 +164,52 @@
     </div>
   </div>
 
-  <div class="col-md-4 chart-card" data-id="users">
+  {# Pago vs Pendente #}
+  <div class="col-md-4 chart-card" data-id="pending-chart">
     <div class="card h-100">
       <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
-        <i class="bi bi-people text-secondary"></i> {{ user_summaries | map(attribute='user') | map(attribute='name') | join(' vs ') }}
+        <i class="bi bi-hourglass-split text-warning me-1"></i> Pago vs Pendente
+      </div>
+      <div class="card-body">
+        <div class="chart-container"><canvas id="chartPending"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  {# Comparação por pessoa (só se houver mais de 1 membro) #}
+  {% if user_summaries | length > 1 %}
+  <div class="col-md-6 chart-card" data-id="users">
+    <div class="card h-100">
+      <div class="card-header fw-semibold chart-drag-handle" style="cursor:grab">
+        <i class="bi bi-people text-secondary me-1"></i>
+        {{ user_summaries | map(attribute='user') | map(attribute='name') | join(' vs ') }}
       </div>
       <div class="card-body">
         <div class="chart-container"><canvas id="chartUsers"></canvas></div>
       </div>
     </div>
   </div>
+  {% endif %}
 
 </div>
 
-<!-- Formulário oculto para bulk-paid -->
-<form method="POST" action="{{ url_for('expenses.bulk_paid') }}" id="formBulkPaid">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <input type="hidden" name="next" value="{{ url_for('main.index', month=month, year=year) }}">
-</form>
-
-<!-- 5. Despesas Pendentes -->
+{# ── 4. DESPESAS PENDENTES ──────────────────────────────────── #}
 {% if pending %}
-<div class="card mb-4 border-warning">
-  <div class="card-header fw-semibold d-flex justify-content-between align-items-center bg-warning bg-opacity-10">
-    <span>
-      <i class="bi bi-clock-fill text-warning"></i> Despesas Pendentes —
-      <span class="badge badge-pendente ms-1">{{ pending|length }}</span>
+<div class="card mb-4" style="border-left:4px solid var(--color-warning)">
+  <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <span class="fw-semibold">
+      <i class="bi bi-clock-fill text-warning me-1"></i> Despesas Pendentes
+      <span class="badge badge-pendente ms-1">{{ pending | length }}</span>
     </span>
     <div class="d-flex align-items-center gap-2">
-      <span class="fw-bold text-danger">{{ total_pendente|brl }}</span>
-      <button type="button" class="btn btn-sm btn-outline-secondary" id="btnSelectAll"
+      <span class="fw-bold text-danger">{{ total_pendente | brl }}</span>
+      <button type="button" class="btn btn-sm btn-outline-secondary no-print" id="btnSelectAll"
               onclick="toggleSelectAll()">
         <i class="bi bi-check-all"></i> Selecionar todas
       </button>
-      <button type="button" class="btn btn-sm btn-success d-none" id="btnMarcarSelecionadas"
+      <button type="button" class="btn btn-sm btn-success d-none no-print" id="btnMarcarSelecionadas"
               onclick="submitBulkPaid()">
-        <i class="bi bi-check-lg"></i> Marcar selecionadas como pagas
+        <i class="bi bi-check-lg"></i> Marcar como pagas
         <span class="badge bg-white text-success ms-1" id="countSelected">0</span>
       </button>
     </div>
@@ -224,55 +219,50 @@
       <table class="table table-hover align-middle mb-0 sortable-table" id="tablePending">
         <thead class="table-light">
           <tr>
-            <th style="width:36px">
+            <th style="width:36px" class="no-print">
               <input type="checkbox" id="checkAll" class="form-check-input" onchange="onCheckAllChange(this)">
             </th>
             <th class="sortable">Pessoa <span class="sort-icon text-muted">⇅</span></th>
             <th class="sortable">Dia <span class="sort-icon text-muted">⇅</span></th>
             <th class="sortable">Descrição <span class="sort-icon text-muted">⇅</span></th>
-            <th class="sortable">Categoria <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable d-none d-md-table-cell">Categoria <span class="sort-icon text-muted">⇅</span></th>
             <th class="sortable text-end">Valor <span class="sort-icon text-muted">⇅</span></th>
-            <th class="text-center">Ação</th>
+            <th class="text-center no-print">Ação</th>
           </tr>
         </thead>
         <tbody>
           {% for e in pending %}
           <tr>
-            <td>
+            <td class="no-print">
               <input type="checkbox" class="form-check-input expense-cb" value="{{ e.id }}"
                      onchange="updateBulkBtn()">
             </td>
-            <td>
-              <span class="badge {{ user_colors[e.user_id].badge_class }}">
-                {{ e.user.name }}
-              </span>
-            </td>
+            <td><span class="badge {{ user_colors[e.user_id].badge_class }}">{{ e.user.name }}</span></td>
             <td class="text-muted small">{{ '%02d'|format(e.day) }}/{{ '%02d'|format(e.month) }}</td>
             <td>
               {{ e.description }}
               {% if e.installment_group_id %}
               <span class="installment-badge ms-1">{{ e.installment_number }}/{{ e.installment_group.num_installments }}x</span>
               {% elif e.recurring_group_id %}
-              <span class="recurring-badge ms-1"><i class="bi bi-arrow-repeat"></i> {{ e.recurring_number }}/{{ e.recurring_group.num_recurrences }}</span>
+              <span class="recurring-badge ms-1"><i class="bi bi-arrow-repeat"></i></span>
               {% endif %}
             </td>
-            <td><span class="badge bg-secondary">{{ e.category }}</span></td>
-            <td class="text-end fw-semibold">{{ e.amount|brl }}</td>
-            <td class="text-center">
+            <td class="d-none d-md-table-cell">
+              <span class="badge bg-light text-dark border">{{ e.category }}</span>
+            </td>
+            <td class="text-end fw-semibold text-danger">{{ e.amount | brl }}</td>
+            <td class="text-center no-print">
               {% set dias_atraso = (today - today.__class__(e.year, e.month, e.day)).days %}
               {% if dias_atraso > 0 %}
               <span class="badge bg-danger me-1">
-                <i class="bi bi-exclamation-triangle-fill"></i> {{ dias_atraso }}d atraso
+                <i class="bi bi-exclamation-triangle-fill"></i> {{ dias_atraso }}d
               </span>
               {% endif %}
-              <form method="POST"
-                    action="{{ url_for('expenses.toggle_paid', expense_id=e.id) }}"
-                    style="display:inline">
+              <form method="POST" action="{{ url_for('expenses.toggle_paid', expense_id=e.id) }}" style="display:inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="next"
-                       value="{{ url_for('main.index', month=month, year=year) }}">
+                <input type="hidden" name="next" value="{{ url_for('main.index', month=month, year=year) }}">
                 <button type="submit" class="btn btn-sm btn-success">
-                  <i class="bi bi-check-lg"></i> Marcar como Pago
+                  <i class="bi bi-check-lg"></i>
                 </button>
               </form>
             </td>
@@ -285,13 +275,12 @@
 </div>
 {% endif %}
 
-<!-- 6. Últimas despesas -->
+{# ── 5. ÚLTIMAS DESPESAS ───────────────────────────────────────── #}
 <div class="card">
   <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-clock-history"></i> Últimas Despesas do Mês</span>
-    <a href="{{ url_for('expenses.index', month=month, year=year) }}" class="btn btn-sm btn-outline-primary">
-      Ver todas
-    </a>
+    <span><i class="bi bi-clock-history me-1"></i> Últimas Despesas</span>
+    <a href="{{ url_for('expenses.index', month=month, year=year) }}"
+       class="btn btn-sm btn-outline-primary">Ver todas</a>
   </div>
   <div class="card-body p-0">
     {% if recent %}
@@ -302,19 +291,15 @@
             <th class="sortable">Pessoa <span class="sort-icon text-muted">⇅</span></th>
             <th class="sortable">Dia <span class="sort-icon text-muted">⇅</span></th>
             <th class="sortable">Descrição <span class="sort-icon text-muted">⇅</span></th>
-            <th class="sortable">Categoria <span class="sort-icon text-muted">⇅</span></th>
-            <th class="sortable">Pagamento <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable d-none d-md-table-cell">Categoria <span class="sort-icon text-muted">⇅</span></th>
+            <th class="sortable d-none d-lg-table-cell">Pagamento <span class="sort-icon text-muted">⇅</span></th>
             <th class="sortable text-end">Valor <span class="sort-icon text-muted">⇅</span></th>
           </tr>
         </thead>
         <tbody>
           {% for e in recent %}
           <tr>
-            <td>
-              <span class="badge {{ user_colors[e.user_id].badge_class }}">
-                {{ e.user.name }}
-              </span>
-            </td>
+            <td><span class="badge {{ user_colors[e.user_id].badge_class }}">{{ e.user.name }}</span></td>
             <td class="text-muted small">{{ '%02d'|format(e.day) }}</td>
             <td>
               {{ e.description }}
@@ -322,29 +307,33 @@
               <span class="installment-badge ms-1">{{ e.installment_number }}/{{ e.installment_group.num_installments }}x</span>
               {% endif %}
             </td>
-            <td><span class="badge bg-secondary">{{ e.category }}</span></td>
-            <td>
+            <td class="d-none d-md-table-cell">
+              <span class="badge bg-light text-dark border">{{ e.category }}</span>
+            </td>
+            <td class="d-none d-lg-table-cell">
               {% if e.payment_method == 'PIX' %}
                 <span class="badge badge-pix">PIX</span>
               {% elif e.payment_method == 'Cartão de Débito' %}
                 <span class="badge badge-debito">Débito</span>
               {% elif e.payment_method == 'Cartão de Crédito' %}
                 <span class="badge badge-credito">Crédito</span>
+              {% elif e.payment_method in ('VR', 'VA') %}
+                <span class="badge badge-vr">{{ e.payment_method }}</span>
               {% else %}
                 <span class="badge badge-dinheiro">Dinheiro</span>
               {% endif %}
               {% if e.bank %}<small class="text-muted ms-1">{{ e.bank }}</small>{% endif %}
             </td>
-            <td class="text-end fw-semibold">{{ e.amount|brl }}</td>
+            <td class="text-end fw-semibold">{{ e.amount | brl }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
     {% else %}
-    <div class="text-center text-muted py-4">
-      <i class="bi bi-inbox fs-1"></i>
-      <p class="mt-2">Nenhuma despesa este mês ainda.</p>
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-inbox fs-1 d-block mb-2 opacity-50"></i>
+      <p class="mb-2">Nenhuma despesa este mês ainda.</p>
       <a href="{{ url_for('expenses.add') }}" class="btn btn-primary btn-sm">
         <i class="bi bi-plus-lg"></i> Adicionar despesa
       </a>
@@ -352,14 +341,15 @@
     {% endif %}
   </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts/dashboard.js') }}"></script>
 <script>
-// ── Drag & drop dos gráficos ──────────────────────────────────
-const STORAGE_KEY = 'dashboard_chart_order';
+// ── Drag & drop ────────────────────────────────────────────────
+const STORAGE_KEY = 'dashboard_chart_order_v2';
 const grid = document.getElementById('chartsGrid');
 
 function saveOrder() {
@@ -368,30 +358,31 @@ function saveOrder() {
 }
 
 function restoreOrder() {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (!saved) return;
-  const ids = JSON.parse(saved);
-  ids.forEach(id => {
-    const el = grid.querySelector(`[data-id="${id}"]`);
-    if (el) grid.appendChild(el);
-  });
+  try {
+    const ids = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (!ids) return;
+    ids.forEach(id => {
+      const el = grid.querySelector(`[data-id="${id}"]`);
+      if (el) grid.appendChild(el);
+    });
+  } catch(_) {}
 }
 
 restoreOrder();
-
-Sortable.create(grid, {
-  handle: '.chart-drag-handle',
-  animation: 150,
-  ghostClass: 'opacity-50',
-  onEnd: saveOrder,
-});
-
-document.getElementById('btnResetLayout').addEventListener('click', () => {
+if (typeof Sortable !== 'undefined') {
+  Sortable.create(grid, {
+    handle: '.chart-drag-handle',
+    animation: 150,
+    ghostClass: 'opacity-50',
+    onEnd: saveOrder,
+  });
+}
+document.getElementById('btnResetLayout')?.addEventListener('click', () => {
   localStorage.removeItem(STORAGE_KEY);
   location.reload();
 });
 
-// ── Bulk mark as paid ────────────────────────────────────────────
+// ── Bulk mark as paid ──────────────────────────────────────────
 function updateBulkBtn() {
   const checked = document.querySelectorAll('.expense-cb:checked');
   const total   = document.querySelectorAll('.expense-cb');
@@ -399,12 +390,8 @@ function updateBulkBtn() {
   const counter = document.getElementById('countSelected');
   const checkAll = document.getElementById('checkAll');
   if (!btn) return;
-  if (checked.length > 0) {
-    btn.classList.remove('d-none');
-    counter.textContent = checked.length;
-  } else {
-    btn.classList.add('d-none');
-  }
+  btn.classList.toggle('d-none', checked.length === 0);
+  if (counter) counter.textContent = checked.length;
   if (checkAll) {
     checkAll.indeterminate = checked.length > 0 && checked.length < total.length;
     checkAll.checked = checked.length === total.length && total.length > 0;
@@ -430,54 +417,36 @@ function submitBulkPaid() {
   form.querySelectorAll('input[name="expense_ids"]').forEach(el => el.remove());
   document.querySelectorAll('.expense-cb:checked').forEach(cb => {
     const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'expense_ids';
-    input.value = cb.value;
+    input.type = 'hidden'; input.name = 'expense_ids'; input.value = cb.value;
     form.appendChild(input);
   });
   form.submit();
 }
 
-// ── Ordenação de tabelas
+// ── Ordenação de tabelas ────────────────────────────────────────
 document.querySelectorAll('.sortable-table').forEach(table => {
   const headers = table.querySelectorAll('th.sortable');
   let lastCol = -1, asc = true;
-
   headers.forEach((th, colIdx) => {
     th.style.cursor = 'pointer';
-    th.title = 'Clique para ordenar';
-
     th.addEventListener('click', () => {
-      asc = (lastCol === colIdx) ? !asc : true;
+      asc = lastCol === colIdx ? !asc : true;
       lastCol = colIdx;
-
-      // Reset ícones
       headers.forEach(h => {
-        h.querySelector('.sort-icon').textContent = '⇅';
-        h.querySelector('.sort-icon').className = 'sort-icon text-muted';
+        const ic = h.querySelector('.sort-icon');
+        if (ic) { ic.textContent = '⇅'; ic.className = 'sort-icon text-muted'; }
       });
       const icon = th.querySelector('.sort-icon');
-      icon.textContent = asc ? '▲' : '▼';
-      icon.className = 'sort-icon text-primary';
-
+      if (icon) { icon.textContent = asc ? '▲' : '▼'; icon.className = 'sort-icon text-primary'; }
       const tbody = table.querySelector('tbody');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-
-      rows.sort((a, b) => {
-        const aText = (a.cells[colIdx]?.innerText || '').trim();
-        const bText = (b.cells[colIdx]?.innerText || '').trim();
-
-        // Tenta comparar como número (R$ ou data)
-        const aNum = parseFloat(aText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-        const bNum = parseFloat(bText.replace(/[^\d,.-]/g, '').replace(',', '.'));
-
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-          return asc ? aNum - bNum : bNum - aNum;
-        }
-        return asc ? aText.localeCompare(bText, 'pt-BR') : bText.localeCompare(aText, 'pt-BR');
-      });
-
-      rows.forEach(row => tbody.appendChild(row));
+      [...tbody.querySelectorAll('tr')].sort((a, b) => {
+        const aT = (a.cells[colIdx]?.innerText || '').trim();
+        const bT = (b.cells[colIdx]?.innerText || '').trim();
+        const aN = parseFloat(aT.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        const bN = parseFloat(bT.replace(/[^\d,.-]/g, '').replace(',', '.'));
+        if (!isNaN(aN) && !isNaN(bN)) return asc ? aN - bN : bN - aN;
+        return asc ? aT.localeCompare(bT, 'pt-BR') : bT.localeCompare(aT, 'pt-BR');
+      }).forEach(row => tbody.appendChild(row));
     });
   });
 });
