@@ -110,6 +110,7 @@ def index():
                            recent=recent,
                            pending=pending,
                            total_pendente=total_pendente,
+                           goals_data_dash=goals_data_dash,
                            month=month,
                            year=year,
                            month_name=MONTH_NAMES_FULL[month - 1],
