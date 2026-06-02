@@ -118,6 +118,22 @@ def create_app(config_name='default'):
         logging.warning('APScheduler não instalado — lembretes Telegram desativados.')
 
     @app.context_processor
+    def inject_alert_count():
+        """Conta alertas críticos para exibir o badge na topbar."""
+        if not session.get('logged_in') or not session.get('tenant_id'):
+            return {'alert_count': 0}
+        try:
+            from app.utils import tenant_users as _tu, get_month_year as _gmy
+            from app.models import User as _U
+            from app.services.alert_service import quick_alert_count
+            _users = _tu().all()
+            _uids  = [u.id for u in _users]
+            _month, _year = _gmy()
+            return {'alert_count': quick_alert_count(_uids, _month, _year)}
+        except Exception:
+            return {'alert_count': 0}
+
+    @app.context_processor
     def inject_expense_modal():
         """Dados para o modal de nova despesa (disponível em todas as páginas logadas)."""
         import json as _json
