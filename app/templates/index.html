@@ -403,6 +403,15 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script src="{{ url_for('static', filename='js/charts/dashboard.js') }}"></script>
 <script>
+// ── Barras de metas no dashboard ──────────────────────────────
+document.querySelectorAll('.dash-goal-bar').forEach(bar => {
+  const t = parseFloat(bar.dataset.target) || 0;
+  setTimeout(() => {
+    bar.style.transition = 'width 1s cubic-bezier(.4,0,.2,1)';
+    bar.style.width = t + '%';
+  }, 120);
+});
+
 // ── Drag & drop ────────────────────────────────────────────────
 const STORAGE_KEY = 'dashboard_chart_order_v2';
 const grid = document.getElementById('chartsGrid');
