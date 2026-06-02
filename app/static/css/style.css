@@ -528,6 +528,247 @@ body {
 
 
 /* ================================================================
+   CREDIT CARD WIDGET
+   ================================================================ */
+
+.credit-card-widget {
+  border-radius: 16px;
+  padding: 1.4rem 1.4rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.12);
+  min-height: 220px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .2s, box-shadow .2s;
+}
+.credit-card-widget::before {
+  content: '';
+  position: absolute;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  right: -60px; top: -60px;
+  pointer-events: none;
+}
+.credit-card-widget:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(0,0,0,.22), 0 4px 12px rgba(0,0,0,.15);
+}
+
+.ccw-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.ccw-bank-name { font-size: .95rem; font-weight: 700; opacity: .95; }
+.ccw-bank-sub  { display: block; font-size: .72rem; opacity: .55; margin-top: 1px; }
+.ccw-digits    { font-size: .85rem; opacity: .7; letter-spacing: .08em; font-family: monospace; }
+
+.ccw-invoice-label { font-size: .72rem; opacity: .65; letter-spacing: .05em; text-transform: uppercase; }
+
+.ccw-total {
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.02em;
+}
+
+/* Barra de limite */
+.ccw-limit-bar-wrap { display: flex; flex-direction: column; gap: 4px; }
+.ccw-limit-bar {
+  height: 6px;
+  background: rgba(255,255,255,.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ccw-limit-bar > div {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .6s ease;
+}
+.ccw-limit-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: .68rem;
+  opacity: .65;
+}
+
+.ccw-dates {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .75rem;
+  opacity: .72;
+  flex-wrap: wrap;
+}
+.ccw-dot { opacity: .4; }
+
+/* Ações */
+.ccw-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: .5rem;
+  border-top: 1px solid rgba(255,255,255,.12);
+}
+.ccw-btn-invoice {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 8px;
+  padding: .35rem .85rem;
+  font-size: .8rem;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: none;
+  transition: background .15s;
+  backdrop-filter: blur(4px);
+}
+.ccw-btn-invoice:hover {
+  background: rgba(255,255,255,.25);
+  color: inherit;
+}
+.ccw-btn-icon {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 8px;
+  color: inherit;
+  font-size: .8rem;
+  cursor: pointer;
+  transition: background .15s;
+  padding: 0;
+}
+.ccw-btn-icon:hover { background: rgba(255,255,255,.22); }
+.ccw-btn-del:hover  { background: rgba(220,53,69,.35) !important; }
+
+
+/* ================================================================
+   INVOICE PAGE
+   ================================================================ */
+
+/* Hero */
+.invoice-hero {
+  border-radius: 16px;
+  padding: 1.5rem 1.5rem 0;
+  box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  overflow: hidden;
+  position: relative;
+}
+.invoice-hero::before {
+  content: '';
+  position: absolute;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  right: -80px; top: -80px;
+  pointer-events: none;
+}
+
+.invoice-hero-card { padding-bottom: 1rem; }
+.invoice-hero-label { font-size: .75rem; opacity: .65; text-transform: uppercase; letter-spacing: .06em; }
+.invoice-hero-total { font-size: 2.4rem; font-weight: 800; line-height: 1.1; letter-spacing: -.02em; }
+.invoice-hero-meta  { font-size: .8rem; opacity: .7; display: flex; align-items: center; }
+
+/* Nav da fatura */
+.invoice-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,.12);
+  margin: 0 -1.5rem;
+  padding: .65rem 1.5rem;
+  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,.1);
+}
+.invoice-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  font-size: .8rem;
+  font-weight: 600;
+  color: inherit;
+  opacity: .75;
+  text-decoration: none;
+  padding: .25rem .6rem;
+  border-radius: 6px;
+  transition: opacity .15s, background .15s;
+}
+.invoice-nav-btn:hover { opacity: 1; background: rgba(255,255,255,.12); color: inherit; }
+.invoice-nav-current   { font-size: .875rem; font-weight: 700; opacity: .9; }
+
+/* Resumo */
+.invoice-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .4rem 0;
+  font-size: .88rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+.invoice-summary-row:last-child { border-bottom: none; }
+
+/* Timeline de transações */
+.txn-day-separator {
+  display: flex;
+  align-items: center;
+  padding: .6rem 1.25rem;
+  background: #f8f9fa;
+  border-top: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.txn-day-label {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: #6c757d;
+}
+
+.txn-item {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  padding: .9rem 1.25rem;
+  border-bottom: 1px solid #f4f4f4;
+  transition: background .12s;
+  cursor: default;
+}
+.txn-item:hover { background: #fafafa; }
+.txn-item:last-child { border-bottom: none; }
+.txn-paid { opacity: .65; }
+
+.txn-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: #f0f0f0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  color: #6c757d;
+  flex-shrink: 0;
+}
+
+.txn-body  { flex: 1; min-width: 0; }
+.txn-title { font-size: .875rem; font-weight: 600; color: #212529; display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
+.txn-meta  { font-size: .75rem; color: #6c757d; margin-top: 2px; display: flex; align-items: center; gap: .3rem; }
+.txn-separator { opacity: .4; }
+
+.txn-badge {
+  font-size: .65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.txn-badge-installment { background: #e9ecef; color: #495057; }
+.txn-badge-recurring   { background: #d1e7dd; color: #0a3622; }
+
+.txn-right    { text-align: right; flex-shrink: 0; }
+.txn-amount   { font-size: .9rem; font-weight: 700; color: #dc3545; }
+.txn-status-paid { font-size: .68rem; color: #198754; margin-top: 2px; }
+
+
+/* ================================================================
    IMPRESSÃO
    ================================================================ */
 
