@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request, Response
 from sqlalchemy import func
 from app import db
-from app.models import User, Expense, InstallmentGroup, RecurringGroup
+from app.models import User, Expense, InstallmentGroup, RecurringGroup, CreditCard
 from app.forms import ExpenseForm
 from app.utils import tenant_users, tenant_user_ids, MONTH_NAMES_SHORT, month_offset, user_color_map, get_month_year, _brl
 from datetime import datetime
