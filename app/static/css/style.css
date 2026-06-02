@@ -528,6 +528,80 @@ body {
 
 
 /* ================================================================
+   INSIGHTS PANEL
+   ================================================================ */
+
+.insights-card { overflow: hidden; }
+.insights-bulb { font-size: 1rem; line-height: 1; }
+
+/* Lista */
+.insight-list { display: flex; flex-direction: column; }
+
+.insight-item {
+  display: flex;
+  align-items: center;
+  gap: .875rem;
+  padding: .85rem 1.25rem;
+  border-bottom: 1px solid #f4f4f4;
+  transition: background .12s;
+}
+.insight-item:last-child { border-bottom: none; }
+.insight-item:hover { background: #fafbff; }
+
+/* Borda lateral colorida por tipo */
+.insight-item-danger  { border-left: 3px solid #dc3545; }
+.insight-item-warning { border-left: 3px solid #ffc107; }
+.insight-item-success { border-left: 3px solid #198754; }
+.insight-item-info    { border-left: 3px solid #0d6efd; }
+
+/* Ícone */
+.insight-icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+.insight-icon-danger  { background: rgba(220,53,69,.10);  color: #dc3545; }
+.insight-icon-warning { background: rgba(255,193,7,.15);  color: #a07800; }
+.insight-icon-success { background: rgba(25,135,84,.10);  color: #198754; }
+.insight-icon-info    { background: rgba(13,110,253,.10); color: #0d6efd; }
+
+/* Texto */
+.insight-body  { flex: 1; min-width: 0; }
+.insight-title { font-size: .87rem; font-weight: 600; color: #212529; }
+.insight-msg   { font-size: .77rem; color: #6c757d; margin-top: 2px;
+                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Valor */
+.insight-value {
+  font-size: .9rem;
+  font-weight: 700;
+  padding: .2rem .65rem;
+  border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.insight-value-danger  { color: #dc3545; background: rgba(220,53,69,.08); }
+.insight-value-warning { color: #a07800; background: rgba(255,193,7,.10); }
+.insight-value-success { color: #198754; background: rgba(25,135,84,.08); }
+.insight-value-info    { color: #0d6efd; background: rgba(13,110,253,.08); }
+
+/* Empty state */
+.insights-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #6c757d;
+}
+
+/* Mobile: truncate menos agressivamente */
+@media (max-width: 575.98px) {
+  .insight-msg { white-space: normal; }
+  .insight-value { display: none; }
+}
+
+
+/* ================================================================
    CREDIT CARD WIDGET
    ================================================================ */
 
