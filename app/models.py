@@ -260,6 +260,7 @@ class CreditCard(db.Model):
     bank = db.Column(db.Text, nullable=True)
     due_day = db.Column(db.Integer, nullable=False)
     best_buy_day = db.Column(db.Integer, nullable=False)
+    credit_limit = db.Column(db.Numeric(12, 2), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     expenses = db.relationship('Expense', backref='credit_card', lazy='dynamic',
