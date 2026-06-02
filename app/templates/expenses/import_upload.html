@@ -1,15 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}Importar Extrato — FinFam{% endblock %}
+{% block page_title %}Importar Extrato{% endblock %}
 
 {% block content %}
-<div class="row mb-3 align-items-center">
-  <div class="col">
-    <h2 class="fw-bold"><i class="bi bi-cloud-upload text-primary"></i> Importar Extrato</h2>
-    <p class="text-muted mb-0">Importe transações diretamente do arquivo exportado pelo seu banco.</p>
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-cloud-upload text-primary me-2"></i>Importar Extrato</h4>
+    <p class="text-muted small mb-0">Importe transações diretamente do arquivo exportado pelo seu banco.</p>
   </div>
-  <div class="col-auto">
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('rules.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-tags me-1"></i>Regras de Categorização
+    </a>
     <a href="{{ url_for('expenses.index') }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left"></i> Voltar
+      <i class="bi bi-arrow-left me-1"></i>Voltar
     </a>
   </div>
 </div>
