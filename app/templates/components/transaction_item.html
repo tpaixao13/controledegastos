@@ -1,0 +1,43 @@
+{# ================================================================
+   Macro: transaction_item
+   Parâmetros:
+     expense       — objeto Expense
+     category_icons — dict {categoria: bi-icon}
+   ================================================================ #}
+
+{% macro transaction_item(expense, category_icons) %}
+{% set icon = category_icons.get(expense.category, 'bi-tag') %}
+<div class="txn-item {{ 'txn-paid' if expense.paid }}">
+  <div class="txn-icon">
+    <i class="bi {{ icon }}"></i>
+  </div>
+
+  <div class="txn-body">
+    <div class="txn-title">
+      {{ expense.description }}
+      {% if expense.installment_group_id %}
+      <span class="txn-badge txn-badge-installment">
+        {{ expense.installment_number }}/{{ expense.installment_group.num_installments }}x
+      </span>
+      {% endif %}
+      {% if expense.recurring_group_id %}
+      <span class="txn-badge txn-badge-recurring">
+        <i class="bi bi-arrow-repeat"></i>
+      </span>
+      {% endif %}
+    </div>
+    <div class="txn-meta">
+      <span class="txn-category">{{ expense.category }}</span>
+      {% if expense.bank %}<span class="txn-separator">·</span>
+      <span class="txn-bank">{{ expense.bank }}</span>{% endif %}
+    </div>
+  </div>
+
+  <div class="txn-right">
+    <div class="txn-amount">{{ expense.amount | brl }}</div>
+    {% if expense.paid %}
+    <div class="txn-status-paid"><i class="bi bi-check-circle-fill"></i> Pago</div>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
