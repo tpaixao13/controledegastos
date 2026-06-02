@@ -4,8 +4,9 @@ from urllib.parse import urlparse
 from flask import Blueprint, render_template, redirect, url_for, flash, request, Response, jsonify
 from sqlalchemy import func
 from app import db
-from app.models import User, Expense, InstallmentGroup, RecurringGroup, CreditCard
+from app.models import User, Expense, InstallmentGroup, RecurringGroup, CreditCard, CategoryRule
 from app.forms import ExpenseForm
+from app.services.categorizer import categorize_batch, create_rule_if_missing, is_duplicate
 from app.utils import tenant_users, tenant_user_ids, MONTH_NAMES_SHORT, month_offset, user_color_map, get_month_year, _brl
 from datetime import datetime
 
