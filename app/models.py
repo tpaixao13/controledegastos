@@ -275,6 +275,39 @@ class CreditCard(db.Model):
         return f'<CreditCard {self.label}>'
 
 
+class Goal(db.Model):
+    __tablename__ = 'goals'
+
+    TYPES = {
+        'saving':          ('💰', 'Economizar'),
+        'spending_limit':  ('📉', 'Limite de gastos'),
+        'debt_reduction':  ('💳', 'Quitar dívida'),
+    }
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.Text, nullable=False)
+    type = db.Column(db.Text, nullable=False)
+    target_amount = db.Column(db.Numeric(12, 2), nullable=False)
+    category = db.Column(db.Text, nullable=True)
+    due_date = db.Column(db.Date, nullable=True)
+    start_date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    active = db.Column(db.Boolean, default=True, nullable=False)
+
+    @property
+    def emoji(self):
+        return self.TYPES.get(self.type, ('🎯', ''))[0]
+
+    @property
+    def type_label(self):
+        return self.TYPES.get(self.type, ('', self.type))[1]
+
+    def __repr__(self):
+        return f'<Goal {self.title} {self.type}>'
+
+
 class CategoryRule(db.Model):
     """Regra persistente: se descrição contém keyword → categoria."""
     __tablename__ = 'category_rules'
