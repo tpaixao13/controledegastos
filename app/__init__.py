@@ -149,7 +149,13 @@ def create_app(config_name='default'):
             _uids  = [u.id for u in _users]
             _cards = _CC.query.filter(_CC.user_id.in_(_uids)).order_by(_CC.bank).all()
             _card_json = _json.dumps({
-                c.id: {'due_day': c.due_day, 'best_buy_day': c.best_buy_day, 'bank': c.bank or ''}
+                c.id: {
+                    'due_day':      c.due_day,
+                    'best_buy_day': c.best_buy_day,
+                    'bank':         c.bank or '',
+                    'label':        c.label,
+                    'credit_limit': float(c.credit_limit) if c.credit_limit else None,
+                }
                 for c in _cards
             })
             return {
