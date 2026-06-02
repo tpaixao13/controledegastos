@@ -1,3 +1,4 @@
+import json
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from app import db
 from app.models import CreditCard, Expense
@@ -10,12 +11,53 @@ cards_bp = Blueprint('cards', __name__, url_prefix='/cards')
 MONTH_NAMES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
+MONTH_NAMES_SHORT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+                     'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+
+# Paleta de cores para os cartões no gráfico
+_CHART_COLORS = [
+    'rgba(13,110,253,0.8)',
+    'rgba(220,53,69,0.8)',
+    'rgba(25,135,84,0.8)',
+    'rgba(255,193,7,0.8)',
+    'rgba(13,202,240,0.8)',
+    'rgba(111,66,193,0.8)',
+]
+
 
 def _billing_month(purchase_day: int, purchase_month: int, purchase_year: int,
                    best_buy_day: int) -> tuple[int, int]:
     if purchase_day <= best_buy_day:
         return purchase_month, purchase_year
     return month_offset(purchase_month, purchase_year, 1)
+
+
+def _chart_data(cards, invoice_month, invoice_year):
+    """Retorna dados dos últimos 6 meses por cartão para o gráfico."""
+    months = [month_offset(invoice_month, invoice_year, -i) for i in range(5, -1, -1)]
+    labels = [f'{MONTH_NAMES_SHORT[m - 1]}/{y}' for m, y in months]
+
+    datasets = []
+    for i, card in enumerate(cards):
+        totals = []
+        for m, y in months:
+            total = db.session.query(
+                db.func.coalesce(db.func.sum(Expense.amount), 0)
+            ).filter(
+                Expense.card_id == card.id,
+                Expense.month == m,
+                Expense.year == y,
+            ).scalar()
+            totals.append(float(total))
+
+        datasets.append({
+            'label': card.label,
+            'data': totals,
+            'backgroundColor': _CHART_COLORS[i % len(_CHART_COLORS)],
+            'borderRadius': 4,
+        })
+
+    return {'labels': labels, 'datasets': datasets}
 
 
 @cards_bp.route('/')
@@ -32,7 +74,6 @@ def index():
     invoice_month = request.args.get('month', now.month, type=int)
     invoice_year = request.args.get('year', now.year, type=int)
 
-    # Para cada cartão, calcular os totais da fatura selecionada
     card_invoices = {}
     for card in cards:
         expenses = (Expense.query
@@ -47,6 +88,8 @@ def index():
     prev_month, prev_year = month_offset(invoice_month, invoice_year, -1)
     next_month, next_year = month_offset(invoice_month, invoice_year, 1)
 
+    chart_json = json.dumps(_chart_data(cards, invoice_month, invoice_year)) if cards else None
+
     return render_template('cards/index.html',
                            cards=cards,
                            form=form,
@@ -55,7 +98,8 @@ def index():
                            invoice_year=invoice_year,
                            month_name=MONTH_NAMES[invoice_month - 1],
                            prev_month=prev_month, prev_year=prev_year,
-                           next_month=next_month, next_year=next_year)
+                           next_month=next_month, next_year=next_year,
+                           chart_json=chart_json)
 
 
 @cards_bp.route('/add', methods=['POST'])
