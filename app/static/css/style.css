@@ -350,6 +350,48 @@ body {
 
 
 /* ================================================================
+   KPI CARDS
+   ================================================================ */
+
+.kpi-card { transition: transform .15s, box-shadow .15s; }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.kpi-icon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.kpi-value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  color: #212529;
+  line-height: 1.15;
+  margin-bottom: .2rem;
+}
+
+.kpi-label {
+  font-size: .78rem;
+  color: #6c757d;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+.kpi-delta {
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.kpi-delta-good { color: #198754; background: rgba(25,135,84,.10); }
+.kpi-delta-bad  { color: #dc3545; background: rgba(220,53,69,.10); }
+
+
+/* ================================================================
    COMPONENTES
    ================================================================ */
 
