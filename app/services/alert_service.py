@@ -265,9 +265,18 @@ def generate_alerts(uids: list, month: int, year: int,
             'action_url': url_for('expenses.index'),
         })
 
+    # ── 10. Alertas de metas ─────────────────────────────────────────
+    active_goals = (Goal.query
+                    .filter(Goal.user_id.in_(uids), Goal.active == True)
+                    .all())
+    if active_goals:
+        from app.services.goal_service import calculate_all as _calc_goals, goals_for_alerts
+        goals_data = _calc_goals(active_goals, uids, month, year)
+        alerts.extend(goals_for_alerts(goals_data))
+
     # ── Ordenar e limitar ────────────────────────────────────────────
-    _order = {'danger': 0, 'warning': 1, 'info': 2}
-    alerts.sort(key=lambda x: (_order.get(x['type'], 3), x.get('priority', 99)))
+    _order = {'danger': 0, 'warning': 1, 'info': 2, 'success': 3}
+    alerts.sort(key=lambda x: (_order.get(x['type'], 4), x.get('priority', 99)))
     return alerts[:_TH['max_alerts']]
 
 
