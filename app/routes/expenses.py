@@ -408,31 +408,51 @@ def edit(expense_id):
     uids = tenant_user_ids()
     expense = Expense.query.filter(Expense.id == expense_id, Expense.user_id.in_(uids)).first_or_404()
     users = tenant_users().order_by(User.name).all()
+    uids  = [u.id for u in users]
+
+    credit_cards = CreditCard.query.filter(CreditCard.user_id.in_(uids)).order_by(CreditCard.bank).all()
+
     form = ExpenseForm(obj=expense)
     form.user_id.choices = [(u.id, u.name) for u in users]
+    form.card_id.choices = [(0, '— Nenhum (usar banco acima) —')] + [
+        (c.id, c.label) for c in credit_cards
+    ]
 
     if request.method == 'GET':
         form.credit_type.data = 'avista'
+        form.card_id.data = expense.card_id or 0
 
     if form.validate_on_submit():
         payment = form.payment_method.data
-        expense.user_id = form.user_id.data
-        expense.description = form.description.data
-        expense.amount = form.amount.data
-        expense.category = form.category.data
+        expense.user_id        = form.user_id.data
+        expense.description    = form.description.data
+        expense.amount         = form.amount.data
+        expense.category       = form.category.data
         expense.payment_method = payment
-        expense.bank = _bank_from_form(form, payment)
-        expense.year = form.year.data
-        expense.month = form.month.data
-        expense.day = form.day.data
-        expense.paid = form.paid.data
+        expense.bank           = _bank_from_form(form, payment)
+        expense.year           = form.year.data
+        expense.month          = form.month.data
+        expense.day            = form.day.data
+        expense.paid           = form.paid.data
+        card_id_val            = form.card_id.data
+        expense.card_id        = card_id_val if (card_id_val and card_id_val > 0) else None
         db.session.commit()
         flash('Despesa atualizada com sucesso!', 'success')
         return redirect(url_for('expenses.index'))
 
-    uids = [u.id for u in users]
+    card_data_json = json.dumps({
+        c.id: {
+            'due_day':      c.due_day,
+            'best_buy_day': c.best_buy_day,
+            'bank':         c.bank or '',
+            'label':        c.label,
+            'credit_limit': float(c.credit_limit) if c.credit_limit else None,
+        }
+        for c in credit_cards
+    })
     return render_template('expenses/edit.html', form=form, expense=expense,
-                           users=users, all_categories=_tenant_categories(uids))
+                           users=users, all_categories=_tenant_categories(uids),
+                           credit_cards=credit_cards, card_data_json=card_data_json)
 
 
 @expenses_bp.route('/delete/<int:expense_id>', methods=['POST'])
