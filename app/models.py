@@ -275,6 +275,21 @@ class CreditCard(db.Model):
         return f'<CreditCard {self.label}>'
 
 
+class CategoryRule(db.Model):
+    """Regra persistente: se descrição contém keyword → categoria."""
+    __tablename__ = 'category_rules'
+
+    id = db.Column(db.Integer, primary_key=True)
+    tenant_id = db.Column(db.Integer, db.ForeignKey('tenants.id'), nullable=False)
+    keyword = db.Column(db.Text, nullable=False)
+    category = db.Column(db.Text, nullable=False)
+    match_count = db.Column(db.Integer, default=0, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<CategoryRule "{self.keyword}" → {self.category}>'
+
+
 class Investment(db.Model):
     __tablename__ = 'investments'
 
