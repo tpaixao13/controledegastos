@@ -79,6 +79,11 @@
         {{ form.hidden_tag() }}
         <div class="modal-body">
           <div class="row g-3">
+            <div class="col-12">
+              {{ form.card_type.label(class='form-label fw-semibold') }}
+              {{ form.card_type(class='form-select', id='addCardType',
+                 onchange='toggleAddCardFields()') }}
+            </div>
             <div class="col-md-6">
               {{ form.nickname.label(class='form-label fw-semibold') }}
               {{ form.nickname(class='form-control', placeholder='Ex: Nubank principal') }}
@@ -96,36 +101,73 @@
               {{ form.bank.label(class='form-label fw-semibold') }}
               {{ form.bank(class='form-select') }}
             </div>
-            <div class="col-md-6">
-              {{ form.due_day.label(class='form-label fw-semibold') }}
-              <div class="input-group">
-                {{ form.due_day(class='form-control', placeholder='10', min=1, max=31) }}
-                <span class="input-group-text">do mês</span>
+            <div class="col-6">
+              <div class="form-check mt-1">
+                {{ form.is_virtual(class='form-check-input') }}
+                {{ form.is_virtual.label(class='form-check-label') }}
               </div>
             </div>
-            <div class="col-md-6">
-              {{ form.best_buy_day.label(class='form-label fw-semibold') }}
-              <div class="input-group">
-                {{ form.best_buy_day(class='form-control', placeholder='9', min=1, max=31) }}
-                <span class="input-group-text">do mês</span>
+            <div class="col-6">
+              <div class="form-check mt-1">
+                {{ form.is_additional(class='form-check-input') }}
+                {{ form.is_additional.label(class='form-check-label') }}
               </div>
             </div>
-            <div class="col-12">
-              {{ form.credit_limit.label(class='form-label fw-semibold') }}
-              <div class="input-group">
-                <span class="input-group-text">R$</span>
-                {{ form.credit_limit(class='form-control', placeholder='5000,00',
-                   min=0, step='0.01') }}
+
+            {# Campos crédito #}
+            <div id="addCreditFields">
+              <div class="row g-2">
+                <div class="col-md-6">
+                  {{ form.due_day.label(class='form-label fw-semibold small') }}
+                  <div class="input-group input-group-sm">
+                    {{ form.due_day(class='form-control', placeholder='10', min=1, max=31) }}
+                    <span class="input-group-text">do mês</span>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  {{ form.best_buy_day.label(class='form-label fw-semibold small') }}
+                  <div class="input-group input-group-sm">
+                    {{ form.best_buy_day(class='form-control', placeholder='9', min=1, max=31) }}
+                    <span class="input-group-text">do mês</span>
+                  </div>
+                </div>
+                <div class="col-12">
+                  {{ form.credit_limit.label(class='form-label fw-semibold small') }}
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">R$</span>
+                    {{ form.credit_limit(class='form-control', placeholder='5000,00', min=0, step='0.01') }}
+                  </div>
+                  <div class="form-text">Opcional — mostra o % do limite utilizado.</div>
+                </div>
+                <div class="col-12">
+                  <div class="alert alert-info py-2 mb-0 small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Compras <strong>até o melhor dia</strong> entram na fatura atual.
+                  </div>
+                </div>
               </div>
-              <div class="form-text">Opcional — usado para mostrar o percentual de limite usado.</div>
             </div>
-            <div class="col-12">
-              <div class="alert alert-info py-2 mb-0 small">
-                <i class="bi bi-info-circle me-1"></i>
-                Compras <strong>até o melhor dia</strong> entram na fatura atual.
-                Após esse dia, vão para a próxima fatura.
+
+            {# Campos VR/VA #}
+            <div id="addVrvaFields" class="d-none">
+              <div class="row g-2">
+                <div class="col-6">
+                  {{ form.monthly_amount.label(class='form-label fw-semibold small') }}
+                  <div class="input-group input-group-sm">
+                    <span class="input-group-text">R$</span>
+                    {{ form.monthly_amount(class='form-control', placeholder='800,00', min=0, step='0.01') }}
+                  </div>
+                </div>
+                <div class="col-6">
+                  {{ form.renewal_day.label(class='form-label fw-semibold small') }}
+                  <div class="input-group input-group-sm">
+                    {{ form.renewal_day(class='form-control', placeholder='1', min=1, max=31) }}
+                    <span class="input-group-text">do mês</span>
+                  </div>
+                </div>
               </div>
             </div>
+
           </div>
         </div>
         <div class="modal-footer">
