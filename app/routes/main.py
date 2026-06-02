@@ -76,6 +76,13 @@ def index():
     cards = CreditCard.query.filter(CreditCard.user_id.in_(uids)).all()
     insights = generate_insights(uids, month, year, cards=cards)
 
+    # ── Metas (top 3 para o dashboard) ───────────────────────────
+    goals = (Goal.query
+             .filter(Goal.user_id.in_(uids), Goal.active == True)
+             .order_by(Goal.created_at)
+             .all())
+    goals_data_dash = goals_calculate_all(goals, uids, month, year)[:3]
+
     # ── Despesas recentes e pendentes ────────────────────────────
     recent = (Expense.query
               .filter(Expense.user_id.in_(uids), Expense.year == year, Expense.month == month)
