@@ -20,6 +20,20 @@
 </div>
 {% else %}
 
+<!-- Gráfico: últimos 6 meses por cartão -->
+{% if chart_json %}
+<div class="card mb-4">
+  <div class="card-header fw-semibold">
+    <i class="bi bi-bar-chart-line"></i> Gastos por Cartão — últimos 6 meses
+  </div>
+  <div class="card-body">
+    <div style="height:260px">
+      <canvas id="chartCards"></canvas>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- Navegação de fatura -->
 <div class="d-flex align-items-center justify-content-center gap-3 mb-4">
   <a href="{{ url_for('cards.index', month=prev_month, year=prev_year) }}"
