@@ -350,6 +350,36 @@ body {
 
 
 /* ================================================================
+   EXPENSE MODAL
+   ================================================================ */
+
+/* Seção avançada com animação de altura */
+.modal-advanced-section {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s ease;
+}
+.modal-advanced-section.open {
+  max-height: 700px;
+}
+
+/* Campos inválidos com feedback claro */
+#expenseModalForm .form-control.is-invalid,
+#expenseModalForm .form-select.is-invalid {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 .2rem rgba(220,53,69,.15);
+}
+
+/* Botão toggle avançado */
+#btnToggleAdvanced {
+  font-size: .83rem;
+  color: #6c757d;
+  transition: color .15s;
+}
+#btnToggleAdvanced:hover { color: #0d6efd; }
+
+
+/* ================================================================
    KPI CARDS
    ================================================================ */
 
