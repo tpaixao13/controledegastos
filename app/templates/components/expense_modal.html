@@ -214,6 +214,15 @@
                 </select>
               </div>
 
+              {# Aviso de valor total em parcelado #}
+              <div class="col-12 d-none" id="m_installment_hint">
+                <div class="alert alert-warning py-2 mb-0 small border-0 bg-warning bg-opacity-15">
+                  <i class="bi bi-exclamation-triangle me-1"></i>
+                  Informe o <strong>valor TOTAL</strong> da compra, não o valor da parcela.
+                  <div id="m_installment_preview" class="fw-semibold mt-1"></div>
+                </div>
+              </div>
+
               {# Pessoa (só se multi-user) #}
               {% if modal_users | length > 1 %}
               <div class="col-sm-6">
