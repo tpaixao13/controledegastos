@@ -247,6 +247,30 @@ class Expense(db.Model):
         return f'<Expense {self.description} R${self.amount} {self.month}/{self.year}>'
 
 
+class CreditCard(db.Model):
+    __tablename__ = 'credit_cards'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    nickname = db.Column(db.Text, nullable=True)
+    last_digits = db.Column(db.String(4), nullable=False)
+    bank = db.Column(db.Text, nullable=True)
+    due_day = db.Column(db.Integer, nullable=False)
+    best_buy_day = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    expenses = db.relationship('Expense', backref='credit_card', lazy='dynamic',
+                               foreign_keys='Expense.card_id')
+
+    @property
+    def label(self):
+        name = self.nickname or self.bank or 'Cartão'
+        return f'{name} •••• {self.last_digits}'
+
+    def __repr__(self):
+        return f'<CreditCard {self.label}>'
+
+
 class Investment(db.Model):
     __tablename__ = 'investments'
 
