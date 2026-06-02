@@ -424,7 +424,10 @@ def edit(expense_id):
         form.card_id.data = expense.card_id or 0
 
     if form.validate_on_submit():
-        payment = form.payment_method.data
+        payment     = form.payment_method.data
+        card_id_val = form.card_id.data
+        new_card_id = card_id_val if (card_id_val and card_id_val > 0) else None
+
         expense.user_id        = form.user_id.data
         expense.description    = form.description.data
         expense.amount         = form.amount.data
@@ -435,10 +438,46 @@ def edit(expense_id):
         expense.month          = form.month.data
         expense.day            = form.day.data
         expense.paid           = form.paid.data
-        card_id_val            = form.card_id.data
-        expense.card_id        = card_id_val if (card_id_val and card_id_val > 0) else None
+        expense.card_id        = new_card_id
+
+        apply_all = request.form.get('apply_all') == '1'
+
+        if apply_all and (expense.installment_group_id or expense.recurring_group_id):
+            # Campos propagados para todas as parcelas/recorrências
+            shared = {
+                'description':    expense.description,
+                'category':       expense.category,
+                'payment_method': expense.payment_method,
+                'bank':           expense.bank,
+                'card_id':        expense.card_id,
+            }
+
+            if expense.installment_group_id:
+                siblings = Expense.query.filter(
+                    Expense.installment_group_id == expense.installment_group_id,
+                    Expense.id != expense.id,
+                ).all()
+                for s in siblings:
+                    for field, val in shared.items():
+                        setattr(s, field, val)
+                total = len(siblings) + 1
+                flash(f'Alterações aplicadas a todas as {total} parcelas.', 'success')
+
+            elif expense.recurring_group_id:
+                siblings = Expense.query.filter(
+                    Expense.recurring_group_id == expense.recurring_group_id,
+                    Expense.id != expense.id,
+                ).all()
+                for s in siblings:
+                    for field, val in shared.items():
+                        setattr(s, field, val)
+                    s.amount = expense.amount  # recorrência tem mesmo valor
+                total = len(siblings) + 1
+                flash(f'Alterações aplicadas a todas as {total} recorrências.', 'success')
+        else:
+            flash('Despesa atualizada com sucesso!', 'success')
+
         db.session.commit()
-        flash('Despesa atualizada com sucesso!', 'success')
         return redirect(url_for('expenses.index'))
 
     card_data_json = json.dumps({
