@@ -47,17 +47,39 @@ def _parse_amount(s: str):
     s = s.strip().strip('"').replace('R$', '').replace('\xa0', '').replace(' ', '')
     if not s or s in ('-', '+', '.', ','):
         return None
-    # Formato brasileiro: 1.234,56 ou -1.234,56
-    br = s.replace('.', '').replace(',', '.')
-    try:
-        return float(br)
-    except ValueError:
-        pass
-    # Formato internacional: 1234.56
-    try:
-        return float(s.replace(',', ''))
-    except ValueError:
-        return None
+
+    has_dot   = '.' in s
+    has_comma = ',' in s
+
+    if has_dot and has_comma:
+        # Ex: -1.234,56 (BR) ou -1,234.56 (EN)
+        # Se a vírgula vem antes do ponto → formato EN (-1,234.56)
+        if s.index(',') < s.index('.'):
+            try:
+                return float(s.replace(',', ''))
+            except ValueError:
+                pass
+        # Senão → formato BR (-1.234,56)
+        try:
+            return float(s.replace('.', '').replace(',', '.'))
+        except ValueError:
+            pass
+
+    elif has_comma and not has_dot:
+        # -1234,56 → formato BR com vírgula decimal
+        try:
+            return float(s.replace(',', '.'))
+        except ValueError:
+            pass
+
+    else:
+        # -1234.56 ou -1234 → formato EN ou inteiro
+        try:
+            return float(s)
+        except ValueError:
+            pass
+
+    return None
 
 
 def _col_hint_score(name: str, hint_set: set) -> int:
