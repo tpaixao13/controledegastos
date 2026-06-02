@@ -159,5 +159,6 @@
 {% endblock %}
 
 {% block scripts %}
+<script>window._cardData = {{ card_data_json | safe if card_data_json else '{}' }};</script>
 <script src="{{ url_for('static', filename='js/expense_form.js') }}"></script>
 {% endblock %}
