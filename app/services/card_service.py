@@ -126,6 +126,32 @@ def future_installments_total(card_id: int, month: int, year: int) -> float:
     return float(total)
 
 
+def vr_va_balance(card: CreditCard, month: int, year: int) -> dict | None:
+    """
+    Retorna saldo atual de um cartão VR ou VA.
+    Retorna None se o cartão não for VR/VA ou não tiver monthly_amount.
+    """
+    ct = card.card_type or 'credit'
+    if ct not in ('vr', 'va') or not card.monthly_amount:
+        return None
+    monthly = float(card.monthly_amount)
+    spent = float(
+        db.session.query(func.sum(Expense.amount))
+        .filter(Expense.card_id == card.id,
+                Expense.month == month,
+                Expense.year == year)
+        .scalar() or 0
+    )
+    remaining = max(monthly - spent, 0)
+    pct_used  = min(spent / monthly * 100, 100) if monthly > 0 else 0
+    return {
+        'monthly':   monthly,
+        'spent':     spent,
+        'remaining': remaining,
+        'pct_used':  round(pct_used, 1),
+    }
+
+
 def get_invoice(card: CreditCard, month: int, year: int) -> dict:
     """
     Retorna estrutura completa de uma fatura.
