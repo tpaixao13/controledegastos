@@ -297,9 +297,9 @@
   // ── Inicializar data com hoje quando modal abre ────────────────
   modalEl.addEventListener('show.bs.modal', () => {
     const today = new Date();
-    if (fDay   && !fDay.value)   fDay.value   = today.getDate();
-    if (fMonth && !fMonth.value) fMonth.value = today.getMonth() + 1;
-    if (fYear  && !fYear.value)  fYear.value  = today.getFullYear();
+    if (fDay)   fDay.value   = today.getDate();
+    if (fMonth) fMonth.value = today.getMonth() + 1;
+    if (fYear)  fYear.value  = today.getFullYear();
     setTimeout(() => fDescription?.focus(), 200);
   });
 
