@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Regras de Categorização — FinFam{% endblock %}
+{% block page_title %}Regras de Categorização{% endblock %}
+
+{% block content %}
+
+{# ── Header ──────────────────────────────────────────────────────── #}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold"><i class="bi bi-tags text-primary me-2"></i>Regras de Categorização</h4>
+    <p class="text-muted small mb-0">
+      Palavras-chave que são detectadas automaticamente e atribuem uma categoria às despesas.
+    </p>
+  </div>
+  <button class="btn btn-primary btn-sm fw-semibold"
+          data-bs-toggle="modal" data-bs-target="#addRuleModal">
+    <i class="bi bi-plus-lg me-1"></i>Nova Regra
+  </button>
+</div>
+
+{# ── Info ─────────────────────────────────────────────────────────── #}
+<div class="alert alert-info py-2 mb-4 small">
+  <i class="bi bi-lightbulb me-1"></i>
+  As regras são aplicadas durante a <strong>importação de extratos</strong> e ao
+  <strong>criar despesas</strong> (sugestão de categoria). A regra com mais usos tem prioridade.
+</div>
+
+{% if not rules %}
+{# ── Empty state ──────────────────────────────────────────────────── #}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-tags fs-1 d-block mb-3 opacity-30"></i>
+  <h5 class="fw-semibold mb-2">Nenhuma regra cadastrada</h5>
+  <p class="small mb-4">
+    Crie regras para que o sistema categorize automaticamente suas despesas.<br>
+    Ex.: Palavra-chave <strong>"IFOOD"</strong> → Categoria <strong>Alimentação</strong>
+  </p>
+  <button class="btn btn-primary btn-sm"
+          data-bs-toggle="modal" data-bs-target="#addRuleModal">
+    <i class="bi bi-plus-lg me-1"></i>Criar primeira regra
+  </button>
+</div>
+
+{% else %}
+
+{# ── Tabela de regras ─────────────────────────────────────────────── #}
+<div class="card">
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-list-check me-1"></i>{{ rules | length }} regra{{ 's' if rules | length != 1 }}</span>
+    <span class="text-muted small">Ordenadas por uso</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">Palavra-chave</th>
+            <th>Categoria</th>
+            <th class="text-center" style="width:90px">Usos</th>
+            <th class="text-end pe-3" style="width:120px">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for rule in rules %}
+          <tr>
+            <td class="ps-3">
+              <code class="rule-keyword">{{ rule.keyword }}</code>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark border">{{ rule.category }}</span>
+            </td>
+            <td class="text-center">
+              {% if rule.match_count > 0 %}
+              <span class="badge bg-primary rounded-pill">{{ rule.match_count }}</span>
+              {% else %}
+              <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            <td class="text-end pe-3">
+              <button class="btn btn-outline-secondary btn-sm"
+                      data-bs-toggle="modal"
+                      data-bs-target="#editRuleModal{{ rule.id }}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <form method="POST" action="{{ url_for('rules.delete', rule_id=rule.id) }}"
+                    class="d-inline"
+                    onsubmit="return confirm('Excluir regra «{{ rule.keyword }}»?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+
+          {# Modal editar #}
+          <div class="modal fade" id="editRuleModal{{ rule.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                  <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Editar Regra</h5>
+                  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{{ url_for('rules.edit', rule_id=rule.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label fw-semibold">Palavra-chave (contém)</label>
+                      <input type="text" name="keyword" class="form-control text-uppercase"
+                             value="{{ rule.keyword }}" required minlength="2"
+                             style="font-family:monospace"
+                             oninput="this.value=this.value.toUpperCase()">
+                      <div class="form-text">A busca é em qualquer parte da descrição.</div>
+                    </div>
+                    <div class="mb-0">
+                      <label class="form-label fw-semibold">Categoria</label>
+                      <select name="category" class="form-select" required>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {{ 'selected' if cat == rule.category }}>{{ cat }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{# ── Exemplos de regras comuns ────────────────────────────────────── #}
+<div class="card mt-4">
+  <div class="card-header fw-semibold">
+    <i class="bi bi-lightbulb text-warning me-1"></i>Exemplos de regras comuns
+  </div>
+  <div class="card-body">
+    <div class="row g-2">
+      {% for kw, cat in [
+        ('IFOOD', 'Alimentação'), ('RAPPI', 'Alimentação'), ('UBER EATS', 'Alimentação'),
+        ('MERCADO', 'Alimentação'), ('SUPERMERCADO', 'Alimentação'), ('PADARIA', 'Alimentação'),
+        ('UBER', 'Transporte'), ('99APP', 'Transporte'), ('POSTO', 'Transporte'),
+        ('FARMACIA', 'Saúde'), ('DROGARIA', 'Saúde'), ('CLINICA', 'Saúde'),
+        ('NETFLIX', 'Lazer'), ('SPOTIFY', 'Lazer'), ('AMAZON PRIME', 'Lazer'),
+        ('AMAZON', 'Compras'), ('MAGAZINE LUIZA', 'Compras'), ('SHOPEE', 'Compras'),
+        ('ESCOLA', 'Educação'), ('CURSO', 'Educação'), ('UDEMY', 'Educação'),
+        ('ALUGUEL', 'Moradia'), ('CONDOMINIO', 'Moradia'), ('ENERGIA', 'Moradia'),
+      ] %}
+      <div class="col-6 col-md-4 col-lg-3">
+        <button type="button"
+                class="btn btn-outline-secondary btn-sm w-100 text-start rule-example-btn"
+                data-keyword="{{ kw }}" data-category="{{ cat }}">
+          <code class="small">{{ kw }}</code>
+          <span class="text-muted"> → {{ cat }}</span>
+        </button>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="text-muted small mt-3 mb-0">
+      Clique em um exemplo para pré-preencher o formulário de nova regra.
+    </p>
+  </div>
+</div>
+
+{# ── Modal adicionar regra ─────────────────────────────────────────── #}
+<div class="modal fade" id="addRuleModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Nova Regra</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('rules.add') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Palavra-chave (contém)</label>
+            <input type="text" name="keyword" id="newKeyword"
+                   class="form-control text-uppercase"
+                   placeholder="Ex: IFOOD, NETFLIX, MERCADO..."
+                   required minlength="2" style="font-family:monospace"
+                   oninput="this.value=this.value.toUpperCase()">
+            <div class="form-text">
+              Detectada em qualquer parte da descrição da despesa.
+            </div>
+          </div>
+          <div class="mb-0">
+            <label class="form-label fw-semibold">Categoria</label>
+            <select name="category" id="newCategory" class="form-select" required>
+              <option value="">— Selecione —</option>
+              {% for cat in categories %}
+              <option value="{{ cat }}">{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary fw-semibold">
+            <i class="bi bi-plus-lg me-1"></i>Criar Regra
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Pré-preencher modal com exemplo clicado
+document.querySelectorAll('.rule-example-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const kw  = btn.dataset.keyword;
+    const cat = btn.dataset.category;
+    document.getElementById('newKeyword').value  = kw;
+    document.getElementById('newCategory').value = cat;
+    new bootstrap.Modal(document.getElementById('addRuleModal')).show();
+  });
+});
+</script>
+{% endblock %}
