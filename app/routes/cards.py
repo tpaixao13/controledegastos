@@ -169,12 +169,18 @@ def edit(card_id):
             flash('O melhor dia de compra deve ser anterior ao dia de vencimento.', 'warning')
             return redirect(url_for('cards.index'))
 
-        card.nickname     = form.nickname.data or None
-        card.last_digits  = form.last_digits.data
-        card.bank         = form.bank.data or None
-        card.due_day      = form.due_day.data
-        card.best_buy_day = form.best_buy_day.data
-        card.credit_limit = form.credit_limit.data or None
+        ct = form.card_type.data or 'credit'
+        card.nickname      = form.nickname.data or None
+        card.last_digits   = form.last_digits.data
+        card.bank          = form.bank.data or None
+        card.due_day       = form.due_day.data or 1
+        card.best_buy_day  = form.best_buy_day.data or 1
+        card.credit_limit  = form.credit_limit.data or None
+        card.card_type     = ct
+        card.is_virtual    = bool(form.is_virtual.data)
+        card.is_additional = bool(form.is_additional.data)
+        card.monthly_amount = form.monthly_amount.data if ct in ('vr', 'va') else None
+        card.renewal_day   = form.renewal_day.data if ct in ('vr', 'va') else None
         db.session.commit()
         flash('Cartão atualizado com sucesso!', 'success')
     else:
