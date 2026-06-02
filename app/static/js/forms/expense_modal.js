@@ -250,14 +250,22 @@
     r.addEventListener('change', updateFields);
   });
 
-  cardSelect?.addEventListener('change', updateInvoicePreview);
-  fDay?.addEventListener('input',  updateInvoicePreview);
+  cardSelect?.addEventListener('change', () => {
+    autofillBankFromCard();
+    updateInvoicePreview();
+  });
+  fDay?.addEventListener('input',    updateInvoicePreview);
   fMonth?.addEventListener('change', updateInvoicePreview);
   fYear?.addEventListener('change',  updateInvoicePreview);
-  fAmount?.addEventListener('input',  () => {
+  fAmount?.addEventListener('input', () => {
+    updateInstallmentHint();
     clearTimeout(_invoiceTimer);
     _invoiceTimer = setTimeout(updateInvoicePreview, 350);
   });
+  form.querySelector('#m_num_installments')?.addEventListener('change', updateInstallmentHint);
+  form.querySelectorAll('input[name="credit_type"]').forEach(r =>
+    r.addEventListener('change', () => { updateFields(); updateInstallmentHint(); })
+  );
 
   recurringCheck?.addEventListener('change', () => {
     recurringRow?.classList.toggle('d-none', !recurringCheck.checked);
