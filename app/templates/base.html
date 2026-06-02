@@ -55,6 +55,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/core/toast.js') }}"></script>
 <script src="{{ url_for('static', filename='js/core/sidebar.js') }}"></script>
+{% if session.get('logged_in') %}
+<script src="{{ url_for('static', filename='js/forms/expense_modal.js') }}"></script>
+{% endif %}
 
 {% block scripts %}{% endblock %}
 </body>
