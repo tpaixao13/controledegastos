@@ -240,6 +240,7 @@ class Expense(db.Model):
     installment_number = db.Column(db.Integer, nullable=True)
     recurring_group_id = db.Column(db.Integer, db.ForeignKey('recurring_groups.id'), nullable=True)
     recurring_number = db.Column(db.Integer, nullable=True)
+    card_id = db.Column(db.Integer, db.ForeignKey('credit_cards.id'), nullable=True)
     paid = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
