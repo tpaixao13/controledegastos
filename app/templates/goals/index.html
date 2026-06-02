@@ -1,0 +1,527 @@
+{% extends 'base.html' %}
+
+{% block title %}Metas Financeiras — FinFam{% endblock %}
+{% block page_title %}Metas Financeiras{% endblock %}
+
+{% block content %}
+
+{# ── Header ──────────────────────────────────────────────────────── #}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold">
+      <i class="bi bi-trophy text-warning me-2"></i>Metas Financeiras
+    </h4>
+    <p class="text-muted small mb-0">Seu coach financeiro · {{ month_name }} {{ year }}</p>
+  </div>
+  <button class="btn btn-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddGoal">
+    <i class="bi bi-plus-lg me-1"></i>Nova Meta
+  </button>
+</div>
+
+{# ── Resumo ──────────────────────────────────────────────────────── #}
+{% if goals_data %}
+{% set n_done     = goals_data | selectattr('status', 'equalto', 'completed') | list | length %}
+{% set n_on_track = goals_data | selectattr('status', 'in', ['on_track', 'ahead']) | list | length %}
+{% set n_at_risk  = goals_data | selectattr('status', 'in', ['at_risk', 'behind', 'over_limit']) | list | length %}
+<div class="row g-3 mb-4">
+  <div class="col-4">
+    <div class="card text-center border-0 bg-success bg-opacity-10">
+      <div class="card-body py-3">
+        <div class="fs-3 fw-bold text-success">{{ n_done }}</div>
+        <div class="small text-muted">Concluídas</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="card text-center border-0 bg-primary bg-opacity-10">
+      <div class="card-body py-3">
+        <div class="fs-3 fw-bold text-primary">{{ n_on_track }}</div>
+        <div class="small text-muted">No ritmo</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="card text-center border-0 bg-danger bg-opacity-10">
+      <div class="card-body py-3">
+        <div class="fs-3 fw-bold text-danger">{{ n_at_risk }}</div>
+        <div class="small text-muted">Em risco</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Empty state ─────────────────────────────────────────────────── #}
+{% if not goals_data %}
+<div class="text-center py-5">
+  <div class="mb-3" style="font-size:4rem">🎯</div>
+  <h5 class="fw-bold mb-2">Comece sua primeira meta</h5>
+  <p class="text-muted mb-4" style="max-width:420px;margin:0 auto">
+    Defina objetivos financeiros e deixe o FinFam te guiar até lá.<br>
+    Economize mais, gaste menos, quite dívidas — um passo por vez.
+  </p>
+  <button class="btn btn-primary btn-lg fw-semibold" data-bs-toggle="modal" data-bs-target="#modalAddGoal">
+    <i class="bi bi-plus-lg me-1"></i>Criar minha primeira meta
+  </button>
+</div>
+
+{% else %}
+
+{# ── Goal cards ──────────────────────────────────────────────────── #}
+<div class="row g-3">
+  {% for d in goals_data %}
+  {% set g = d.goal %}
+
+  {# ── Progress bar color ── #}
+  {% if g.type == 'spending_limit' %}
+    {% if d.status == 'over_limit' %}
+      {% set bar_color = 'bg-danger' %}
+    {% elif d.status == 'at_risk' %}
+      {% set bar_color = 'bg-warning' %}
+    {% else %}
+      {% set bar_color = 'bg-success' %}
+    {% endif %}
+    {% set bar_pct = [d.pct_used, 100] | min %}
+  {% else %}
+    {% if d.status == 'completed' %}
+      {% set bar_color = 'bg-success' %}
+    {% elif d.status in ('behind',) %}
+      {% set bar_color = 'bg-danger' %}
+    {% elif d.status == 'at_risk' %}
+      {% set bar_color = 'bg-warning' %}
+    {% else %}
+      {% set bar_color = 'bg-primary' %}
+    {% endif %}
+    {% set bar_pct = d.pct %}
+  {% endif %}
+
+  <div class="col-md-6 col-xl-4">
+    <div class="card h-100 goal-card goal-card-{{ d.status_color }}
+      {% if d.status == 'completed' %} border-success border-opacity-50{% endif %}">
+
+      {# ── Header do card ── #}
+      <div class="card-header d-flex align-items-start justify-content-between gap-2 pb-2">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-4">{{ g.emoji }}</span>
+          <div>
+            <div class="fw-semibold lh-sm">{{ g.title }}</div>
+            <div class="small text-muted">{{ g.type_label }}</div>
+          </div>
+        </div>
+        <div class="dropdown flex-shrink-0">
+          <button class="btn btn-sm btn-outline-secondary border-0" data-bs-toggle="dropdown">
+            <i class="bi bi-three-dots-vertical"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li>
+              <button class="dropdown-item small"
+                      onclick="openEditGoal({{ g.id }}, '{{ g.title|e }}', '{{ g.type }}',
+                               {{ g.target_amount }}, '{{ g.category or '' }}',
+                               '{{ g.due_date.strftime('%Y-%m-%d') if g.due_date else '' }}',
+                               {{ g.user_id }})">
+                <i class="bi bi-pencil me-2 text-muted"></i>Editar
+              </button>
+            </li>
+            {% if d.status != 'completed' %}
+            <li>
+              <button class="dropdown-item small text-success"
+                      onclick="confirmComplete({{ g.id }}, '{{ g.title|e }}')">
+                <i class="bi bi-check-circle me-2"></i>Marcar concluída
+              </button>
+            </li>
+            {% endif %}
+            <li><hr class="dropdown-divider my-1"></li>
+            <li>
+              <button class="dropdown-item small text-danger"
+                      onclick="confirmDelete({{ g.id }}, '{{ g.title|e }}')">
+                <i class="bi bi-archive me-2"></i>Arquivar
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card-body pt-2">
+
+        {# ── Meta / categoria / prazo ── #}
+        <div class="d-flex flex-wrap gap-2 mb-3 small text-muted">
+          <span><i class="bi bi-bullseye me-1"></i>{{ d.target | brl }}</span>
+          {% if g.category %}
+          <span><i class="bi bi-tag me-1"></i>{{ g.category }}</span>
+          {% endif %}
+          {% if g.due_date %}
+          <span><i class="bi bi-calendar3 me-1"></i>Vence {{ g.due_date.strftime('%d/%m/%Y') }}</span>
+          {% endif %}
+          {% if d.days_remaining is not none %}
+            {% if d.days_remaining < 0 %}
+            <span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Vencida há {{ -d.days_remaining }} dia{{ 's' if -d.days_remaining > 1 }}</span>
+            {% elif d.days_remaining == 0 %}
+            <span class="text-warning"><i class="bi bi-exclamation-circle me-1"></i>Vence hoje</span>
+            {% elif d.days_remaining <= 7 %}
+            <span class="text-warning"><i class="bi bi-clock me-1"></i>{{ d.days_remaining }} dias restantes</span>
+            {% endif %}
+          {% endif %}
+        </div>
+
+        {# ── Progress bar ── #}
+        <div class="mb-1 d-flex justify-content-between align-items-center">
+          <span class="small fw-semibold text-muted">
+            {% if g.type == 'spending_limit' %}
+              Gasto: {{ d.current | brl }}
+            {% else %}
+              Conquistado: {{ d.current | brl }}
+            {% endif %}
+          </span>
+          <span class="small fw-bold
+            {% if d.status_color == 'success' %}text-success
+            {% elif d.status_color == 'warning' %}text-warning
+            {% else %}text-danger{% endif %}">
+            {% if g.type == 'spending_limit' %}{{ d.pct_used | round(0) | int }}% usado
+            {% else %}{{ d.pct | round(0) | int }}%{% endif %}
+          </span>
+        </div>
+        <div class="progress mb-2 goal-progress" style="height:10px;border-radius:6px">
+          <div class="progress-bar {{ bar_color }} goal-progress-bar"
+               role="progressbar"
+               style="width:0%;border-radius:6px"
+               data-target="{{ bar_pct }}">
+          </div>
+        </div>
+
+        {# ── Valores ── #}
+        <div class="d-flex justify-content-between small text-muted mb-3">
+          {% if g.type == 'spending_limit' %}
+          <span>Orçamento: {{ d.target | brl }}</span>
+          {% if d.over_amount > 0 %}
+          <span class="text-danger fw-semibold">+{{ d.over_amount | brl }} excedido</span>
+          {% else %}
+          <span>Restante: <span class="text-success fw-semibold">{{ d.remaining | brl }}</span></span>
+          {% endif %}
+          {% else %}
+          <span>Falta: <span class="fw-semibold">{{ d.remaining | brl }}</span></span>
+          <span>Meta: {{ d.target | brl }}</span>
+          {% endif %}
+        </div>
+
+        {# ── Status badge + coaching ── #}
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="badge rounded-pill
+            {% if d.status_color == 'success' %}bg-success
+            {% elif d.status_color == 'warning' %}bg-warning text-dark
+            {% elif d.status_color == 'danger' %}bg-danger
+            {% else %}bg-secondary{% endif %}">
+            <i class="bi {{ d.status_icon }} me-1"></i>{{ d.status_label }}
+          </span>
+          {% if d.forecast and d.status != 'completed' %}
+          <span class="small text-muted">
+            <i class="bi bi-calendar-check me-1"></i>Previsão: {{ d.forecast.strftime('%d/%m') }}
+          </span>
+          {% endif %}
+        </div>
+        <p class="small text-muted mb-0 fst-italic">{{ d.coaching }}</p>
+
+      </div>
+
+      {# ── Footer só se incompleta ── #}
+      {% if d.status != 'completed' %}
+      <div class="card-footer bg-transparent border-top-0 pt-0 pb-3 px-3">
+        <button class="btn btn-sm btn-outline-success w-100"
+                onclick="confirmComplete({{ g.id }}, '{{ g.title|e }}')">
+          <i class="bi bi-check-circle me-1"></i>Marcar como concluída
+        </button>
+      </div>
+      {% else %}
+      <div class="card-footer bg-transparent border-top-0 pt-0 pb-3 px-3">
+        <div class="text-center text-success small fw-semibold">
+          <i class="bi bi-trophy-fill me-1"></i>Meta concluída em {{ g.completed_at.strftime('%d/%m/%Y') if g.completed_at }}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{# ── Dica motivacional ───────────────────────────────────────────── #}
+<div class="card mt-4 border-0 bg-light">
+  <div class="card-body py-3">
+    <div class="d-flex gap-3 align-items-start">
+      <i class="bi bi-lightbulb text-warning fs-4 flex-shrink-0 mt-1"></i>
+      <div>
+        <div class="fw-semibold small mb-1">Como usar as metas para mudar seus hábitos?</div>
+        <ul class="text-muted small mb-0 ps-3">
+          <li>Defina metas pequenas e alcançáveis — pequenas vitórias criam momentum</li>
+          <li>Use <strong>Limite de categoria</strong> para controlar gastos impulsivos</li>
+          <li>Revise suas metas todo mês e ajuste os valores conforme sua realidade</li>
+          <li>Cada meta concluída merece uma celebração — você está no caminho certo!</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+
+{# ══════════════════════════════════════════════════════════════════ #}
+{# MODAL — Adicionar Meta                                            #}
+{# ══════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalAddGoal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('goals.add') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-trophy me-2 text-warning"></i>Nova Meta Financeira
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          {% if users | length > 1 %}
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Para quem?</label>
+            <select name="user_id" class="form-select form-select-sm" required>
+              {% for u in users %}
+              <option value="{{ u.id }}">{{ u.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% else %}
+          <input type="hidden" name="user_id" value="{{ users[0].id if users }}">
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Tipo de meta</label>
+            <select name="type" id="addGoalType" class="form-select form-select-sm" required
+                    onchange="toggleCategoryField('addGoalCatGroup', this.value)">
+              <option value="">Escolha um tipo...</option>
+              <option value="saving">💰 Economizar (poupar dinheiro no mês)</option>
+              <option value="spending_limit">📉 Limite de gasto por categoria</option>
+              <option value="debt_reduction">💳 Quitar dívida / parcelamento</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Título da meta</label>
+            <input type="text" name="title" class="form-control form-control-sm"
+                   placeholder='Ex: "Poupar R$ 500 este mês"' required maxlength="120">
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Valor alvo (R$)</label>
+              <input type="text" name="target_amount" class="form-control form-control-sm"
+                     placeholder="1000" required>
+            </div>
+            <div class="col-6" id="addGoalCatGroup" style="display:none">
+              <label class="form-label fw-semibold small">Categoria</label>
+              <select name="category" class="form-select form-select-sm">
+                <option value="">Todas</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Data de início</label>
+              <input type="date" name="start_date" class="form-control form-control-sm"
+                     value="{{ today if today else '' }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Prazo (opcional)</label>
+              <input type="date" name="due_date" class="form-control form-control-sm">
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm fw-semibold">
+            <i class="bi bi-check-lg me-1"></i>Criar Meta
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════ #}
+{# MODAL — Editar Meta                                               #}
+{# ══════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalEditGoal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="POST" id="formEditGoal">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-pencil me-2 text-primary"></i>Editar Meta
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Tipo de meta</label>
+            <select name="type" id="editGoalType" class="form-select form-select-sm" required
+                    onchange="toggleCategoryField('editGoalCatGroup', this.value)">
+              <option value="saving">💰 Economizar</option>
+              <option value="spending_limit">📉 Limite de gasto</option>
+              <option value="debt_reduction">💳 Quitar dívida</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold small">Título</label>
+            <input type="text" name="title" id="editGoalTitle" class="form-control form-control-sm"
+                   required maxlength="120">
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold small">Valor alvo (R$)</label>
+              <input type="text" name="target_amount" id="editGoalTarget"
+                     class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6" id="editGoalCatGroup">
+              <label class="form-label fw-semibold small">Categoria</label>
+              <select name="category" id="editGoalCategory" class="form-select form-select-sm">
+                <option value="">Todas</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}">{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="col-6">
+            <label class="form-label fw-semibold small">Prazo (opcional)</label>
+            <input type="date" name="due_date" id="editGoalDue"
+                   class="form-control form-control-sm">
+          </div>
+
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm fw-semibold">
+            <i class="bi bi-check-lg me-1"></i>Salvar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════ #}
+{# MODAL — Confirmar Conclusão                                       #}
+{# ══════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalComplete" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content text-center">
+      <div class="modal-body py-4">
+        <div class="mb-2" style="font-size:3rem">🎉</div>
+        <h5 class="fw-bold mb-2">Concluir meta?</h5>
+        <p class="text-muted small mb-3" id="completeGoalName"></p>
+        <form method="POST" id="formComplete">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-success fw-semibold">
+              <i class="bi bi-trophy me-1"></i>Sim, concluí!
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════ #}
+{# MODAL — Confirmar Arquivamento                                    #}
+{# ══════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalDelete" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-body py-4 text-center">
+        <i class="bi bi-archive fs-2 text-muted mb-2 d-block"></i>
+        <h6 class="fw-bold mb-2">Arquivar esta meta?</h6>
+        <p class="text-muted small mb-3" id="deleteGoalName"></p>
+        <form method="POST" id="formDelete">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="d-flex gap-2 justify-content-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-sm btn-warning fw-semibold">Arquivar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Progress bars animadas ─────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.goal-progress-bar').forEach(bar => {
+    const target = parseFloat(bar.dataset.target) || 0;
+    setTimeout(() => {
+      bar.style.transition = 'width 1s cubic-bezier(.4,0,.2,1)';
+      bar.style.width = target + '%';
+    }, 80);
+  });
+});
+
+// ── Toggle campo categoria ─────────────────────────────────────────
+function toggleCategoryField(groupId, type) {
+  const group = document.getElementById(groupId);
+  if (!group) return;
+  group.style.display = (type === 'spending_limit' || type === 'debt_reduction') ? '' : 'none';
+}
+
+// ── Abrir modal edição ─────────────────────────────────────────────
+function openEditGoal(id, title, type, target, category, dueDate, userId) {
+  document.getElementById('formEditGoal').action = '/goals/edit/' + id;
+  document.getElementById('editGoalTitle').value  = title;
+  document.getElementById('editGoalTarget').value = target;
+  document.getElementById('editGoalDue').value    = dueDate || '';
+
+  const typeSelect = document.getElementById('editGoalType');
+  typeSelect.value = type;
+  toggleCategoryField('editGoalCatGroup', type);
+
+  const catSelect = document.getElementById('editGoalCategory');
+  if (catSelect) catSelect.value = category || '';
+
+  const modal = bootstrap.Modal.getOrCreate(document.getElementById('modalEditGoal'));
+  modal.show();
+}
+
+// ── Confirmar conclusão ────────────────────────────────────────────
+function confirmComplete(id, title) {
+  document.getElementById('completeGoalName').textContent = '"' + title + '"';
+  document.getElementById('formComplete').action = '/goals/complete/' + id;
+  bootstrap.Modal.getOrCreate(document.getElementById('modalComplete')).show();
+}
+
+// ── Confirmar arquivamento ─────────────────────────────────────────
+function confirmDelete(id, title) {
+  document.getElementById('deleteGoalName').textContent = '"' + title + '"';
+  document.getElementById('formDelete').action = '/goals/delete/' + id;
+  bootstrap.Modal.getOrCreate(document.getElementById('modalDelete')).show();
+}
+
+// ── Data de hoje para o modal ──────────────────────────────────────
+const todayInput = document.querySelector('input[name="start_date"]');
+if (todayInput && !todayInput.value) {
+  const today = new Date().toISOString().split('T')[0];
+  todayInput.value = today;
+}
+</script>
+{% endblock %}
