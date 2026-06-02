@@ -528,6 +528,37 @@ body {
 
 
 /* ================================================================
+   IMPORT + RULES
+   ================================================================ */
+
+/* Badges de fonte de categoria no import */
+.import-src-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: .65rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.import-src-rule    { background: rgba(25,135,84,.12);  color: #198754; }
+.import-src-history { background: rgba(13,110,253,.10); color: #0d6efd; }
+.import-src-manual  { background: #f0f0f0; color: #6c757d; }
+
+/* Linha duplicada */
+.import-row-dup { opacity: .5; background: #fffbea !important; }
+.import-row-dup:hover { opacity: .65; }
+
+/* Keyword na tabela de regras */
+.rule-keyword {
+  background: rgba(13,110,253,.07);
+  color: #0d6efd;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: .82rem;
+}
+
+
+/* ================================================================
    INSIGHTS PANEL
    ================================================================ */
 
