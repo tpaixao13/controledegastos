@@ -155,6 +155,10 @@ def create_app(config_name='default'):
                     'bank':         c.bank or '',
                     'label':        c.label,
                     'credit_limit': float(c.credit_limit) if c.credit_limit else None,
+                    'card_type':    c.card_type or 'credit',
+                    'is_virtual':   bool(c.is_virtual),
+                    'is_additional':bool(c.is_additional),
+                    'monthly_amount': float(c.monthly_amount) if c.monthly_amount else None,
                 }
                 for c in _cards
             })
