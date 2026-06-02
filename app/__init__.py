@@ -85,6 +85,7 @@ def create_app(config_name='default'):
         from app.routes.investments import investments_bp
         from app.routes.admin import admin_bp
         from app.routes.cards import cards_bp
+        from app.routes.rules import rules_bp
 
         app.register_blueprint(auth_bp)
         app.register_blueprint(main_bp)
@@ -94,6 +95,7 @@ def create_app(config_name='default'):
         app.register_blueprint(investments_bp)
         app.register_blueprint(admin_bp)
         app.register_blueprint(cards_bp)
+        app.register_blueprint(rules_bp)
 
         if limiter:
             limiter.limit('20 per minute')(app.view_functions['auth.login'])
