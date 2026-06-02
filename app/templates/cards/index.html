@@ -68,7 +68,6 @@
       </div>
 
       <div class="card-body p-0">
-        <!-- Info do cartão -->
         <div class="d-flex gap-0 border-bottom text-center">
           <div class="flex-fill py-2 border-end">
             <div class="text-muted small">Vencimento</div>
@@ -134,13 +133,55 @@
         <form method="POST" action="{{ url_for('cards.edit', card_id=card.id) }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="modal-body">
-            {% call _card_form_fields(
-              nickname=card.nickname or '',
-              last_digits=card.last_digits,
-              bank=card.bank or '',
-              due_day=card.due_day,
-              best_buy_day=card.best_buy_day
-            ) %}{% endcall %}
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Apelido (opcional)</label>
+                <input type="text" name="nickname" class="form-control"
+                       value="{{ card.nickname or '' }}" placeholder="Ex: Nubank principal">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Últimos 4 dígitos</label>
+                <div class="input-group">
+                  <span class="input-group-text text-muted">••••</span>
+                  <input type="text" name="last_digits" class="form-control"
+                         value="{{ card.last_digits }}" maxlength="4" required
+                         style="max-width:80px;"
+                         oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Bandeira / Banco</label>
+                <select name="bank" class="form-select">
+                  {% for val, lbl in [
+                    ('', '— Selecione o banco —'),
+                    ('Nubank', 'Nubank'), ('Itaú', 'Itaú'), ('Bradesco', 'Bradesco'),
+                    ('Banco do Brasil', 'Banco do Brasil'), ('Caixa Econômica Federal', 'Caixa Econômica Federal'),
+                    ('Santander', 'Santander'), ('Inter', 'Inter'), ('C6 Bank', 'C6 Bank'),
+                    ('BTG Pactual', 'BTG Pactual'), ('Sicredi', 'Sicredi'), ('Sicoob', 'Sicoob'),
+                    ('Safra', 'Safra'), ('Original', 'Original'), ('Neon', 'Neon'),
+                    ('PicPay', 'PicPay'), ('XP Investimentos', 'XP Investimentos'), ('Outros', 'Outros'),
+                  ] %}
+                  <option value="{{ val }}" {{ 'selected' if (card.bank or '') == val }}>{{ lbl }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Dia de vencimento</label>
+                <div class="input-group">
+                  <input type="number" name="due_day" class="form-control"
+                         value="{{ card.due_day }}" min="1" max="31" required>
+                  <span class="input-group-text">do mês</span>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Melhor dia de compra</label>
+                <div class="input-group">
+                  <input type="number" name="best_buy_day" class="form-control"
+                         value="{{ card.best_buy_day }}" min="1" max="31" required>
+                  <span class="input-group-text">do mês</span>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -207,8 +248,8 @@
               <div class="alert alert-info py-2 mb-0 small">
                 <i class="bi bi-info-circle"></i>
                 Compras feitas <strong>até o melhor dia</strong> entram na fatura atual.
-                Compras após esse dia vão para a <strong>próxima fatura</strong>.
-                <br>Ex.: vencimento dia 10, melhor dia 9 — compra dia 2 vai para fatura de junho; dia 11 vai para julho.
+                Compras após esse dia vão para a <strong>próxima fatura</strong>.<br>
+                Ex.: vencimento dia 10, melhor dia 9 — compra dia 2 vai para fatura de junho; dia 11 vai para julho.
               </div>
             </div>
           </div>
@@ -223,53 +264,3 @@
 </div>
 
 {% endblock %}
-
-{% macro _card_form_fields(nickname='', last_digits='', bank='', due_day='', best_buy_day='') %}
-<div class="row g-3">
-  <div class="col-md-6">
-    <label class="form-label fw-semibold">Apelido (opcional)</label>
-    <input type="text" name="nickname" class="form-control" value="{{ nickname }}" placeholder="Ex: Nubank principal">
-  </div>
-  <div class="col-md-6">
-    <label class="form-label fw-semibold">Últimos 4 dígitos</label>
-    <div class="input-group">
-      <span class="input-group-text text-muted">••••</span>
-      <input type="text" name="last_digits" class="form-control" value="{{ last_digits }}"
-             maxlength="4" required placeholder="1234" style="max-width:80px;"
-             oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
-    </div>
-  </div>
-  <div class="col-12">
-    <label class="form-label fw-semibold">Bandeira / Banco</label>
-    <select name="bank" class="form-select">
-      {% for val, label in [
-        ('', '— Selecione o banco —'),
-        ('Nubank', 'Nubank'), ('Itaú', 'Itaú'), ('Bradesco', 'Bradesco'),
-        ('Banco do Brasil', 'Banco do Brasil'), ('Caixa Econômica Federal', 'Caixa Econômica Federal'),
-        ('Santander', 'Santander'), ('Inter', 'Inter'), ('C6 Bank', 'C6 Bank'),
-        ('BTG Pactual', 'BTG Pactual'), ('Sicredi', 'Sicredi'), ('Sicoob', 'Sicoob'),
-        ('Safra', 'Safra'), ('Original', 'Original'), ('Neon', 'Neon'),
-        ('PicPay', 'PicPay'), ('XP Investimentos', 'XP Investimentos'), ('Outros', 'Outros'),
-      ] %}
-      <option value="{{ val }}" {{ 'selected' if bank == val }}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-6">
-    <label class="form-label fw-semibold">Dia de vencimento</label>
-    <div class="input-group">
-      <input type="number" name="due_day" class="form-control" value="{{ due_day }}"
-             min="1" max="31" required placeholder="Ex: 10">
-      <span class="input-group-text">do mês</span>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <label class="form-label fw-semibold">Melhor dia de compra</label>
-    <div class="input-group">
-      <input type="number" name="best_buy_day" class="form-control" value="{{ best_buy_day }}"
-             min="1" max="31" required placeholder="Ex: 9">
-      <span class="input-group-text">do mês</span>
-    </div>
-  </div>
-</div>
-{% endmacro %}
