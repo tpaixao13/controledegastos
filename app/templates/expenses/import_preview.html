@@ -1,22 +1,35 @@
 {% extends 'base.html' %}
 {% block title %}Confirmar Importação — FinFam{% endblock %}
+{% block page_title %}Confirmar Importação{% endblock %}
 
 {% block content %}
-<div class="row mb-3 align-items-center">
-  <div class="col">
-    <h2 class="fw-bold"><i class="bi bi-card-checklist text-primary"></i> Confirmar Importação</h2>
-    <p class="text-muted mb-0">
-      <strong>{{ transactions|length }}</strong> transações encontradas para
-      <strong>{{ selected_user.name }}</strong>
-      {% if bank %} · <span class="badge bg-secondary">{{ bank }}</span>{% endif %}
-      &mdash; total: <strong class="text-danger">{{ total|brl }}</strong>.
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+  <div>
+    <h4 class="mb-0 fw-bold">
+      <i class="bi bi-card-checklist text-primary me-2"></i>Confirmar Importação
+    </h4>
+    <p class="text-muted small mb-0">
+      <strong>{{ transactions|length }}</strong> transações · <strong>{{ selected_user.name }}</strong>
+      {% if bank %}<span class="badge bg-secondary ms-1">{{ bank }}</span>{% endif %}
+      · Total: <strong class="text-danger">{{ total|brl }}</strong>
+      {% if duplicates %}
+      · <span class="badge bg-warning text-dark">{{ duplicates|length }} duplicada(s) desmarcada(s)</span>
+      {% endif %}
     </p>
   </div>
-  <div class="col-auto">
-    <a href="{{ url_for('expenses.import_bank') }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left"></i> Novo upload
-    </a>
-  </div>
+  <a href="{{ url_for('expenses.import_bank') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Novo upload
+  </a>
+</div>
+
+{# Legenda de fontes de categoria #}
+<div class="d-flex gap-3 mb-3 flex-wrap">
+  <span class="small"><span class="import-src-badge import-src-rule">regra</span> Regra automática</span>
+  <span class="small"><span class="import-src-badge import-src-history">histórico</span> Baseado no histórico</span>
+  <span class="small"><span class="import-src-badge import-src-manual">manual</span> Selecione a categoria</span>
+  {% if duplicates %}
+  <span class="small"><span class="badge bg-warning text-dark">⚠ duplicada</span> Já foi importada</span>
+  {% endif %}
 </div>
 
 <form method="POST" action="{{ url_for('expenses.import_bank_confirm') }}">
