@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block title %}Cartões de Crédito — FinFam{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+  <h4 class="mb-0 fw-bold">
+    <i class="bi bi-credit-card-2-front"></i> Cartões de Crédito
+  </h4>
+  <button class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#addCardModal">
+    <i class="bi bi-plus-lg"></i> Novo Cartão
+  </button>
+</div>
+
+{% if not cards %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-credit-card fs-1 d-block mb-3"></i>
+  <p class="mb-1">Nenhum cartão cadastrado ainda.</p>
+  <p class="small">Adicione um cartão para controlar suas faturas automaticamente.</p>
+</div>
+{% else %}
+
+<!-- Navegação de fatura -->
+<div class="d-flex align-items-center justify-content-center gap-3 mb-4">
+  <a href="{{ url_for('cards.index', month=prev_month, year=prev_year) }}"
+     class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-chevron-left"></i>
+  </a>
+  <span class="fw-semibold fs-5">Fatura {{ month_name }} / {{ invoice_year }}</span>
+  <a href="{{ url_for('cards.index', month=next_month, year=next_year) }}"
+     class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-chevron-right"></i>
+  </a>
+</div>
+
+<div class="row g-4">
+  {% for card in cards %}
+  {% set inv = card_invoices[card.id] %}
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-credit-card-2-front fs-5 text-primary"></i>
+          <div>
+            <span class="fw-semibold">
+              {{ card.nickname or card.bank or 'Cartão' }}
+              <span class="text-muted fw-normal">•••• {{ card.last_digits }}</span>
+            </span>
+            {% if card.bank and card.nickname %}
+            <span class="text-muted small d-block">{{ card.bank }}</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="d-flex gap-1">
+          <button class="btn btn-outline-secondary btn-sm"
+                  data-bs-toggle="modal"
+                  data-bs-target="#editCardModal{{ card.id }}">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <form method="POST" action="{{ url_for('cards.delete', card_id=card.id) }}"
+                onsubmit="return confirm('Excluir cartão •••• {{ card.last_digits }}? As despesas serão mantidas.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="card-body p-0">
+        <!-- Info do cartão -->
+        <div class="d-flex gap-0 border-bottom text-center">
+          <div class="flex-fill py-2 border-end">
+            <div class="text-muted small">Vencimento</div>
+            <div class="fw-semibold">Dia {{ card.due_day }}</div>
+          </div>
+          <div class="flex-fill py-2 border-end">
+            <div class="text-muted small">Melhor dia de compra</div>
+            <div class="fw-semibold">Até dia {{ card.best_buy_day }}</div>
+          </div>
+          <div class="flex-fill py-2">
+            <div class="text-muted small">Total da fatura</div>
+            <div class="fw-bold text-danger">{{ inv.total | brl }}</div>
+          </div>
+        </div>
+
+        {% if inv.expenses %}
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Dia</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th class="text-end pe-3">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in inv.expenses %}
+              <tr>
+                <td class="ps-3 text-muted">{{ '%02d'|format(e.day) }}</td>
+                <td>
+                  {{ e.description }}
+                  {% if e.installment_group_id %}
+                  <span class="badge bg-secondary ms-1" style="font-size:.65rem;">
+                    {{ e.installment_number }}/{{ e.installment_group.num_installments }}x
+                  </span>
+                  {% endif %}
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ e.category }}</span></td>
+                <td class="text-end pe-3 text-danger fw-semibold">{{ e.amount | brl }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4 small">
+          <i class="bi bi-inbox"></i> Sem despesas nesta fatura
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Cartão -->
+  <div class="modal fade" id="editCardModal{{ card.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Cartão</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form method="POST" action="{{ url_for('cards.edit', card_id=card.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="modal-body">
+            {% call _card_form_fields(
+              nickname=card.nickname or '',
+              last_digits=card.last_digits,
+              bank=card.bank or '',
+              due_day=card.due_day,
+              best_buy_day=card.best_buy_day
+            ) %}{% endcall %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Modal Adicionar Cartão -->
+<div class="modal fade" id="addCardModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Novo Cartão de Crédito</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('cards.add') }}">
+        {{ form.hidden_tag() }}
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.nickname.label(class='form-label fw-semibold') }}
+              {{ form.nickname(class='form-control', placeholder='Ex: Nubank principal') }}
+            </div>
+            <div class="col-md-6">
+              {{ form.last_digits.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                <span class="input-group-text text-muted">••••</span>
+                {{ form.last_digits(class='form-control' + (' is-invalid' if form.last_digits.errors else ''),
+                                    maxlength=4, placeholder='1234',
+                                    style='max-width:80px;',
+                                    oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)") }}
+              </div>
+              {% for e in form.last_digits.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              {{ form.bank.label(class='form-label fw-semibold') }}
+              {{ form.bank(class='form-select') }}
+            </div>
+            <div class="col-md-6">
+              {{ form.due_day.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                {{ form.due_day(class='form-control' + (' is-invalid' if form.due_day.errors else ''),
+                                placeholder='Ex: 10', min=1, max=31) }}
+                <span class="input-group-text">do mês</span>
+              </div>
+              {% for e in form.due_day.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              {{ form.best_buy_day.label(class='form-label fw-semibold') }}
+              <div class="input-group">
+                {{ form.best_buy_day(class='form-control' + (' is-invalid' if form.best_buy_day.errors else ''),
+                                     placeholder='Ex: 9', min=1, max=31) }}
+                <span class="input-group-text">do mês</span>
+              </div>
+              {% for e in form.best_buy_day.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              <div class="alert alert-info py-2 mb-0 small">
+                <i class="bi bi-info-circle"></i>
+                Compras feitas <strong>até o melhor dia</strong> entram na fatura atual.
+                Compras após esse dia vão para a <strong>próxima fatura</strong>.
+                <br>Ex.: vencimento dia 10, melhor dia 9 — compra dia 2 vai para fatura de junho; dia 11 vai para julho.
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit_card(class='btn btn-primary') }}
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% macro _card_form_fields(nickname='', last_digits='', bank='', due_day='', best_buy_day='') %}
+<div class="row g-3">
+  <div class="col-md-6">
+    <label class="form-label fw-semibold">Apelido (opcional)</label>
+    <input type="text" name="nickname" class="form-control" value="{{ nickname }}" placeholder="Ex: Nubank principal">
+  </div>
+  <div class="col-md-6">
+    <label class="form-label fw-semibold">Últimos 4 dígitos</label>
+    <div class="input-group">
+      <span class="input-group-text text-muted">••••</span>
+      <input type="text" name="last_digits" class="form-control" value="{{ last_digits }}"
+             maxlength="4" required placeholder="1234" style="max-width:80px;"
+             oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)">
+    </div>
+  </div>
+  <div class="col-12">
+    <label class="form-label fw-semibold">Bandeira / Banco</label>
+    <select name="bank" class="form-select">
+      {% for val, label in [
+        ('', '— Selecione o banco —'),
+        ('Nubank', 'Nubank'), ('Itaú', 'Itaú'), ('Bradesco', 'Bradesco'),
+        ('Banco do Brasil', 'Banco do Brasil'), ('Caixa Econômica Federal', 'Caixa Econômica Federal'),
+        ('Santander', 'Santander'), ('Inter', 'Inter'), ('C6 Bank', 'C6 Bank'),
+        ('BTG Pactual', 'BTG Pactual'), ('Sicredi', 'Sicredi'), ('Sicoob', 'Sicoob'),
+        ('Safra', 'Safra'), ('Original', 'Original'), ('Neon', 'Neon'),
+        ('PicPay', 'PicPay'), ('XP Investimentos', 'XP Investimentos'), ('Outros', 'Outros'),
+      ] %}
+      <option value="{{ val }}" {{ 'selected' if bank == val }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label fw-semibold">Dia de vencimento</label>
+    <div class="input-group">
+      <input type="number" name="due_day" class="form-control" value="{{ due_day }}"
+             min="1" max="31" required placeholder="Ex: 10">
+      <span class="input-group-text">do mês</span>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label class="form-label fw-semibold">Melhor dia de compra</label>
+    <div class="input-group">
+      <input type="number" name="best_buy_day" class="form-control" value="{{ best_buy_day }}"
+             min="1" max="31" required placeholder="Ex: 9">
+      <span class="input-group-text">do mês</span>
+    </div>
+  </div>
+</div>
+{% endmacro %}
