@@ -71,6 +71,10 @@ def index():
         'balance':  _delta(saldo_combinado, prev_saldo),
     }
 
+    # ── Insights financeiros ─────────────────────────────────────
+    cards = CreditCard.query.filter(CreditCard.user_id.in_(uids)).all()
+    insights = generate_insights(uids, month, year, cards=cards)
+
     # ── Despesas recentes e pendentes ────────────────────────────
     recent = (Expense.query
               .filter(Expense.user_id.in_(uids), Expense.year == year, Expense.month == month)
