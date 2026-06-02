@@ -182,6 +182,13 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+function toggleAddCardFields() {
+  const ct = document.getElementById('addCardType')?.value || 'credit';
+  document.getElementById('addCreditFields')?.classList.toggle('d-none', ct !== 'credit');
+  document.getElementById('addVrvaFields')?.classList.toggle('d-none', ct !== 'vr' && ct !== 'va');
+}
+</script>
 {% if history_chart %}
 <script>
 (() => {
