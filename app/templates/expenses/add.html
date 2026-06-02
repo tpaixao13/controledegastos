@@ -80,6 +80,15 @@
               {{ form.bank(class='form-select' + (' is-invalid' if form.bank.errors else '')) }}
             </div>
 
+            <!-- Cartão cadastrado (condicional - só Cartão de Crédito) -->
+            {% if credit_cards %}
+            <div class="col-12" id="card-row" style="display:none">
+              {{ form.card_id.label(class='form-label fw-semibold') }}
+              {{ form.card_id(class='form-select', id='card_id') }}
+              <div id="billing-hint" class="form-text text-info fw-semibold" style="display:none"></div>
+            </div>
+            {% endif %}
+
             <!-- Parcelas (condicional - só Cartão de Crédito) -->
             <div class="col-12" id="installment-section" style="display:none">
               <label class="form-label fw-semibold">Modalidade</label>
