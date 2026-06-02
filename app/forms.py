@@ -126,6 +126,8 @@ class CreditCardForm(FlaskForm):
     bank = SelectField('Bandeira / Banco', choices=BANKS, validators=[Optional()])
     due_day = IntegerField('Dia de vencimento', validators=[DataRequired(), NumberRange(min=1, max=31)])
     best_buy_day = IntegerField('Melhor dia de compra', validators=[DataRequired(), NumberRange(min=1, max=31)])
+    credit_limit = DecimalField('Limite do Cartão (R$)', places=2,
+                                validators=[Optional(), NumberRange(min=0)])
     submit_card = SubmitField('Salvar Cartão')
 
 
