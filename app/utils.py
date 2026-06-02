@@ -243,7 +243,23 @@ def send_daily_reminders(app) -> None:
             users = User.query.filter_by(tenant_id=tenant.id).all()
             if not users:
                 continue
+
+            # Lembrete diário (pendências e atrasos)
             msg = build_daily_reminder(users)
+
+            # Alertas críticos do motor proativo
+            try:
+                from app.services.alert_service import generate_alerts, build_alert_telegram_text
+                from app.models import CreditCard
+                uids = [u.id for u in users]
+                cards = CreditCard.query.filter(CreditCard.user_id.in_(uids)).all()
+                alerts = generate_alerts(uids, now.month, now.year, tenant.id, cards=cards)
+                alert_msg = build_alert_telegram_text(alerts)
+                if alert_msg:
+                    msg = (msg or '') + '\n\n' + alert_msg if msg else alert_msg
+            except Exception as e:
+                print(f'[Telegram] Alertas erro tenant {tenant.id}: {e}')
+
             if msg:
                 ok, err = send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
                 if not ok:
