@@ -2,6 +2,42 @@
 
 {% block title %}Cartões de Crédito — FinFam{% endblock %}
 
+{% block scripts %}
+{% if chart_json is defined and chart_json %}
+<script>
+(function () {
+  const data = {{ chart_json | safe }};
+  function brl(v) {
+    return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  }
+  const ctx = document.getElementById('chartCards');
+  if (!ctx) return;
+  new Chart(ctx, {
+    type: 'bar',
+    data: data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 12 } } },
+        tooltip: {
+          callbacks: { label: c => `${c.dataset.label}: ${brl(c.parsed.y)}` }
+        }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: {
+          beginAtZero: true,
+          ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') }
+        }
+      }
+    }
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
   <h4 class="mb-0 fw-bold">
