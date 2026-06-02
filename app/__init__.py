@@ -99,6 +99,7 @@ def create_app(config_name='default'):
         app.register_blueprint(cards_bp)
         app.register_blueprint(rules_bp)
         app.register_blueprint(alerts_bp)
+        app.register_blueprint(goals_bp)
 
         if limiter:
             limiter.limit('20 per minute')(app.view_functions['auth.login'])
