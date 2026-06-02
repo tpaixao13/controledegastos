@@ -56,7 +56,8 @@
             <div class="col-4 col-sm-2">
               <label class="form-label fw-semibold" for="m_day">Dia</label>
               <input type="number" id="m_day" name="day"
-                     class="form-control text-center" min="1" max="31" required>
+                     class="form-control text-center" min="1" max="31"
+                     value="{{ now.day }}" required>
               <div class="invalid-feedback"></div>
             </div>
 
@@ -66,7 +67,7 @@
                 {% for n, label in [(1,'Janeiro'),(2,'Fevereiro'),(3,'Março'),(4,'Abril'),
                                     (5,'Maio'),(6,'Junho'),(7,'Julho'),(8,'Agosto'),
                                     (9,'Setembro'),(10,'Outubro'),(11,'Novembro'),(12,'Dezembro')] %}
-                <option value="{{ n }}">{{ label }}</option>
+                <option value="{{ n }}" {{ 'selected' if n == now.month }}>{{ label }}</option>
                 {% endfor %}
               </select>
             </div>
@@ -74,7 +75,8 @@
             <div class="col-4 col-sm-3">
               <label class="form-label fw-semibold" for="m_year">Ano</label>
               <input type="number" id="m_year" name="year"
-                     class="form-control" min="2000" max="2100" required>
+                     class="form-control" min="2000" max="2100"
+                     value="{{ now.year }}" required>
             </div>
 
             {# Categoria #}
