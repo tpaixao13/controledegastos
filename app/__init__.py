@@ -223,6 +223,7 @@ def _run_migrations():
         "CREATE TABLE IF NOT EXISTS credit_cards (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), nickname TEXT, last_digits TEXT NOT NULL, bank TEXT, due_day INTEGER NOT NULL, best_buy_day INTEGER NOT NULL, created_at DATETIME)",
         "ALTER TABLE expenses ADD COLUMN card_id INTEGER REFERENCES credit_cards(id)",
         "ALTER TABLE credit_cards ADD COLUMN credit_limit NUMERIC(12,2)",
+        "CREATE TABLE IF NOT EXISTS category_rules (id INTEGER PRIMARY KEY, tenant_id INTEGER NOT NULL REFERENCES tenants(id), keyword TEXT NOT NULL, category TEXT NOT NULL, match_count INTEGER NOT NULL DEFAULT 0, created_at DATETIME)",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
