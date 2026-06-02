@@ -90,6 +90,7 @@ def index():
     total_pendente = sum(float(e.amount) for e in pending)
 
     return render_template('index.html',
+                           insights=insights,
                            today=now.date(),
                            user_summaries=user_summaries,
                            user_colors=user_color_map(users),
