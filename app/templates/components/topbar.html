@@ -33,10 +33,12 @@
 
   {# ── Direita: ações + usuário ────────────────────────────────── #}
   <div class="topbar-right">
-    <a href="{{ url_for('expenses.add') }}" class="btn btn-primary btn-sm fw-semibold topbar-new-btn">
+    <button type="button"
+            class="btn btn-primary btn-sm fw-semibold topbar-new-btn"
+            data-bs-toggle="modal" data-bs-target="#expenseModal">
       <i class="bi bi-plus-lg"></i>
       <span class="d-none d-md-inline">Nova Despesa</span>
-    </a>
+    </button>
 
     {% if session.get('user_name') %}
     <div class="dropdown">
