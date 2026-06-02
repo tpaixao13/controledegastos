@@ -90,8 +90,10 @@ def generate_alerts(uids: list, month: int, year: int,
             'message': (f'{n} despesa{"s" if n > 1 else ""} não paga{"s" if n > 1 else ""} '
                         f'totalizando {_brl(total_ov)}. '
                         f'A mais antiga venceu há {days_late} dia{"s" if days_late > 1 else ""}.'),
-            'action_label': 'Ver pendências',
-            'action_url': url_for('main.index', month=month, year=year),
+            'action_label': 'Ver atrasadas',
+            'action_url': url_for('expenses.index',
+                                  month=oldest.month, year=oldest.year,
+                                  paid='pendente'),
         })
 
     # ── 2. Vencimentos nos próximos 3 dias ───────────────────────────
