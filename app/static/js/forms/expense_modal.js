@@ -63,19 +63,75 @@
   }
 
   // ── Lógica condicional de campos ───────────────────────────────
-  const _BANK_METHODS = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'VR', 'VA'];
+  const _BANK_METHODS  = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'VR', 'VA'];
+  const _METHOD_TO_TYPE = {
+    'Cartão de Crédito': 'credit',
+    'Cartão de Débito':  'debit',
+    'VR': 'vr',
+    'VA': 'va',
+  };
+
+  function updateCardOptions(method) {
+    if (!cardSelect) return;
+    const targetType = _METHOD_TO_TYPE[method];
+    Array.from(cardSelect.options).forEach(opt => {
+      if (opt.value === '0') { opt.style.display = ''; return; }
+      const optType = opt.dataset.type || 'credit';
+      opt.style.display = (targetType && optType === targetType) ? '' : 'none';
+    });
+    const selVal = parseInt(cardSelect.value, 10);
+    if (selVal > 0) {
+      const selOpt = cardSelect.querySelector(`option[value="${selVal}"]`);
+      if (selOpt && selOpt.style.display === 'none') cardSelect.value = '0';
+    }
+  }
+
+  function autofillBankFromCard() {
+    const id = parseInt(cardSelect?.value, 10);
+    const card = cardData[id];
+    if (!card || !id) return;
+    const bankSel = form.querySelector('#m_bank');
+    if (bankSel && card.bank) bankSel.value = card.bank;
+  }
+
+  function updateInstallmentHint() {
+    const hintRow = form.querySelector('#m_installment_hint');
+    const preview = form.querySelector('#m_installment_preview');
+    const isCredit    = fPayment?.value === 'Cartão de Crédito';
+    const isParcelado = form.querySelector('#m_credit_parcelado')?.checked;
+    if (!isCredit || !isParcelado) {
+      hintRow?.classList.add('d-none');
+      return;
+    }
+    hintRow?.classList.remove('d-none');
+    const amount = parseFloat(fAmount?.value) || 0;
+    const num    = parseInt(form.querySelector('#m_num_installments')?.value) || 1;
+    if (preview) {
+      preview.textContent = (amount > 0 && num > 1)
+        ? `Cada parcela: ${_fmtBrl(amount / num)}`
+        : '';
+    }
+  }
 
   function updateFields() {
-    const method      = fPayment?.value || '';
-    const isCredit    = method === 'Cartão de Crédito';
-    const needsBank   = _BANK_METHODS.includes(method);
-    const isParcelado = form.querySelector('#m_credit_parcelado')?.checked;
+    const method       = fPayment?.value || '';
+    const isCredit     = method === 'Cartão de Crédito';
+    const hasBank      = _BANK_METHODS.includes(method);
+    const isCardMethod = !!_METHOD_TO_TYPE[method];
+    const isParcelado  = form.querySelector('#m_credit_parcelado')?.checked;
 
-    bankRow?.classList.toggle('d-none', !needsBank);
-    cardRow?.classList.toggle('d-none', !isCredit);
+    bankRow?.classList.toggle('d-none', !hasBank);
     creditTypeRow?.classList.toggle('d-none', !isCredit);
     installmentsRow?.classList.toggle('d-none', !(isCredit && isParcelado));
 
+    if (isCardMethod) {
+      updateCardOptions(method);
+      cardRow?.classList.remove('d-none');
+    } else {
+      cardRow?.classList.add('d-none');
+    }
+
+    updateInstallmentHint();
     updateInvoicePreview();
   }
 
