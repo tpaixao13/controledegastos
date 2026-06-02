@@ -295,11 +295,34 @@ def export_csv():
     return _make_xlsx(rows, year, month)
 
 
+def _resolve_card(form, payment, uids):
+    """Retorna (card, card_id, billing_month, billing_year) com base na seleção de cartão."""
+    if payment != 'Cartão de Crédito':
+        return None, None, form.month.data, form.year.data
+    raw_id = form.card_id.data
+    if not raw_id:
+        return None, None, form.month.data, form.year.data
+    card = CreditCard.query.filter(CreditCard.id == raw_id,
+                                   CreditCard.user_id.in_(uids)).first()
+    if not card:
+        return None, None, form.month.data, form.year.data
+    bm, by = month_offset(form.month.data, form.year.data,
+                          1 if form.day.data > card.best_buy_day else 0)
+    return card, card.id, bm, by
+
+
 @expenses_bp.route('/add', methods=['GET', 'POST'])
 def add():
+    import json
     users = tenant_users().order_by(User.name).all()
+    uids = [u.id for u in users]
     form = ExpenseForm()
     form.user_id.choices = [(u.id, u.name) for u in users]
+
+    credit_cards = CreditCard.query.filter(CreditCard.user_id.in_(uids)).order_by(CreditCard.bank).all()
+    form.card_id.choices = [(0, '— Nenhum (usar banco acima) —')] + [
+        (c.id, c.label) for c in credit_cards
+    ]
 
     now = datetime.now()
     if request.method == 'GET':
@@ -308,17 +331,24 @@ def add():
         form.day.data = now.day
         form.num_installments.data = 2
         form.recurring_times.data = 12
+        form.card_id.data = 0
 
     if form.validate_on_submit():
         payment = form.payment_method.data
         bank = _bank_from_form(form, payment)
+
+        card, card_id, billing_month, billing_year = _resolve_card(form, payment, uids)
+        if card:
+            bank = card.bank or bank
+            form.month.data = billing_month
+            form.year.data = billing_year
 
         is_parcelado = (payment == 'Cartão de Crédito' and
                         form.credit_type.data == 'parcelado')
         is_recurring = form.is_recurring.data
 
         if is_parcelado:
-            _create_installments(form, bank)
+            _create_installments(form, bank, card_id=card_id)
         elif is_recurring:
             _create_recurring(form, bank, payment)
         else:
@@ -332,6 +362,7 @@ def add():
                 year=form.year.data,
                 month=form.month.data,
                 day=form.day.data,
+                card_id=card_id,
             )
             db.session.add(expense)
             db.session.commit()
@@ -339,9 +370,14 @@ def add():
 
         return redirect(url_for('expenses.index'))
 
-    uids = [u.id for u in users]
+    card_data_json = json.dumps({
+        c.id: {'due_day': c.due_day, 'best_buy_day': c.best_buy_day, 'bank': c.bank or ''}
+        for c in credit_cards
+    })
     return render_template('expenses/add.html', form=form, users=users,
-                           all_categories=_tenant_categories(uids))
+                           all_categories=_tenant_categories(uids),
+                           credit_cards=credit_cards,
+                           card_data_json=card_data_json)
 
 
 @expenses_bp.route('/edit/<int:expense_id>', methods=['GET', 'POST'])
