@@ -1,0 +1,264 @@
+{# ================================================================
+   Expense Modal — modal de nova despesa (incluído no base.html)
+   ================================================================ #}
+
+<div class="modal fade" id="expenseModal" tabindex="-1" aria-labelledby="expenseModalLabel">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+
+      {# ── Header ──────────────────────────────────────────────── #}
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="expenseModalLabel">
+          <i class="bi bi-plus-circle text-primary me-2"></i>Nova Despesa
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      {# ── Body ────────────────────────────────────────────────── #}
+      <div class="modal-body pt-3">
+        <form id="expenseModalForm" novalidate
+              action="{{ url_for('expenses.add') }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          {# ── Alerta de erro global ──────────────────────────── #}
+          <div id="modalErrorAlert" class="alert alert-danger py-2 d-none mb-3">
+            <i class="bi bi-exclamation-circle me-1"></i>
+            <span id="modalErrorMsg">Verifique os campos e tente novamente.</span>
+          </div>
+
+          {# ══════════════════════════════════════════════════════
+             SEÇÃO 1 — ESSENCIAL
+             ══════════════════════════════════════════════════════ #}
+          <div class="row g-3">
+
+            {# Descrição #}
+            <div class="col-12">
+              <label class="form-label fw-semibold" for="m_description">Descrição</label>
+              <input type="text" id="m_description" name="description"
+                     class="form-control" placeholder="Ex: Supermercado, Conta de luz..."
+                     maxlength="200" autocomplete="off" required>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            {# Valor #}
+            <div class="col-sm-4">
+              <label class="form-label fw-semibold" for="m_amount">Valor (R$)</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="number" id="m_amount" name="amount"
+                       class="form-control" placeholder="0,00"
+                       step="0.01" min="0.01" required>
+              </div>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            {# Data #}
+            <div class="col-4 col-sm-2">
+              <label class="form-label fw-semibold" for="m_day">Dia</label>
+              <input type="number" id="m_day" name="day"
+                     class="form-control text-center" min="1" max="31" required>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            <div class="col-4 col-sm-3">
+              <label class="form-label fw-semibold" for="m_month">Mês</label>
+              <select id="m_month" name="month" class="form-select">
+                {% for n, label in [(1,'Janeiro'),(2,'Fevereiro'),(3,'Março'),(4,'Abril'),
+                                    (5,'Maio'),(6,'Junho'),(7,'Julho'),(8,'Agosto'),
+                                    (9,'Setembro'),(10,'Outubro'),(11,'Novembro'),(12,'Dezembro')] %}
+                <option value="{{ n }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-4 col-sm-3">
+              <label class="form-label fw-semibold" for="m_year">Ano</label>
+              <input type="number" id="m_year" name="year"
+                     class="form-control" min="2000" max="2100" required>
+            </div>
+
+            {# Categoria #}
+            <div class="col-12">
+              <label class="form-label fw-semibold" for="m_category">Categoria</label>
+              <input type="text" id="m_category" name="category"
+                     class="form-control" list="m_category_opts"
+                     placeholder="Ex: Alimentação, Lazer..." autocomplete="off" required>
+              <datalist id="m_category_opts">
+                {% for cat in modal_categories %}
+                <option value="{{ cat }}">
+                {% endfor %}
+              </datalist>
+              <div class="invalid-feedback"></div>
+            </div>
+
+            {# Forma de Pagamento #}
+            <div class="col-12">
+              <label class="form-label fw-semibold" for="m_payment_method">Forma de Pagamento</label>
+              <select id="m_payment_method" name="payment_method" class="form-select" required>
+                <option value="">— Selecione —</option>
+                <option value="PIX">PIX</option>
+                <option value="Cartão de Débito">Cartão de Débito</option>
+                <option value="Cartão de Crédito">Cartão de Crédito</option>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="VR">VR — Vale Refeição</option>
+                <option value="VA">VA — Vale Alimentação</option>
+              </select>
+              <div class="invalid-feedback"></div>
+            </div>
+
+          </div>{# /row essencial #}
+
+          {# ── Toggle avançado ─────────────────────────────────── #}
+          <div class="mt-3">
+            <button type="button" id="btnToggleAdvanced"
+                    class="btn btn-link btn-sm text-decoration-none ps-0 text-muted">
+              <i class="bi bi-sliders me-1"></i>
+              <span id="toggleAdvancedLabel">+ Opções avançadas</span>
+            </button>
+          </div>
+
+          {# ══════════════════════════════════════════════════════
+             SEÇÃO 2 — AVANÇADO
+             ══════════════════════════════════════════════════════ #}
+          <div id="advancedSection" class="modal-advanced-section">
+            <hr class="my-3">
+            <div class="row g-3">
+
+              {# Banco (PIX, Débito, Crédito) #}
+              <div class="col-12 d-none" id="m_bank_row">
+                <label class="form-label fw-semibold" for="m_bank">Banco / Instituição</label>
+                <select id="m_bank" name="bank" class="form-select">
+                  <option value="">— Selecione o banco —</option>
+                  {% for val, lbl in [
+                    ('Nubank','Nubank'),('Itaú','Itaú'),('Bradesco','Bradesco'),
+                    ('Banco do Brasil','Banco do Brasil'),('Caixa Econômica Federal','Caixa Econômica Federal'),
+                    ('Santander','Santander'),('Inter','Inter'),('C6 Bank','C6 Bank'),
+                    ('BTG Pactual','BTG Pactual'),('Sicredi','Sicredi'),('Sicoob','Sicoob'),
+                    ('Safra','Safra'),('Original','Original'),('Neon','Neon'),
+                    ('PicPay','PicPay'),('XP Investimentos','XP Investimentos'),('Outros','Outros'),
+                  ] %}
+                  <option value="{{ val }}">{{ lbl }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              {# Cartão cadastrado (só Crédito + se houver cartões) #}
+              {% if modal_cards %}
+              <div class="col-12 d-none" id="m_card_row">
+                <label class="form-label fw-semibold" for="m_card_id">Cartão Cadastrado</label>
+                <select id="m_card_id" name="card_id" class="form-select">
+                  <option value="0">— Nenhum (usar banco acima) —</option>
+                  {% for c in modal_cards %}
+                  <option value="{{ c.id }}" data-due="{{ c.due_day }}"
+                          data-best="{{ c.best_buy_day }}">
+                    {{ c.label }}
+                  </option>
+                  {% endfor %}
+                </select>
+                <div id="m_billing_hint" class="form-text text-primary fw-semibold mt-1" style="display:none"></div>
+              </div>
+              {% endif %}
+
+              {# Tipo de crédito (só Crédito) #}
+              <div class="col-12 d-none" id="m_credit_type_row">
+                <label class="form-label fw-semibold">Tipo</label>
+                <div class="d-flex gap-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio"
+                           name="credit_type" id="m_credit_avista" value="avista" checked>
+                    <label class="form-check-label" for="m_credit_avista">À vista</label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio"
+                           name="credit_type" id="m_credit_parcelado" value="parcelado">
+                    <label class="form-check-label" for="m_credit_parcelado">Parcelado</label>
+                  </div>
+                </div>
+              </div>
+
+              {# Nº de Parcelas (só Parcelado) #}
+              <div class="col-sm-4 d-none" id="m_installments_row">
+                <label class="form-label fw-semibold" for="m_num_installments">Nº de Parcelas</label>
+                <select id="m_num_installments" name="num_installments" class="form-select">
+                  {% for i in range(2, 13) %}
+                  <option value="{{ i }}">{{ i }}x</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              {# Pessoa (só se multi-user) #}
+              {% if modal_users | length > 1 %}
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold" for="m_user_id">Pessoa</label>
+                <select id="m_user_id" name="user_id" class="form-select">
+                  {% for u in modal_users %}
+                  <option value="{{ u.id }}"
+                    {{ 'selected' if u.id == session.get('user_id') }}>
+                    {{ u.name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% else %}
+              <input type="hidden" name="user_id"
+                     value="{{ modal_users[0].id if modal_users else '' }}">
+              {% endif %}
+
+              {# Pago #}
+              <div class="col-sm-6 d-flex align-items-end pb-1">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox"
+                         id="m_paid" name="paid" value="true">
+                  <label class="form-check-label fw-semibold" for="m_paid">
+                    Marcar como Pago
+                  </label>
+                </div>
+              </div>
+
+              {# Recorrente #}
+              <div class="col-12">
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox"
+                         id="m_is_recurring" name="is_recurring" value="true">
+                  <label class="form-check-label fw-semibold" for="m_is_recurring">
+                    Despesa Recorrente
+                  </label>
+                </div>
+              </div>
+
+              {# Duração da recorrência #}
+              <div class="col-sm-5 d-none" id="m_recurring_times_row">
+                <label class="form-label fw-semibold" for="m_recurring_times">
+                  Repetir por quantos meses
+                </label>
+                <div class="input-group">
+                  <input type="number" id="m_recurring_times" name="recurring_times"
+                         class="form-control" value="12" min="2" max="120"
+                         placeholder="Ex: 12">
+                  <span class="input-group-text">meses</span>
+                </div>
+              </div>
+
+            </div>{# /row avançado #}
+          </div>{# /advancedSection #}
+
+        </form>
+      </div>{# /modal-body #}
+
+      {# ── Footer ──────────────────────────────────────────────── #}
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button type="submit" form="expenseModalForm" id="btnSaveExpense"
+                class="btn btn-primary fw-semibold px-4">
+          <i class="bi bi-check-lg me-1"></i>Salvar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{# Dados dos cartões para o JS #}
+<script>window._modalCardData = {{ modal_card_data_json | safe if modal_card_data_json else '{}' }};</script>
