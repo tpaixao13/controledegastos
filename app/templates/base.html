@@ -45,6 +45,11 @@
   </main>
 </div>
 
+{# ── Expense modal ───────────────────────────────────────────── #}
+{% if session.get('logged_in') %}
+{% include 'components/expense_modal.html' %}
+{% endif %}
+
 {# ── Toast container ─────────────────────────────────────────── #}
 <div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999"></div>
 
