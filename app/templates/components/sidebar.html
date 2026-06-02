@@ -58,6 +58,16 @@
 
     <span class="sidebar-label mt-3">Automação</span>
 
+    <a href="{{ url_for('alerts.index') }}"
+       class="sidebar-link {{ 'active' if request.blueprint == 'alerts' }}">
+      <i class="bi bi-bell{{ '-fill' if alert_count and alert_count > 0 else '' }}
+         {{ ' text-danger' if alert_count and alert_count > 0 else '' }}"></i>
+      <span>Alertas</span>
+      {% if alert_count and alert_count > 0 %}
+      <span class="ms-auto badge bg-danger rounded-pill" style="font-size:.62rem">{{ alert_count }}</span>
+      {% endif %}
+    </a>
+
     <a href="{{ url_for('expenses.import_bank') }}"
        class="sidebar-link {{ 'active' if request.endpoint in ('expenses.import_bank', 'expenses.import_bank_parse') }}">
       <i class="bi bi-cloud-upload"></i>
