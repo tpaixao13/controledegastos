@@ -73,7 +73,19 @@ def fix():
 
         for r in rows2:
             exp = db.session.get(Expense, r.id_simples)
+            # Verificar se o próximo mês já tem recorrente do mesmo grupo
             new_month, new_year = month_offset(exp.month, exp.year, 1)
+            conflict = db.session.query(Expense).filter(
+                Expense.user_id == exp.user_id,
+                Expense.month == new_month,
+                Expense.year == new_year,
+                Expense.description == exp.description,
+                Expense.recurring_group_id.isnot(None),
+            ).first()
+            if conflict:
+                print(f"[simples] '{r.description[:35]}' ID={r.id_simples}: "
+                      f"proximo mes tambem tem recorrente - mantendo em {exp.month:02d}/{exp.year}")
+                continue
             print(f"[simples] '{r.description[:35]}' ID={r.id_simples}: "
                   f"{exp.month:02d}/{exp.year} -> {new_month:02d}/{new_year}")
             exp.month = new_month
