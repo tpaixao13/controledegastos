@@ -304,19 +304,44 @@ def export_csv():
 
 
 def _resolve_card(form, payment, uids):
-    """Retorna (card, card_id, billing_month, billing_year) com base na seleção de cartão."""
-    if payment != 'Cartão de Crédito':
-        return None, None, form.month.data, form.year.data
-    raw_id = form.card_id.data
-    if not raw_id:
-        return None, None, form.month.data, form.year.data
-    card = CreditCard.query.filter(CreditCard.id == raw_id,
-                                   CreditCard.user_id.in_(uids)).first()
-    if not card:
-        return None, None, form.month.data, form.year.data
-    bm, by = month_offset(form.month.data, form.year.data,
-                          1 if form.day.data > card.best_buy_day else 0)
-    return card, card.id, bm, by
+    """
+    Retorna (card, card_id, billing_month, billing_year).
+
+    - Crédito: ajusta mês de fatura pelo best_buy_day
+    - Débito:  usa cartão selecionado (sem ajuste de mês)
+    - VR/VA:   usa cartão selecionado OU auto-associa ao cartão VR/VA do usuário
+    """
+    raw_id = form.card_id.data or 0
+    month  = form.month.data
+    year   = form.year.data
+
+    if payment == 'Cartão de Crédito':
+        if not raw_id:
+            return None, None, month, year
+        card = CreditCard.query.filter(CreditCard.id == raw_id,
+                                       CreditCard.user_id.in_(uids)).first()
+        if not card:
+            return None, None, month, year
+        bm, by = month_offset(month, year,
+                              1 if form.day.data > card.best_buy_day else 0)
+        return card, card.id, bm, by
+
+    if payment in ('Cartão de Débito', 'VR', 'VA'):
+        card = None
+        # 1) Cartão selecionado explicitamente no modal
+        if raw_id:
+            card = CreditCard.query.filter(CreditCard.id == raw_id,
+                                           CreditCard.user_id.in_(uids)).first()
+        # 2) VR/VA: auto-associar com o cartão do tipo correto se não informado
+        if not card and payment in ('VR', 'VA'):
+            ct = 'vr' if payment == 'VR' else 'va'
+            card = (CreditCard.query
+                    .filter(CreditCard.user_id.in_(uids),
+                            CreditCard.card_type == ct)
+                    .first())
+        return (card, card.id if card else None, month, year)
+
+    return None, None, month, year
 
 
 @expenses_bp.route('/add', methods=['GET', 'POST'])
