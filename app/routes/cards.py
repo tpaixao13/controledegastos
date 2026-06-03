@@ -25,6 +25,28 @@ _CHART_COLORS = [
 ]
 
 
+def _get_or_create_account(user_id: int, bank: str | None,
+                           credit_limit=None) -> 'CreditAccount | None':
+    """
+    Retorna a CreditAccount existente para (user_id, bank),
+    ou cria uma nova se não existir. Retorna None se bank for vazio.
+    """
+    if not bank:
+        return None
+    account = CreditAccount.query.filter_by(user_id=user_id, bank=bank).first()
+    if not account:
+        account = CreditAccount(
+            user_id=user_id,
+            bank=bank,
+            credit_limit=credit_limit or None,
+        )
+        db.session.add(account)
+        db.session.flush()
+    elif credit_limit and not account.credit_limit:
+        account.credit_limit = credit_limit
+    return account
+
+
 def _history_chart(cards, invoice_month, invoice_year):
     """Gráfico de barras — últimos 6 meses por cartão."""
     months = [month_offset(invoice_month, invoice_year, -i) for i in range(5, -1, -1)]
