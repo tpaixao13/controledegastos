@@ -415,11 +415,14 @@ def add():
 
     card_data_json = json.dumps({
         c.id: {
-            'due_day':      c.due_day,
-            'best_buy_day': c.best_buy_day,
-            'bank':         c.bank or '',
-            'label':        c.label,
-            'credit_limit': float(c.credit_limit) if c.credit_limit else None,
+            'due_day':         c.due_day,
+            'best_buy_day':    c.best_buy_day,
+            'bank':            c.bank or '',
+            'label':           c.label,
+            'credit_limit':    float(c.credit_limit) if c.credit_limit else None,
+            'card_type':       c.card_type or '',
+            'supports_credit': bool(c.supports_credit),
+            'supports_debit':  bool(c.supports_debit),
         }
         for c in credit_cards
     })
