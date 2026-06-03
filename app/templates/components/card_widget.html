@@ -9,7 +9,9 @@
 {% set card = d.card %}
 {% set pct  = d.pct or 0 %}
 {% set bar_class = 'bg-success' if pct < 50 else ('bg-warning' if pct < 80 else 'bg-danger') %}
-{% set ct = card.card_type or 'credit' %}
+{% set sc = card.supports_credit %}
+{% set sd = card.supports_debit %}
+{% set is_vr_va = card.card_type in ('vr', 'va') %}
 
 <div class="credit-card-widget" style="background:{{ d.gradient }}; color:{{ d.text_color }}">
 
@@ -26,20 +28,41 @@
       <span class="badge bg-light text-dark" style="font-size:.6rem">Virtual</span>
       {% elif card.is_additional %}
       <span class="badge bg-light text-dark" style="font-size:.6rem">Adicional</span>
-      {% elif ct != 'credit' %}
+      {% elif sc and sd %}
+      <span class="badge bg-light text-dark" style="font-size:.6rem">Créd/Déb</span>
+      {% elif not sc and not sd and not is_vr_va %}
+      <span class="badge bg-light text-dark" style="font-size:.6rem">Crédito</span>
+      {% elif not sc and not sd %}
       <span class="badge bg-light text-dark" style="font-size:.6rem">{{ card.type_label }}</span>
       {% endif %}
       <div class="ccw-digits">•••• {{ card.last_digits }}</div>
     </div>
   </div>
 
-  {# ── Mês + valor ────────────────────────────────────────────── #}
-  {% if ct in ('vr', 'va') %}
+  {# ── Mês + valor principal ──────────────────────────────────── #}
+  {% if is_vr_va %}
   <div class="ccw-invoice-label">Saldo em {{ month_name }}</div>
-  {% else %}
-  <div class="ccw-invoice-label">{{ 'Gastos' if ct == 'debit' else 'Fatura' }} de {{ month_name }}</div>
-  {% endif %}
   <div class="ccw-total">{{ d.total | brl }}</div>
+  {% elif sc and sd %}
+  {# Cartão com ambas as funções: exibir crédito como principal #}
+  <div class="ccw-invoice-label">Fatura de {{ month_name }}</div>
+  <div class="ccw-total">{{ d.credit_total | brl }}</div>
+  {% elif sd %}
+  <div class="ccw-invoice-label">Débito em {{ month_name }}</div>
+  <div class="ccw-total">{{ d.total | brl }}</div>
+  {% else %}
+  <div class="ccw-invoice-label">Fatura de {{ month_name }}</div>
+  <div class="ccw-total">{{ d.total | brl }}</div>
+  {% endif %}
+
+  {# ── Bloco extra débito (só quando tem ambos) ───────────────── #}
+  {% if sc and sd and d.debit_total is defined %}
+  <div class="d-flex justify-content-between align-items-center mt-2 mb-1 opacity-75"
+       style="font-size:.8rem">
+    <span><i class="bi bi-wallet2 me-1"></i>Débito {{ month_name }}</span>
+    <span class="fw-semibold">{{ d.debit_total | brl }}</span>
+  </div>
+  {% endif %}
 
   {# ── Barra VR/VA ────────────────────────────────────────────── #}
   {% if d.vr_balance %}
@@ -55,7 +78,7 @@
     </div>
   </div>
   {# ── Barra de limite (crédito) ──────────────────────────────── #}
-  {% elif d.limit and ct == 'credit' %}
+  {% elif d.limit and sc %}
   <div class="ccw-limit-bar-wrap">
     <div class="ccw-limit-bar">
       <div class="{{ bar_class }}" style="width:{{ [pct, 100]|min }}%"></div>
@@ -67,14 +90,14 @@
   </div>
   {% endif %}
 
-  {# ── Datas (só crédito) ─────────────────────────────────────── #}
-  {% if ct == 'credit' %}
+  {# ── Datas (crédito) ────────────────────────────────────────── #}
+  {% if sc %}
   <div class="ccw-dates">
     <span><i class="bi bi-calendar-x me-1 opacity-75"></i>Fecha dia {{ card.best_buy_day }}</span>
     <span class="ccw-dot">·</span>
     <span><i class="bi bi-calendar-check me-1 opacity-75"></i>Vence dia {{ card.due_day }}</span>
   </div>
-  {% elif ct in ('vr', 'va') and card.renewal_day %}
+  {% elif is_vr_va and card.renewal_day %}
   <div class="ccw-dates">
     <span><i class="bi bi-arrow-repeat me-1 opacity-75"></i>Renova dia {{ card.renewal_day }}</span>
   </div>
