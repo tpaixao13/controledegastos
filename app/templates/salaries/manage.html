@@ -15,6 +15,54 @@
   </div>
 </div>
 
+<!-- Projeção do mês -->
+{% set fixed_received   = fixed_items   | selectattr('received') | map(attribute='amount') | map('float') | sum %}
+{% set variable_received = variable_items | selectattr('received') | map(attribute='amount') | map('float') | sum %}
+{% set total_projected  = fixed_total + variable_total %}
+{% set total_received   = fixed_received + variable_received %}
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="card border-0 bg-light h-100">
+      <div class="card-body py-3">
+        <div class="text-muted small fw-semibold mb-1"><i class="bi bi-building me-1"></i>Renda Fixa</div>
+        <div class="fs-5 fw-bold">{{ fixed_total|brl }}</div>
+        {% if fixed_received < fixed_total %}
+        <div class="text-success small">{{ fixed_received|brl }} recebido</div>
+        {% else %}
+        <div class="text-success small"><i class="bi bi-check-circle-fill"></i> Tudo recebido</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card border-0 bg-light h-100">
+      <div class="card-body py-3">
+        <div class="text-muted small fw-semibold mb-1"><i class="bi bi-graph-up-arrow me-1"></i>Renda Variável</div>
+        <div class="fs-5 fw-bold">{{ variable_total|brl }}</div>
+        {% if variable_received < variable_total %}
+        <div class="text-success small">{{ variable_received|brl }} recebido</div>
+        {% else %}
+        <div class="text-success small"><i class="bi bi-check-circle-fill"></i> Tudo recebido</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card border-0 border-start border-4 border-success h-100">
+      <div class="card-body py-3">
+        <div class="text-muted small fw-semibold mb-1"><i class="bi bi-cash-stack me-1"></i>Total do mês</div>
+        <div class="fs-5 fw-bold text-success">{{ total_projected|brl }}</div>
+        {% if total_received < total_projected %}
+        <div class="text-muted small">{{ total_received|brl }} recebido de {{ total_projected|brl }}</div>
+        {% else %}
+        <div class="text-success small"><i class="bi bi-check-circle-fill"></i> Tudo recebido</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Abas -->
 <ul class="nav nav-tabs mb-4" id="rendaTab" role="tablist">
   <li class="nav-item" role="presentation">
