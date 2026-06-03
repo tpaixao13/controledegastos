@@ -59,19 +59,27 @@ def index():
     # Dados de cada cartão para exibição no widget
     card_data = []
     for card in cards:
-        total    = invoice_total(card.id, invoice_month, invoice_year)
+        sc = bool(card.supports_credit)
+        sd = bool(card.supports_debit)
+        cr_total = credit_invoice_total(card.id, invoice_month, invoice_year) if sc else 0.0
+        db_total = debit_total(card.id, invoice_month, invoice_year) if sd else 0.0
+        # total exibido no widget principal
+        total    = cr_total if sc else (db_total if sd else
+                   invoice_total(card.id, invoice_month, invoice_year))
         gradient, text_color = card_gradient(card)
         limit    = float(card.credit_limit) if card.credit_limit else None
-        pct      = round(total / limit * 100, 1) if limit else None
+        pct      = round(cr_total / limit * 100, 1) if (limit and sc) else None
         vr_bal   = vr_va_balance(card, invoice_month, invoice_year)
         card_data.append({
-            'card':       card,
-            'total':      total,
-            'gradient':   gradient,
-            'text_color': text_color,
-            'limit':      limit,
-            'pct':        pct,
-            'vr_balance': vr_bal,
+            'card':         card,
+            'total':        total,
+            'credit_total': cr_total,
+            'debit_total':  db_total,
+            'gradient':     gradient,
+            'text_color':   text_color,
+            'limit':        limit,
+            'pct':          pct,
+            'vr_balance':   vr_bal,
         })
 
     prev_month, prev_year = month_offset(invoice_month, invoice_year, -1)
