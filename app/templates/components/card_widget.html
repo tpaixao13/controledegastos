@@ -141,13 +141,32 @@
           {% include 'components/_card_form_fields.html' ignore missing %}
           {# Fallback inline se o include falhar #}
           <div class="row g-3">
+            {# Funções do cartão #}
             <div class="col-12">
-              <label class="form-label fw-semibold small">Tipo</label>
-              <select name="card_type" class="form-select form-select-sm"
-                      onchange="toggleCardEditFields(this, {{ card.id }})">
-                {% for val, lbl in [('credit','Crédito'),('debit','Débito'),
-                                    ('vr','VR — Vale Refeição'),('va','VA — Vale Alimentação')] %}
-                <option value="{{ val }}" {{ 'selected' if (card.card_type or 'credit') == val }}>{{ lbl }}</option>
+              <label class="form-label fw-semibold small">Funções</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="supports_credit"
+                         value="true" id="sc_{{ card.id }}"
+                         {{ 'checked' if card.supports_credit }}
+                         onchange="toggleCardEditFields2({{ card.id }})">
+                  <label class="form-check-label small" for="sc_{{ card.id }}">Crédito</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="supports_debit"
+                         value="true" id="sd_{{ card.id }}"
+                         {{ 'checked' if card.supports_debit }}>
+                  <label class="form-check-label small" for="sd_{{ card.id }}">Débito</label>
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold small">Tipo especial</label>
+              <select name="special_type" class="form-select form-select-sm"
+                      onchange="toggleCardEditFields2({{ card.id }})">
+                {% set cur_st = '' if (card.card_type or '') not in ('vr','va') else card.card_type %}
+                {% for val, lbl in [('','Nenhum'),('vr','VR — Vale Refeição'),('va','VA — Vale Alimentação')] %}
+                <option value="{{ val }}" {{ 'selected' if cur_st == val }}>{{ lbl }}</option>
                 {% endfor %}
               </select>
             </div>
