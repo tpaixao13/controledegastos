@@ -105,10 +105,10 @@ def edit(goal_id):
     uids = tenant_user_ids()
     goal = Goal.query.filter(Goal.id == goal_id, Goal.user_id.in_(uids)).first_or_404()
 
-    goal.title        = request.form.get('title', goal.title).strip()
-    goal.type         = request.form.get('type', goal.type).strip()
-    goal.category     = request.form.get('category', '').strip() or None
-    target_raw = request.form.get('target_amount', '').replace(',', '.')
+    goal.title    = request.form.get('title', goal.title).strip()
+    goal.type     = request.form.get('type', goal.type).strip()
+    goal.category = request.form.get('category', '').strip() or None
+    target_raw    = request.form.get('target_amount', '').replace(',', '.')
     try:
         goal.target_amount = float(target_raw) if target_raw else goal.target_amount
     except ValueError:
@@ -121,6 +121,9 @@ def edit(goal_id):
         pass
 
     db.session.commit()
+
+    if _is_ajax():
+        return jsonify({'status': 'ok', 'message': f'Meta "{goal.title}" atualizada!'})
     flash('Meta atualizada com sucesso!', 'success')
     return redirect(url_for('goals.index'))
 
@@ -131,6 +134,9 @@ def complete(goal_id):
     goal = Goal.query.filter(Goal.id == goal_id, Goal.user_id.in_(uids)).first_or_404()
     goal.completed_at = datetime.utcnow()
     db.session.commit()
+
+    if _is_ajax():
+        return jsonify({'status': 'ok', 'message': f'🎉 Meta "{goal.title}" concluída!'})
     flash(f'🎉 Meta "{goal.title}" marcada como concluída!', 'success')
     return redirect(url_for('goals.index'))
 
@@ -141,5 +147,8 @@ def delete(goal_id):
     goal = Goal.query.filter(Goal.id == goal_id, Goal.user_id.in_(uids)).first_or_404()
     goal.active = False
     db.session.commit()
+
+    if _is_ajax():
+        return jsonify({'status': 'ok', 'message': f'Meta "{goal.title}" arquivada.'})
     flash(f'Meta "{goal.title}" arquivada.', 'warning')
     return redirect(url_for('goals.index'))
