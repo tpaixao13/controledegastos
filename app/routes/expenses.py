@@ -408,6 +408,7 @@ def add():
                 month=form.month.data,
                 day=form.day.data,
                 card_id=card_id,
+                paid=bool(form.paid.data),
             )
             db.session.add(expense)
             db.session.commit()
