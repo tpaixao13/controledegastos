@@ -29,6 +29,7 @@
 
   // Avançados
   const bankRow         = form.querySelector('#m_bank_row');
+  const bankSelect      = form.querySelector('#m_bank');
   const cardRow         = form.querySelector('#m_card_row');
   const cardSelect      = form.querySelector('#m_card_id');
   const creditTypeRow   = form.querySelector('#m_credit_type_row');
