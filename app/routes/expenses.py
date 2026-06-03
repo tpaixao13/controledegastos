@@ -516,7 +516,8 @@ def edit(expense_id):
             flash('Despesa atualizada com sucesso!', 'success')
 
         db.session.commit()
-        return redirect(url_for('expenses.index'))
+        next_url = _safe_next(request.form.get('next'), url_for('expenses.index'))
+        return redirect(next_url)
 
     card_data_json = json.dumps({
         c.id: {
