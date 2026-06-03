@@ -179,7 +179,14 @@
             <td class="text-muted small">{{ e.bank or '—' }}</td>
             <td class="text-center">
               {% set due_date = '{:04d}-{:02d}-{:02d}'.format(e.year, e.month, e.day) %}
-              {% set dias_atraso = (today - today.__class__(e.year, e.month, e.day)).days if not e.paid else 0 %}
+              {% if e.paid %}
+                {% set dias_atraso = 0 %}
+              {% elif e.payment_method == 'Cartão de Crédito' and e.credit_card %}
+                {% set _venc = [e.credit_card.due_day, 28] | min %}
+                {% set dias_atraso = (today - today.__class__(e.year, e.month, _venc)).days %}
+              {% else %}
+                {% set dias_atraso = (today - today.__class__(e.year, e.month, e.day)).days %}
+              {% endif %}
               <form method="POST"
                     action="{{ url_for('expenses.toggle_paid', expense_id=e.id) }}"
                     style="display:inline">
