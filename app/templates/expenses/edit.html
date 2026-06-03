@@ -23,6 +23,7 @@
 
         <form method="POST" novalidate>
           {{ form.hidden_tag() }}
+          <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
 
           <div class="row g-3">
             <div class="col-md-6">
