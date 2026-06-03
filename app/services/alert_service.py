@@ -60,28 +60,37 @@ def generate_alerts(uids: list, month: int, year: int,
     cur_sal = sum_salaries_month(uids, year, month)
     cur_bal = cur_sal - cur_exp
 
+    # ── Helper: data real de vencimento da despesa ───────────────────
+    def _due_date(e) -> _date:
+        """
+        Para cartão de crédito: vencimento é o due_day do cartão no mês da fatura.
+        Para demais: é o dia registrado na despesa.
+        """
+        if (e.payment_method == 'Cartão de Crédito'
+                and e.card_id and e.credit_card and e.credit_card.due_day):
+            d = min(e.credit_card.due_day, 28)
+            try:
+                return _date(e.year, e.month, d)
+            except ValueError:
+                return _date(e.year, e.month, 28)
+        try:
+            return _date(e.year, e.month, e.day)
+        except (ValueError, TypeError):
+            return _date(e.year, e.month, 1)
+
     # ── 1. Despesas vencidas ─────────────────────────────────────────
-    overdue_rows = (Expense.query
-                    .filter(
-                        Expense.user_id.in_(uids),
-                        Expense.paid.isnot(True),
-                        or_(
-                            Expense.year < today.year,
-                            and_(Expense.year == today.year,
-                                 Expense.month < today.month),
-                            and_(Expense.year == today.year,
-                                 Expense.month == today.month,
-                                 Expense.day < today.day),
-                        )
-                    )
-                    .order_by(Expense.year, Expense.month, Expense.day)
-                    .all())
+    all_unpaid = (Expense.query
+                  .filter(Expense.user_id.in_(uids), Expense.paid.isnot(True))
+                  .order_by(Expense.year, Expense.month, Expense.day)
+                  .all())
+
+    overdue_rows = [e for e in all_unpaid if _due_date(e) < today]
 
     if overdue_rows:
         total_ov = sum(float(e.amount) for e in overdue_rows)
         n = len(overdue_rows)
         oldest = overdue_rows[0]
-        days_late = (today - _date(oldest.year, oldest.month, oldest.day)).days
+        days_late = (today - _due_date(oldest)).days
         alerts.append({
             'type': 'danger', 'priority': 1,
             'key': _key('overdue', n, year, month),
@@ -98,20 +107,10 @@ def generate_alerts(uids: list, month: int, year: int,
 
     # ── 2. Vencimentos nos próximos 3 dias ───────────────────────────
     soon_limit = today + timedelta(days=_TH['due_soon_days'])
-    due_soon = []
-    pending_month = (Expense.query
-                     .filter(Expense.user_id.in_(uids),
-                             Expense.year == today.year,
-                             Expense.month == today.month,
-                             Expense.paid.isnot(True))
-                     .all())
-    for e in pending_month:
-        try:
-            exp_date = _date(e.year, e.month, e.day)
-            if today <= exp_date <= soon_limit:
-                due_soon.append(e)
-        except (ValueError, TypeError):
-            pass
+    pending_month = [e for e in all_unpaid
+                     if e.year == today.year and e.month == today.month]
+    due_soon = [e for e in pending_month
+                if today <= _due_date(e) <= soon_limit]
 
     if due_soon:
         n = len(due_soon)
