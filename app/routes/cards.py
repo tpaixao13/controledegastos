@@ -322,18 +322,36 @@ def api_invoice_preview():
     is_open = purchase_date.day <= card.best_buy_day
     days_to_closing = (card.best_buy_day - purchase_date.day) if is_open else None
 
-    credit_limit   = float(card.credit_limit) if card.credit_limit else None
-    current_usage  = invoice_total(card.id, inv_month, inv_year) if credit_limit else None
-    projected      = (current_usage + amount) if (current_usage is not None and amount) else current_usage
+    # Limite e uso no nível da CONTA (compartilhado entre cartões do mesmo grupo)
+    credit_limit = card.effective_limit
+    if credit_limit:
+        if card.account_id:
+            current_usage = account_credit_usage(card.account_id, inv_month, inv_year)
+        else:
+            current_usage = credit_invoice_total(card.id, inv_month, inv_year)
+    else:
+        current_usage = None
+
+    projected = (current_usage + amount) if (current_usage is not None and amount) else current_usage
+
+    # Info da conta para contexto
+    account_label = None
+    account_total_cards = 1
+    if card.account_id and card.account:
+        account_label       = card.account.display_label
+        account_total_cards = card.account.cards.count()
 
     return jsonify({
-        'invoice_month':    get_invoice_label(inv_year, inv_month),
-        'invoice_year':     inv_year,
-        'invoice_month_num': inv_month,
-        'is_open':          is_open,
-        'days_to_closing':  days_to_closing,
-        'due_day':          card.due_day,
-        'current_usage':    current_usage,
-        'credit_limit':     credit_limit,
-        'projected_usage':  projected,
+        'invoice_month':      get_invoice_label(inv_year, inv_month),
+        'invoice_year':       inv_year,
+        'invoice_month_num':  inv_month,
+        'is_open':            is_open,
+        'days_to_closing':    days_to_closing,
+        'due_day':            card.due_day,
+        'current_usage':      current_usage,
+        'credit_limit':       credit_limit,
+        'projected_usage':    projected,
+        'account_label':      account_label,
+        'account_total_cards': account_total_cards,
+        'is_shared_limit':    account_total_cards > 1,
     })
