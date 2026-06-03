@@ -140,9 +140,12 @@ def add():
             flash('O melhor dia de compra deve ser anterior ao dia de vencimento.', 'warning')
             return redirect(url_for('cards.index'))
 
-        ct = form.card_type.data or 'credit'
-        due   = form.due_day.data or 1
-        best  = form.best_buy_day.data or 1
+        st = form.special_type.data or ''
+        sc = bool(form.supports_credit.data) if st not in ('vr', 'va') else False
+        sd = bool(form.supports_debit.data)  if st not in ('vr', 'va') else False
+        ct = st if st in ('vr', 'va') else ('credit' if sc else 'debit')
+        due  = form.due_day.data or 1
+        best = form.best_buy_day.data or 1
         card = CreditCard(
             user_id=user_id,
             nickname=form.nickname.data or None,
@@ -152,10 +155,12 @@ def add():
             best_buy_day=best,
             credit_limit=form.credit_limit.data or None,
             card_type=ct,
+            supports_credit=sc,
+            supports_debit=sd,
             is_virtual=bool(form.is_virtual.data),
             is_additional=bool(form.is_additional.data),
-            monthly_amount=form.monthly_amount.data if ct in ('vr', 'va') else None,
-            renewal_day=form.renewal_day.data if ct in ('vr', 'va') else None,
+            monthly_amount=form.monthly_amount.data if st in ('vr', 'va') else None,
+            renewal_day=form.renewal_day.data if st in ('vr', 'va') else None,
         )
         db.session.add(card)
         db.session.commit()
