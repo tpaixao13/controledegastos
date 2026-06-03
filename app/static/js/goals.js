@@ -1,63 +1,43 @@
 /**
- * FinFam — Goals AJAX handler
+ * FinFam — Goals actions (edit, complete, archive, add)
+ * Segue o mesmo padrão do expense_modal.js que funciona.
  */
-document.addEventListener('DOMContentLoaded', () => {
-
-  async function goalAction(form) {
-    // Verificação defensiva: action deve apontar para endpoint específico de meta
-    const action = form.action || '';
-    if (!/\/goals\/(edit|complete|delete|add)/.test(action)) {
-      console.warn('[goals.js] form.action inválido — modal aberto sem selecionar meta?', action);
-      window.showToast?.('Erro: reabra o modal e tente novamente.', 'danger');
-      return;
-    }
+(() => {
+  // ── Helper: envia form via AJAX e retorna true/false ──────────────
+  async function postForm(form) {
+    if (!form) return false;
 
     const btn      = form.querySelector('[type="submit"]');
-    const origHtml = btn?.innerHTML ?? '';
+    const origHtml = btn ? btn.innerHTML : '';
     if (btn) {
       btn.disabled  = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
     }
 
     try {
-      const csrfToken = form.querySelector('[name="csrf_token"]')?.value ?? '';
-
       const resp = await fetch(form.action, {
         method:  'POST',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRFToken':       csrfToken,
-        },
-        body: new FormData(form),
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        body:    new FormData(form),
       });
 
-      // Tentar parsear JSON; se falhar mostrar erro legível
-      let data;
-      try {
-        data = await resp.json();
-      } catch {
-        const text = await resp.text().catch(() => '');
-        console.error('[goals.js] Resposta não é JSON. Status:', resp.status, text.slice(0, 200));
-        window.showToast?.(`Erro ${resp.status} ao processar ação.`, 'danger');
-        return;
+      const data = await resp.json();
+
+      if (data.status === 'ok') {
+        const modalEl = form.closest('.modal');
+        if (modalEl) {
+          const inst = bootstrap.Modal.getInstance(modalEl);
+          if (inst) inst.hide();
+        }
+        window.showToast?.(data.message, 'success');
+        return true;
       }
 
-      if (!resp.ok || data.status !== 'ok') {
-        window.showToast?.(data.message || `Erro ${resp.status}.`, 'danger');
-        return;
-      }
-
-      // Fechar modal
-      const modalEl = form.closest('.modal');
-      if (modalEl) {
-        (bootstrap.Modal.getInstance(modalEl) ?? bootstrap.Modal.getOrCreate(modalEl)).hide();
-      }
-
-      window.showToast?.(data.message, 'success');
-      return true; // sinaliza sucesso para o caller
+      window.showToast?.(data.message || 'Erro ao processar.', 'danger');
+      return false;
 
     } catch (err) {
-      console.error('[goals.js] Erro na requisição:', err);
+      console.error('[goals]', err);
       window.showToast?.('Erro de conexão. Tente novamente.', 'danger');
       return false;
     } finally {
@@ -68,62 +48,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // ── Validar que o form tem action apontando para /goals/ ──────────
+  function validAction(form) {
+    return form && /\/goals\/(edit|complete|delete|add)/.test(form.action || '');
+  }
+
   // ── Concluir ──────────────────────────────────────────────────────
-  document.getElementById('formComplete')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const ok = await goalAction(e.target);
-    if (ok) {
-      const goalId = e.target.action.split('/').pop();
-      const card   = document.getElementById(`goal-card-${goalId}`);
-      if (card) {
-        card.classList.add('border-success', 'border-opacity-50');
-        card.style.opacity = '.6';
-        const footer = card.querySelector('.card-footer');
-        if (footer) footer.innerHTML =
-          '<div class="text-center text-success small fw-semibold py-1">' +
-          '<i class="bi bi-trophy-fill me-1"></i>Meta concluída!</div>';
-      }
-      setTimeout(() => location.reload(), 900);
-    }
-  });
+  const fComplete = document.getElementById('formComplete');
+  if (fComplete) {
+    fComplete.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validAction(fComplete)) { fComplete.submit(); return; }
+      const ok = await postForm(fComplete);
+      if (ok) setTimeout(() => location.reload(), 700);
+    });
+  }
 
   // ── Arquivar ──────────────────────────────────────────────────────
-  document.getElementById('formDelete')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const ok = await goalAction(e.target);
-    if (ok) {
-      const goalId = e.target.action.split('/').pop();
-      const col    = document.getElementById(`goal-card-${goalId}`)
-                              ?.closest('.col-md-6, .col-xl-4');
-      if (col) {
-        col.style.transition = 'opacity .35s, transform .35s';
-        col.style.opacity    = '0';
-        col.style.transform  = 'scale(.95)';
-        setTimeout(() => col.remove(), 400);
-      } else {
-        setTimeout(() => location.reload(), 700);
+  const fDelete = document.getElementById('formDelete');
+  if (fDelete) {
+    fDelete.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validAction(fDelete)) { fDelete.submit(); return; }
+      const ok = await postForm(fDelete);
+      if (ok) {
+        const goalId = fDelete.action.split('/').pop();
+        const col    = document.getElementById('goal-card-' + goalId)
+                               ?.closest('.col-md-6, .col-xl-4');
+        if (col) {
+          col.style.transition = 'opacity .35s, transform .35s';
+          col.style.opacity    = '0';
+          col.style.transform  = 'scale(.95)';
+          setTimeout(() => col.remove(), 400);
+        } else {
+          setTimeout(() => location.reload(), 700);
+        }
       }
-    }
-  });
+    });
+  }
 
   // ── Editar ────────────────────────────────────────────────────────
-  document.getElementById('formEditGoal')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const ok = await goalAction(e.target);
-    if (ok) setTimeout(() => location.reload(), 700);
-  });
+  const fEdit = document.getElementById('formEditGoal');
+  if (fEdit) {
+    fEdit.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validAction(fEdit)) { fEdit.submit(); return; }
+      const ok = await postForm(fEdit);
+      if (ok) setTimeout(() => location.reload(), 700);
+    });
+  }
 
   // ── Nova Meta ─────────────────────────────────────────────────────
-  document.querySelector('#modalAddGoal form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const errDiv = e.target.querySelector('.goal-form-error');
-    errDiv?.classList.add('d-none');
-    const ok = await goalAction(e.target);
-    if (ok) {
-      setTimeout(() => location.reload(), 700);
-    } else {
-      errDiv?.classList.remove('d-none');
-    }
-  });
+  const fAdd = document.querySelector('#modalAddGoal form');
+  if (fAdd) {
+    fAdd.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!validAction(fAdd)) { fAdd.submit(); return; }
+      const errDiv = fAdd.querySelector('.goal-form-error');
+      errDiv?.classList.add('d-none');
+      const ok = await postForm(fAdd);
+      if (ok) setTimeout(() => location.reload(), 700);
+      else errDiv?.classList.remove('d-none');
+    });
+  }
 
-});
+})();
