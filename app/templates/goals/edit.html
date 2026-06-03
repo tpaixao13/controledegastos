@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Meta — FinFam{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header bg-primary text-white fw-semibold">
+        <i class="bi bi-pencil me-2"></i>Editar Meta
+      </div>
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('goals.edit', goal_id=goal.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Tipo de meta</label>
+            <select name="type" class="form-select" required>
+              <option value="saving"         {{ 'selected' if goal.type == 'saving' }}>💰 Economizar</option>
+              <option value="spending_limit" {{ 'selected' if goal.type == 'spending_limit' }}>📉 Limite de gasto</option>
+              <option value="debt_reduction" {{ 'selected' if goal.type == 'debt_reduction' }}>💳 Quitar dívida</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Título</label>
+            <input type="text" name="title" class="form-control"
+                   value="{{ goal.title }}" required maxlength="120">
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Valor alvo (R$)</label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="text" name="target_amount" class="form-control"
+                       value="{{ goal.target_amount }}" required>
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Categoria</label>
+              <select name="category" class="form-select">
+                <option value="">Todas</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {{ 'selected' if goal.category == cat }}>{{ cat }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Prazo (opcional)</label>
+            <input type="date" name="due_date" class="form-control"
+                   value="{{ goal.due_date.strftime('%Y-%m-%d') if goal.due_date else '' }}">
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary fw-semibold px-4">
+              <i class="bi bi-check-lg me-1"></i>Salvar
+            </button>
+            <a href="{{ url_for('goals.index') }}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
