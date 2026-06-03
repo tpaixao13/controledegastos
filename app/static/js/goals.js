@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Verificação defensiva: action deve apontar para endpoint específico de meta
     const action = form.action || '';
     if (!/\/goals\/(edit|complete|delete|add)/.test(action)) {
-      console.error('[goals.js] form.action inválido:', action);
-      window.showToast?.('Erro: ação não configurada. Tente novamente.', 'danger');
+      console.warn('[goals.js] form.action inválido — modal aberto sem selecionar meta?', action);
+      window.showToast?.('Erro: reabra o modal e tente novamente.', 'danger');
       return;
     }
 
