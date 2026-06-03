@@ -171,7 +171,9 @@ def add():
         if not user_id or user_id not in uids:
             user_id = uids[0] if uids else None
 
-        if (form.card_type.data or 'credit') == 'credit' and (form.best_buy_day.data or 0) >= (form.due_day.data or 31):
+        _st = form.special_type.data or ''
+        _sc = bool(form.supports_credit.data) if _st not in ('vr', 'va') else False
+        if _sc and (form.best_buy_day.data or 0) >= (form.due_day.data or 31):
             flash('O melhor dia de compra deve ser anterior ao dia de vencimento.', 'warning')
             return redirect(url_for('cards.index'))
 
@@ -221,7 +223,9 @@ def edit(card_id):
                                    CreditCard.user_id.in_(uids)).first_or_404()
     form = CreditCardForm()
     if form.validate_on_submit():
-        if (form.card_type.data or 'credit') == 'credit' and (form.best_buy_day.data or 0) >= (form.due_day.data or 31):
+        _st = form.special_type.data or ''
+        _sc = bool(form.supports_credit.data) if _st not in ('vr', 'va') else False
+        if _sc and (form.best_buy_day.data or 0) >= (form.due_day.data or 31):
             flash('O melhor dia de compra deve ser anterior ao dia de vencimento.', 'warning')
             return redirect(url_for('cards.index'))
 
