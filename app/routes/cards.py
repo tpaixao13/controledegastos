@@ -175,20 +175,26 @@ def add():
             flash('O melhor dia de compra deve ser anterior ao dia de vencimento.', 'warning')
             return redirect(url_for('cards.index'))
 
-        st = form.special_type.data or ''
-        sc = bool(form.supports_credit.data) if st not in ('vr', 'va') else False
-        sd = bool(form.supports_debit.data)  if st not in ('vr', 'va') else False
-        ct = st if st in ('vr', 'va') else ('credit' if sc else 'debit')
+        st   = form.special_type.data or ''
+        sc   = bool(form.supports_credit.data) if st not in ('vr', 'va') else False
+        sd   = bool(form.supports_debit.data)  if st not in ('vr', 'va') else False
+        ct   = st if st in ('vr', 'va') else ('credit' if sc else 'debit')
+        bank = form.bank.data or None
         due  = form.due_day.data or 1
         best = form.best_buy_day.data or 1
+        lim  = form.credit_limit.data or None
+
+        # Auto-criar ou reusar conta de crédito por banco
+        account = _get_or_create_account(user_id, bank, lim) if sc else None
+
         card = CreditCard(
             user_id=user_id,
             nickname=form.nickname.data or None,
             last_digits=form.last_digits.data,
-            bank=form.bank.data or None,
+            bank=bank,
             due_day=due,
             best_buy_day=best,
-            credit_limit=form.credit_limit.data or None,
+            credit_limit=lim,
             card_type=ct,
             supports_credit=sc,
             supports_debit=sd,
@@ -196,6 +202,7 @@ def add():
             is_additional=bool(form.is_additional.data),
             monthly_amount=form.monthly_amount.data if st in ('vr', 'va') else None,
             renewal_day=form.renewal_day.data if st in ('vr', 'va') else None,
+            account_id=account.id if account else None,
         )
         db.session.add(card)
         db.session.commit()
