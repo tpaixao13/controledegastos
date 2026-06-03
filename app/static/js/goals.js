@@ -4,9 +4,11 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   async function goalAction(form) {
-    // Verificação defensiva: form.action deve apontar para um endpoint de metas
-    if (!form.action || form.action === window.location.href) {
-      console.error('[goals.js] form.action não configurado:', form.action);
+    // Verificação defensiva: action deve incluir /goals/ e não pode ser a página atual
+    const action = form.action || '';
+    const validAction = action.includes('/goals/') && !action.endsWith('/goals/');
+    if (!validAction) {
+      console.error('[goals.js] form.action inválido:', action);
       window.showToast?.('Erro: ação não configurada. Tente novamente.', 'danger');
       return;
     }
