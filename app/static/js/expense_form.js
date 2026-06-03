@@ -30,20 +30,27 @@ document.addEventListener('DOMContentLoaded', function () {
     'VA':                c => c.card_type === 'va',
   };
 
-  function filterCardOptions(method) {
+  function filterCardOptions(method, selectedBank) {
     if (!cardSelect) return;
     const fn = _CARD_FILTER[method] || (() => false);
     const visible = [];
     Array.from(cardSelect.options).forEach(opt => {
       if (opt.value === '0') { opt.style.display = ''; return; }
       const card = cardData[parseInt(opt.value)];
-      const show = card && fn(card);
+      const matchMethod = card && fn(card);
+      const matchBank   = !selectedBank || card.bank === selectedBank;
+      const show = matchMethod && matchBank;
       opt.style.display = show ? '' : 'none';
       if (show) visible.push(opt.value);
     });
     const v = parseInt(cardSelect.value, 10);
-    if (v > 0 && (!cardData[v] || !fn(cardData[v]))) cardSelect.value = '0';
-    // Auto-selecionar se só existe um cartão do tipo
+    if (v > 0) {
+      const card = cardData[v];
+      if (!card || !fn(card) || (selectedBank && card.bank !== selectedBank)) {
+        cardSelect.value = '0';
+      }
+    }
+    // Auto-selecionar se só existe um cartão compatível
     if (visible.length === 1 && parseInt(cardSelect.value, 10) === 0) {
       cardSelect.value = visible[0];
     }
@@ -51,21 +58,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Visibilidade dos campos ────────────────────────────────────
   function updateForm() {
-    const method      = paymentSelect ? paymentSelect.value : '';
-    const isCredit    = method === 'Cartão de Crédito';
-    const hasBank     = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'VR', 'VA'].includes(method);
+    const method       = paymentSelect ? paymentSelect.value : '';
+    const isCredit     = method === 'Cartão de Crédito';
+    const hasBank      = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'VR', 'VA'].includes(method);
     const isCardMethod = !!_CARD_FILTER[method];
+    const selectedBank = bankSelect ? bankSelect.value : '';
 
-    if (bankRow)            bankRow.style.display      = hasBank ? '' : 'none';
+    if (bankRow)            bankRow.style.display = hasBank ? '' : 'none';
     if (installmentSection) installmentSection.style.display = isCredit ? '' : 'none';
     if (numInstallmentsRow && !isCredit) numInstallmentsRow.style.display = 'none';
     if (!isCredit && billingHint)        billingHint.style.display = 'none';
 
-    if (isCardMethod) {
-      filterCardOptions(method);
+    // Cartão só aparece depois que o banco for selecionado
+    if (isCardMethod && selectedBank) {
+      filterCardOptions(method, selectedBank);
       if (cardRow) cardRow.style.display = '';
     } else {
       if (cardRow) cardRow.style.display = 'none';
+      if (cardSelect) cardSelect.value = '0';
     }
 
     if (isCredit) {
