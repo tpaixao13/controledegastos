@@ -1,7 +1,7 @@
 import json
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from app import db
-from app.models import CreditCard, Expense
+from app.models import CreditCard, CreditAccount, Expense
 from app.forms import CreditCardForm
 from app.utils import tenant_user_ids, tenant_users, month_offset
 from app.services.card_service import (
