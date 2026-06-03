@@ -83,25 +83,38 @@ def index():
     for card in cards:
         sc = bool(card.supports_credit)
         sd = bool(card.supports_debit)
-        cr_total = credit_invoice_total(card.id, invoice_month, invoice_year) if sc else 0.0
+
+        # Uso de crédito: nível de CONTA (todos os cartões do mesmo grupo)
+        if sc and card.account_id:
+            cr_total = account_credit_usage(card.account_id, invoice_month, invoice_year)
+        elif sc:
+            cr_total = credit_invoice_total(card.id, invoice_month, invoice_year)
+        else:
+            cr_total = 0.0
+
         db_total = debit_total(card.id, invoice_month, invoice_year) if sd else 0.0
-        # total exibido no widget principal
         total    = cr_total if sc else (db_total if sd else
                    invoice_total(card.id, invoice_month, invoice_year))
+
         gradient, text_color = card_gradient(card)
-        limit    = float(card.credit_limit) if card.credit_limit else None
-        pct      = round(cr_total / limit * 100, 1) if (limit and sc) else None
-        vr_bal   = vr_va_balance(card, invoice_month, invoice_year)
+        limit = card.effective_limit
+        pct   = round(cr_total / limit * 100, 1) if (limit and sc) else None
+        vr_bal = vr_va_balance(card, invoice_month, invoice_year)
+
+        # Quantos cartões compartilham o limite
+        account_cards = card.account.cards.count() if card.account_id else 1
+
         card_data.append({
-            'card':         card,
-            'total':        total,
-            'credit_total': cr_total,
-            'debit_total':  db_total,
-            'gradient':     gradient,
-            'text_color':   text_color,
-            'limit':        limit,
-            'pct':          pct,
-            'vr_balance':   vr_bal,
+            'card':          card,
+            'total':         total,
+            'credit_total':  cr_total,
+            'debit_total':   db_total,
+            'gradient':      gradient,
+            'text_color':    text_color,
+            'limit':         limit,
+            'pct':           pct,
+            'vr_balance':    vr_bal,
+            'account_cards': account_cards,
         })
 
     prev_month, prev_year = month_offset(invoice_month, invoice_year, -1)
