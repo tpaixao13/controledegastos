@@ -123,21 +123,24 @@
   }
 
   function updateFields() {
-    const method       = fPayment?.value || '';
-    const isCredit     = method === 'Cartão de Crédito';
-    const hasBank      = _BANK_METHODS.includes(method);
-    const isCardMethod = !!_METHOD_TO_TYPE[method];
+    const method      = fPayment?.value || '';
+    const isCredit    = method === 'Cartão de Crédito';
+    const hasBank     = _BANK_METHODS.includes(method);
+    const isCardMethod = !!_METHOD_FILTER[method];
     const isParcelado  = form.querySelector('#m_credit_parcelado')?.checked;
+    const selectedBank = bankSelect?.value || '';
 
     bankRow?.classList.toggle('d-none', !hasBank);
     creditTypeRow?.classList.toggle('d-none', !isCredit);
     installmentsRow?.classList.toggle('d-none', !(isCredit && isParcelado));
 
-    if (isCardMethod) {
-      updateCardOptions(method);
+    // Cartão só aparece depois que o banco for selecionado
+    if (isCardMethod && selectedBank) {
+      updateCardOptions(method, selectedBank);
       cardRow?.classList.remove('d-none');
     } else {
       cardRow?.classList.add('d-none');
+      if (cardSelect) cardSelect.value = '0';
     }
 
     updateInstallmentHint();
