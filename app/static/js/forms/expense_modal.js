@@ -203,7 +203,9 @@
       const bColor = pct > 80 ? 'bg-danger' : pct > 60 ? 'bg-warning' : 'bg-success';
       bar.style.width    = pct + '%';
       bar.className      = 'progress-bar ' + bColor;
-      ltxt.innerHTML     = `Após essa compra: <strong>${_fmtBrl(usage)}</strong> / ${_fmtBrl(info.creditLimit)} (${pct.toFixed(0)}%)`;
+      const sharedNote = srv.is_shared_limit
+        ? ` <small class="opacity-75">(limite compartilhado)</small>` : '';
+      ltxt.innerHTML = `Após essa compra: <strong>${_fmtBrl(usage)}</strong> / ${_fmtBrl(info.creditLimit)} (${pct.toFixed(0)}%)${sharedNote}`;
       limit.style.display = '';
     } else {
       limit.style.display = 'none';
