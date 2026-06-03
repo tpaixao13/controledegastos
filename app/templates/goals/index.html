@@ -122,18 +122,23 @@
             </li>
             {% if d.status != 'completed' %}
             <li>
-              <button class="dropdown-item small text-success"
-                      onclick="confirmComplete({{ g.id }}, '{{ g.title|e }}')">
-                <i class="bi bi-check-circle me-2"></i>Marcar concluída
-              </button>
+              <form method="POST" action="{{ url_for('goals.complete', goal_id=g.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="dropdown-item small text-success">
+                  <i class="bi bi-check-circle me-2"></i>Marcar concluída
+                </button>
+              </form>
             </li>
             {% endif %}
             <li><hr class="dropdown-divider my-1"></li>
             <li>
-              <button class="dropdown-item small text-danger"
-                      onclick="confirmDelete({{ g.id }}, '{{ g.title|e }}')">
-                <i class="bi bi-archive me-2"></i>Arquivar
-              </button>
+              <form method="POST" action="{{ url_for('goals.delete', goal_id=g.id) }}"
+                    onsubmit="return confirm('Arquivar esta meta?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="dropdown-item small text-danger">
+                  <i class="bi bi-archive me-2"></i>Arquivar
+                </button>
+              </form>
             </li>
           </ul>
         </div>
