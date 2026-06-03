@@ -126,6 +126,28 @@ def debit_total(card_id: int, month: int, year: int) -> float:
     return invoice_total(card_id, month, year, 'Cartão de Débito')
 
 
+def account_credit_usage(account_id: int, month: int, year: int) -> float:
+    """
+    Soma despesas de crédito de TODOS os cartões da conta no mês.
+    Esta é a fonte da verdade para uso de limite compartilhado.
+    """
+    card_ids = [
+        row[0] for row in
+        db.session.query(CreditCard.id).filter(CreditCard.account_id == account_id).all()
+    ]
+    if not card_ids:
+        return 0.0
+    return float(
+        db.session.query(func.sum(Expense.amount))
+        .filter(
+            Expense.card_id.in_(card_ids),
+            Expense.month == month,
+            Expense.year == year,
+            Expense.payment_method == 'Cartão de Crédito',
+        ).scalar() or 0
+    )
+
+
 def future_installments_total(card_id: int, month: int, year: int) -> float:
     """Total de parcelas futuras (do mesmo cartão) além do mês atual."""
     total = (db.session.query(func.sum(Expense.amount))
