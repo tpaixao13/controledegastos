@@ -250,11 +250,37 @@ class Expense(db.Model):
         return f'<Expense {self.description} R${self.amount} {self.month}/{self.year}>'
 
 
+class CreditAccount(db.Model):
+    """
+    Linha de crédito: agrupa cartões do mesmo banco/conta que compartilham limite.
+    Um cartão principal + adicionais/virtuais pertencem ao mesmo CreditAccount.
+    """
+    __tablename__ = 'credit_accounts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    bank = db.Column(db.Text, nullable=True)
+    label = db.Column(db.Text, nullable=True)
+    credit_limit = db.Column(db.Numeric(12, 2), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    cards = db.relationship('CreditCard', backref='account', lazy='dynamic',
+                            foreign_keys='CreditCard.account_id')
+
+    @property
+    def display_label(self) -> str:
+        return self.label or self.bank or 'Conta de Crédito'
+
+    def __repr__(self):
+        return f'<CreditAccount {self.display_label} lim={self.credit_limit}>'
+
+
 class CreditCard(db.Model):
     __tablename__ = 'credit_cards'
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey('credit_accounts.id'), nullable=True)
     nickname = db.Column(db.Text, nullable=True)
     last_digits = db.Column(db.String(4), nullable=False)
     bank = db.Column(db.Text, nullable=True)
