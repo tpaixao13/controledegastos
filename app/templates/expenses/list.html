@@ -225,7 +225,7 @@
                 </button>
               </form>
               {% endif %}
-              <a href="{{ url_for('expenses.edit', expense_id=e.id) }}" class="btn btn-sm btn-outline-secondary">
+              <a href="{{ url_for('expenses.edit', expense_id=e.id, next=request.url) }}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-pencil"></i>
               </a>
               <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
