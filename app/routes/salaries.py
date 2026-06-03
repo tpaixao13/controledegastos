@@ -52,9 +52,12 @@ def manage():
     form.user_id.choices = [(u.id, u.name) for u in users]
 
     now = datetime.now()
+    cur_month = request.args.get('month', now.month, type=int)
+    cur_year  = request.args.get('year',  now.year,  type=int)
+
     if not form.is_submitted():
-        form.year.data = now.year
-        form.month.data = now.month
+        form.year.data  = cur_year
+        form.month.data = cur_month
 
     active_tab = request.args.get('tab', 'fixa')
 
@@ -66,7 +69,8 @@ def manage():
         pay_day_type, pay_day, err = _parse_payment_day(form)
         if err:
             flash(err, 'danger')
-            return redirect(url_for('salaries.manage', tab=income_type))
+            return redirect(url_for('salaries.manage', tab=income_type,
+                                    month=cur_month, year=cur_year))
 
         if income_type == 'fixa' and form.is_recurring.data:
             n = form.recurring_months.data
@@ -111,28 +115,30 @@ def manage():
             db.session.commit()
             flash('Renda adicionada com sucesso!', 'success')
 
-        return redirect(url_for('salaries.manage', tab=income_type))
+        return redirect(url_for('salaries.manage', tab=income_type,
+                                month=cur_month, year=cur_year))
 
     all_salaries = (Salary.query
-                    .filter(Salary.user_id.in_(uids))
+                    .filter(Salary.user_id.in_(uids),
+                            Salary.year  == cur_year,
+                            Salary.month == cur_month)
                     .join(User)
-                    .order_by(Salary.year.desc(), Salary.month.desc(), User.name)
+                    .order_by(User.name)
                     .all())
 
-    fixed = _group_salaries([s for s in all_salaries if s.income_type == 'fixa'], now)
-    variable = _group_salaries([s for s in all_salaries if s.income_type == 'variavel'], now)
-
-    def _totals(groups):
-        return {key: sum(float(s.amount) for s in items) for key, items in groups.items()}
+    fixed    = [s for s in all_salaries if s.income_type == 'fixa']
+    variable = [s for s in all_salaries if s.income_type == 'variavel']
 
     return render_template('salaries/manage.html',
                            form=form,
-                           fixed_groups=fixed,
-                           variable_groups=variable,
-                           fixed_totals=_totals(fixed),
-                           variable_totals=_totals(variable),
+                           fixed_items=fixed,
+                           variable_items=variable,
+                           fixed_total=sum(float(s.amount) for s in fixed),
+                           variable_total=sum(float(s.amount) for s in variable),
                            variable_sources=VARIABLE_SOURCES,
                            active_tab=active_tab,
+                           cur_month=cur_month,
+                           cur_year=cur_year,
                            users=users,
                            user_colors=user_color_map(users))
 
