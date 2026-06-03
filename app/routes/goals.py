@@ -1,5 +1,5 @@
 from datetime import date as _date, datetime
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, jsonify
 from app import db
 from app.models import Goal, User
 from app.utils import tenant_user_ids, tenant_users, get_month_year
