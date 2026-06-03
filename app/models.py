@@ -303,8 +303,11 @@ class CreditCard(db.Model):
     @property
     def effective_limit(self) -> float | None:
         """Limite real: da conta (compartilhado) se vinculado, senão do próprio cartão."""
-        if self.account_id and self.account and self.account.credit_limit:
-            return float(self.account.credit_limit)
+        try:
+            if self.account and self.account.credit_limit:
+                return float(self.account.credit_limit)
+        except Exception:
+            pass
         return float(self.credit_limit) if self.credit_limit else None
 
     @property
