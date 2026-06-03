@@ -33,6 +33,10 @@ def index():
                            month_name=MONTH_NAMES[month - 1])
 
 
+def _is_ajax():
+    return request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+
 @goals_bp.route('/add', methods=['POST'])
 def add():
     uids  = tenant_user_ids()
@@ -40,6 +44,8 @@ def add():
     if not user_id or user_id not in uids:
         user_id = uids[0] if uids else None
     if not user_id:
+        if _is_ajax():
+            return jsonify({'status': 'error', 'message': 'Usuário inválido.'}), 400
         flash('Usuário inválido.', 'danger')
         return redirect(url_for('goals.index'))
 
@@ -51,6 +57,8 @@ def add():
     start_date_raw= request.form.get('start_date', '').strip()
 
     if not title or not gtype or not target_raw:
+        if _is_ajax():
+            return jsonify({'status': 'error', 'message': 'Preencha título, tipo e valor.'}), 422
         flash('Preencha título, tipo e valor.', 'danger')
         return redirect(url_for('goals.index'))
 
@@ -59,6 +67,8 @@ def add():
         if target <= 0:
             raise ValueError
     except ValueError:
+        if _is_ajax():
+            return jsonify({'status': 'error', 'message': 'Valor inválido.'}), 422
         flash('Valor inválido.', 'danger')
         return redirect(url_for('goals.index'))
 
@@ -83,6 +93,9 @@ def add():
     )
     db.session.add(goal)
     db.session.commit()
+
+    if _is_ajax():
+        return jsonify({'status': 'ok', 'message': f'Meta "{title}" criada com sucesso!'})
     flash(f'Meta "{title}" criada com sucesso!', 'success')
     return redirect(url_for('goals.index'))
 
