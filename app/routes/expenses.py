@@ -147,7 +147,13 @@ def index():
                   .distinct().order_by(Expense.category).all())
     categories = [c[0] for c in categories]
 
-    payment_methods = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'Dinheiro']
+    payment_methods = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'Dinheiro', 'VR', 'VA']
+
+    banks = (db.session.query(Expense.bank)
+             .filter(Expense.user_id.in_(uids),
+                     Expense.bank.isnot(None), Expense.bank != '')
+             .distinct().order_by(Expense.bank).all())
+    banks = [b[0] for b in banks]
 
     return render_template('expenses/list.html',
                            expenses=expenses,
@@ -155,13 +161,14 @@ def index():
                            users=users,
                            categories=categories,
                            payment_methods=payment_methods,
+                           banks=banks,
                            total_mes=total_mes,
                            today=now.date(),
                            user_colors=user_color_map(users),
                            filters={'user_id': user_id, 'month': month, 'year': year,
                                     'category': category, 'payment_method': payment_method,
-                                    'paid': paid_filter, 'date_from': date_from,
-                                    'date_to': date_to})
+                                    'bank': bank_filter, 'paid': paid_filter,
+                                    'date_from': date_from, 'date_to': date_to})
 
 
 _EXPORT_HEADERS = [
