@@ -7,6 +7,7 @@ from app.utils import tenant_user_ids, tenant_users, month_offset
 from app.services.card_service import (
     card_gradient, invoice_total, get_invoice, CATEGORY_ICONS,
     get_invoice_reference, get_invoice_label, vr_va_balance,
+    credit_invoice_total, debit_total,
 )
 from datetime import datetime
 
