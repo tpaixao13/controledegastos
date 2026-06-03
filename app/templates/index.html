@@ -307,7 +307,13 @@
             </td>
             <td class="text-end fw-semibold text-danger">{{ e.amount | brl }}</td>
             <td class="text-center no-print">
-              {% set dias_atraso = (today - today.__class__(e.year, e.month, e.day)).days %}
+              {# Para cartão de crédito, o vencimento é o due_day do cartão, não o dia da compra #}
+              {% if e.payment_method == 'Cartão de Crédito' and e.credit_card %}
+                {% set _venc = [e.credit_card.due_day, 28] | min %}
+                {% set dias_atraso = (today - today.__class__(e.year, e.month, _venc)).days %}
+              {% else %}
+                {% set dias_atraso = (today - today.__class__(e.year, e.month, e.day)).days %}
+              {% endif %}
               {% if dias_atraso > 0 %}
               <span class="badge bg-danger me-1">
                 <i class="bi bi-exclamation-triangle-fill"></i> {{ dias_atraso }}d
