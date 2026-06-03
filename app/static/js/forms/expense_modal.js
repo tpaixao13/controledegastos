@@ -74,15 +74,24 @@
   function updateCardOptions(method) {
     if (!cardSelect) return;
     const filterFn = _METHOD_FILTER[method] || (() => false);
+    const visible = [];
     Array.from(cardSelect.options).forEach(opt => {
       if (opt.value === '0') { opt.style.display = ''; return; }
       const card = cardData[parseInt(opt.value)];
-      opt.style.display = (card && filterFn(card)) ? '' : 'none';
+      const show = card && filterFn(card);
+      opt.style.display = show ? '' : 'none';
+      if (show) visible.push(opt.value);
     });
+    // Reset se a seleção atual não é do tipo correto
     const selVal = parseInt(cardSelect.value, 10);
     if (selVal > 0) {
       const card = cardData[selVal];
       if (!card || !filterFn(card)) cardSelect.value = '0';
+    }
+    // Auto-selecionar se só existe um cartão do tipo (VR, VA, Débito)
+    if (visible.length === 1 && parseInt(cardSelect.value, 10) === 0) {
+      cardSelect.value = visible[0];
+      autofillBankFromCard();
     }
   }
 
