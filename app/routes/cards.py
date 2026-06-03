@@ -225,23 +225,36 @@ def edit(card_id):
             flash('O melhor dia de compra deve ser anterior ao dia de vencimento.', 'warning')
             return redirect(url_for('cards.index'))
 
-        st = form.special_type.data or ''
-        sc = bool(form.supports_credit.data) if st not in ('vr', 'va') else False
-        sd = bool(form.supports_debit.data)  if st not in ('vr', 'va') else False
-        ct = st if st in ('vr', 'va') else ('credit' if sc else 'debit')
-        card.nickname       = form.nickname.data or None
-        card.last_digits    = form.last_digits.data
-        card.bank           = form.bank.data or None
-        card.due_day        = form.due_day.data or 1
-        card.best_buy_day   = form.best_buy_day.data or 1
-        card.credit_limit   = form.credit_limit.data or None
-        card.card_type      = ct
+        st   = form.special_type.data or ''
+        sc   = bool(form.supports_credit.data) if st not in ('vr', 'va') else False
+        sd   = bool(form.supports_debit.data)  if st not in ('vr', 'va') else False
+        ct   = st if st in ('vr', 'va') else ('credit' if sc else 'debit')
+        bank = form.bank.data or None
+        lim  = form.credit_limit.data or None
+
+        card.nickname        = form.nickname.data or None
+        card.last_digits     = form.last_digits.data
+        card.bank            = bank
+        card.due_day         = form.due_day.data or 1
+        card.best_buy_day    = form.best_buy_day.data or 1
+        card.credit_limit    = lim
+        card.card_type       = ct
         card.supports_credit = sc
         card.supports_debit  = sd
-        card.is_virtual     = bool(form.is_virtual.data)
-        card.is_additional  = bool(form.is_additional.data)
-        card.monthly_amount = form.monthly_amount.data if st in ('vr', 'va') else None
-        card.renewal_day    = form.renewal_day.data if st in ('vr', 'va') else None
+        card.is_virtual      = bool(form.is_virtual.data)
+        card.is_additional   = bool(form.is_additional.data)
+        card.monthly_amount  = form.monthly_amount.data if st in ('vr', 'va') else None
+        card.renewal_day     = form.renewal_day.data if st in ('vr', 'va') else None
+
+        # Atualizar/criar conta de crédito
+        if sc:
+            account = _get_or_create_account(card.user_id, bank, lim)
+            card.account_id = account.id if account else None
+            # Atualizar limite na conta se fornecido
+            if account and lim:
+                account.credit_limit = lim
+        else:
+            card.account_id = None
         db.session.commit()
         flash('Cartão atualizado com sucesso!', 'success')
     else:
