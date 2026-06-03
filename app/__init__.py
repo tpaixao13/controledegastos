@@ -262,6 +262,11 @@ def _run_migrations():
         "ALTER TABLE credit_cards ADD COLUMN is_additional INTEGER NOT NULL DEFAULT 0",
         "ALTER TABLE credit_cards ADD COLUMN monthly_amount NUMERIC(12,2)",
         "ALTER TABLE credit_cards ADD COLUMN renewal_day INTEGER",
+        "ALTER TABLE credit_cards ADD COLUMN supports_credit INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE credit_cards ADD COLUMN supports_debit INTEGER NOT NULL DEFAULT 0",
+        # Migração de dados: converter card_type legado para supports_*
+        "UPDATE credit_cards SET supports_credit = 1 WHERE card_type = 'credit' AND supports_credit = 0",
+        "UPDATE credit_cards SET supports_debit = 1 WHERE card_type = 'debit' AND supports_debit = 0",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
