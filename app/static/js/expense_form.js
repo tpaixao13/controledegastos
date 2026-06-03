@@ -32,13 +32,20 @@ document.addEventListener('DOMContentLoaded', function () {
   function filterCardOptions(method) {
     if (!cardSelect) return;
     const fn = _CARD_FILTER[method] || (() => false);
+    const visible = [];
     Array.from(cardSelect.options).forEach(opt => {
       if (opt.value === '0') { opt.style.display = ''; return; }
       const card = cardData[parseInt(opt.value)];
-      opt.style.display = (card && fn(card)) ? '' : 'none';
+      const show = card && fn(card);
+      opt.style.display = show ? '' : 'none';
+      if (show) visible.push(opt.value);
     });
     const v = parseInt(cardSelect.value, 10);
     if (v > 0 && (!cardData[v] || !fn(cardData[v]))) cardSelect.value = '0';
+    // Auto-selecionar se só existe um cartão do tipo
+    if (visible.length === 1 && parseInt(cardSelect.value, 10) === 0) {
+      cardSelect.value = visible[0];
+    }
   }
 
   // ── Visibilidade dos campos ────────────────────────────────────
