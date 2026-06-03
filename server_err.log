@@ -15,3 +15,10 @@ Press CTRL+C to quit
 127.0.0.1 - - [03/Jun/2026 17:20:05] "GET /goals/ HTTP/1.1" 302 -
 127.0.0.1 - - [03/Jun/2026 17:20:05] "GET /login HTTP/1.1" 200 -
 127.0.0.1 - - [03/Jun/2026 17:21:55] "GET /static/js/goals.js HTTP/1.1" 200 -
+127.0.0.1 - - [03/Jun/2026 17:24:10] "GET /static/js/goals.js HTTP/1.1" 200 -
+127.0.0.1 - - [03/Jun/2026 18:11:58] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [03/Jun/2026 18:12:13] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [03/Jun/2026 18:12:54] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [03/Jun/2026 18:12:54] "POST /login HTTP/1.1" 200 -
+127.0.0.1 - - [03/Jun/2026 18:12:54] "GET /goals/ HTTP/1.1" 302 -
+127.0.0.1 - - [03/Jun/2026 18:12:54] "GET /login HTTP/1.1" 200 -

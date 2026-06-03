@@ -100,10 +100,14 @@ def add():
     return redirect(url_for('goals.index'))
 
 
-@goals_bp.route('/edit/<int:goal_id>', methods=['POST'])
+@goals_bp.route('/edit/<int:goal_id>', methods=['GET', 'POST'])
 def edit(goal_id):
     uids = tenant_user_ids()
     goal = Goal.query.filter(Goal.id == goal_id, Goal.user_id.in_(uids)).first_or_404()
+
+    if request.method == 'GET':
+        return render_template('goals/edit.html', goal=goal,
+                               categories=sorted(CATEGORIES))
 
     goal.title    = request.form.get('title', goal.title).strip()
     goal.type     = request.form.get('type', goal.type).strip()
