@@ -202,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Listeners ──────────────────────────────────────────────────
   if (paymentSelect) paymentSelect.addEventListener('change', updateForm);
+  if (bankSelect)    bankSelect.addEventListener('change', updateForm);
   creditTypeRadios.forEach(r => r.addEventListener('change', updateInstallments));
   if (recurringCheck) recurringCheck.addEventListener('change', updateRecurring);
   if (cardSelect) cardSelect.addEventListener('change', updateBillingHint);
