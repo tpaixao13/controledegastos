@@ -397,6 +397,11 @@ def add():
         elif is_recurring:
             _create_recurring(form, bank, payment)
         else:
+            dup = is_duplicate(
+                form.user_id.data,
+                form.year.data, form.month.data, form.day.data,
+                float(form.amount.data), form.description.data,
+            )
             expense = Expense(
                 user_id=form.user_id.data,
                 description=form.description.data,
@@ -412,6 +417,13 @@ def add():
             )
             db.session.add(expense)
             db.session.commit()
+
+            if dup:
+                msg = '⚠️ Despesa salva, mas parece duplicada — verifique se já existe igual.'
+                if is_ajax:
+                    return jsonify({'status': 'ok', 'message': msg, 'duplicate': True})
+                flash(msg, 'warning')
+                return redirect(url_for('expenses.index'))
 
         if is_ajax:
             return jsonify({'status': 'ok', 'message': 'Despesa adicionada com sucesso!'})
