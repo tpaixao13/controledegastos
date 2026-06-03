@@ -28,9 +28,10 @@
     <a href="{{ url_for('expenses.import_bank') }}" class="btn btn-outline-primary btn-sm fw-semibold">
       <i class="bi bi-cloud-upload"></i> Importar Extrato
     </a>
-    <a href="{{ url_for('expenses.add') }}" class="btn btn-primary fw-semibold btn-sm">
+    <button type="button" class="btn btn-primary fw-semibold btn-sm"
+            data-bs-toggle="modal" data-bs-target="#expenseModal">
       <i class="bi bi-plus-lg"></i> Nova Despesa
-    </a>
+    </button>
   </div>
 </div>
 
