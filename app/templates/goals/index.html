@@ -115,13 +115,10 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow-sm">
             <li>
-              <button class="dropdown-item small"
-                      onclick="openEditGoal({{ g.id }}, '{{ g.title|e }}', '{{ g.type }}',
-                               {{ g.target_amount }}, '{{ g.category or '' }}',
-                               '{{ g.due_date.strftime('%Y-%m-%d') if g.due_date else '' }}',
-                               {{ g.user_id }})">
+              <a class="dropdown-item small"
+                 href="{{ url_for('goals.edit', goal_id=g.id) }}">
                 <i class="bi bi-pencil me-2 text-muted"></i>Editar
-              </button>
+              </a>
             </li>
             {% if d.status != 'completed' %}
             <li>
