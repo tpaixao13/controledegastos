@@ -335,7 +335,8 @@
 
       if (data.status === 'ok') {
         bootstrap.Modal.getInstance(modalEl).hide();
-        window.showToast?.(data.message || 'Despesa adicionada!', 'success');
+        const toastType = data.duplicate ? 'warning' : 'success';
+        window.showToast?.(data.message || 'Despesa adicionada!', toastType);
         setTimeout(() => location.reload(), 800);
       } else {
         const errors = data.errors || {};
