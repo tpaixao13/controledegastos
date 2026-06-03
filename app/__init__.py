@@ -150,14 +150,16 @@ def create_app(config_name='default'):
             _cards = _CC.query.filter(_CC.user_id.in_(_uids)).order_by(_CC.bank).all()
             _card_json = _json.dumps({
                 c.id: {
-                    'due_day':      c.due_day,
-                    'best_buy_day': c.best_buy_day,
-                    'bank':         c.bank or '',
-                    'label':        c.label,
-                    'credit_limit': float(c.credit_limit) if c.credit_limit else None,
-                    'card_type':    c.card_type or 'credit',
-                    'is_virtual':   bool(c.is_virtual),
-                    'is_additional':bool(c.is_additional),
+                    'due_day':        c.due_day,
+                    'best_buy_day':   c.best_buy_day,
+                    'bank':           c.bank or '',
+                    'label':          c.label,
+                    'credit_limit':   float(c.credit_limit) if c.credit_limit else None,
+                    'card_type':      c.card_type or '',
+                    'supports_credit': bool(c.supports_credit),
+                    'supports_debit':  bool(c.supports_debit),
+                    'is_virtual':     bool(c.is_virtual),
+                    'is_additional':  bool(c.is_additional),
                     'monthly_amount': float(c.monthly_amount) if c.monthly_amount else None,
                 }
                 for c in _cards
