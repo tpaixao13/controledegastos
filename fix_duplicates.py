@@ -50,7 +50,7 @@ def fix():
             exp = db.session.get(Expense, id_to_move)
             new_month, new_year = month_offset(exp.month, exp.year, 1)
             print(f"[grupo] '{r.description[:35]}' ID={id_to_move}: "
-                  f"{exp.month:02d}/{exp.year} → {new_month:02d}/{new_year}")
+                  f"{exp.month:02d}/{exp.year} -> {new_month:02d}/{new_year}")
             exp.month = new_month
             exp.year  = new_year
             moved += 1
@@ -75,7 +75,7 @@ def fix():
             exp = db.session.get(Expense, r.id_simples)
             new_month, new_year = month_offset(exp.month, exp.year, 1)
             print(f"[simples] '{r.description[:35]}' ID={r.id_simples}: "
-                  f"{exp.month:02d}/{exp.year} → {new_month:02d}/{new_year}")
+                  f"{exp.month:02d}/{exp.year} -> {new_month:02d}/{new_year}")
             exp.month = new_month
             exp.year  = new_year
             moved += 1
