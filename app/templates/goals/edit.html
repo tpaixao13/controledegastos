@@ -15,10 +15,10 @@
 
           <div class="mb-3">
             <label class="form-label fw-semibold">Tipo de meta</label>
-            <select name="type" class="form-select" required>
+            <select name="type" id="goalType" class="form-select" required>
               <option value="saving"         {{ 'selected' if goal.type == 'saving' }}>💰 Economizar</option>
-              <option value="spending_limit" {{ 'selected' if goal.type == 'spending_limit' }}>📉 Limite de gasto</option>
-              <option value="debt_reduction" {{ 'selected' if goal.type == 'debt_reduction' }}>💳 Quitar dívida</option>
+              <option value="spending_limit" {{ 'selected' if goal.type == 'spending_limit' }}>📉 Limite de gasto por categoria</option>
+              <option value="debt_reduction" {{ 'selected' if goal.type == 'debt_reduction' }}>💳 Quitar dívida / parcelamento</option>
             </select>
           </div>
 
@@ -37,7 +37,10 @@
                        value="{{ goal.target_amount }}" required>
               </div>
             </div>
-            <div class="col-6">
+
+            {# Categoria só aparece para tipos que precisam dela #}
+            <div class="col-6" id="catGroup"
+                 style="{{ '' if goal.type in ('spending_limit', 'debt_reduction') else 'display:none' }}">
               <label class="form-label fw-semibold">Categoria</label>
               <select name="category" class="form-select">
                 <option value="">Todas</option>
@@ -65,4 +68,19 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const typeSelect = document.getElementById('goalType');
+  const catGroup   = document.getElementById('catGroup');
+
+  function toggleCategory() {
+    const needs = ['spending_limit', 'debt_reduction'].includes(typeSelect.value);
+    catGroup.style.display = needs ? '' : 'none';
+    if (!needs) catGroup.querySelector('select').value = '';
+  }
+
+  typeSelect.addEventListener('change', toggleCategory);
+</script>
 {% endblock %}
