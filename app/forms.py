@@ -121,26 +121,23 @@ class ExpenseForm(FlaskForm):
 
 
 class CreditCardForm(FlaskForm):
-    card_type = SelectField('Tipo de Cartão', choices=[
-        ('credit', 'Crédito'),
-        ('debit',  'Débito'),
-        ('vr',     'VR — Vale Refeição'),
-        ('va',     'VA — Vale Alimentação'),
-    ], default='credit')
+    supports_credit = BooleanField('Crédito', validators=[Optional()])
+    supports_debit  = BooleanField('Débito',  validators=[Optional()])
+    special_type    = SelectField('Tipo especial', choices=[
+        ('',   'Nenhum'),
+        ('vr', 'VR — Vale Refeição'),
+        ('va', 'VA — Vale Alimentação'),
+    ], default='', validators=[Optional()])
     nickname = StringField('Apelido (opcional)', validators=[Optional(), Length(max=50)])
     last_digits = StringField('Últimos 4 dígitos', validators=[DataRequired(), Length(min=4, max=4)])
     bank = SelectField('Bandeira / Banco', choices=BANKS, validators=[Optional()])
-    is_virtual = BooleanField('Cartão Virtual', validators=[Optional()])
+    is_virtual    = BooleanField('Cartão Virtual',   validators=[Optional()])
     is_additional = BooleanField('Cartão Adicional', validators=[Optional()])
-    due_day = IntegerField('Dia de vencimento', validators=[Optional(), NumberRange(min=0, max=31)],
-                           default=1)
-    best_buy_day = IntegerField('Melhor dia de compra', validators=[Optional(), NumberRange(min=0, max=31)],
-                                default=1)
-    credit_limit = DecimalField('Limite do Cartão (R$)', places=2,
-                                validators=[Optional(), NumberRange(min=0)])
-    monthly_amount = DecimalField('Saldo Mensal (R$)', places=2,
-                                  validators=[Optional(), NumberRange(min=0)])
-    renewal_day = IntegerField('Dia de renovação', validators=[Optional(), NumberRange(min=1, max=31)])
+    due_day      = IntegerField('Dia de vencimento',    validators=[Optional(), NumberRange(min=0, max=31)], default=1)
+    best_buy_day = IntegerField('Melhor dia de compra', validators=[Optional(), NumberRange(min=0, max=31)], default=1)
+    credit_limit   = DecimalField('Limite do Cartão (R$)', places=2, validators=[Optional(), NumberRange(min=0)])
+    monthly_amount = DecimalField('Saldo Mensal (R$)',      places=2, validators=[Optional(), NumberRange(min=0)])
+    renewal_day    = IntegerField('Dia de renovação', validators=[Optional(), NumberRange(min=1, max=31)])
     submit_card = SubmitField('Salvar Cartão')
 
 
