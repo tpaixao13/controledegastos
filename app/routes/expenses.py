@@ -95,6 +95,7 @@ def index():
         month = 0  # 0 = todos os meses
     category = request.args.get('category', '')
     payment_method = request.args.get('payment_method', '')
+    bank_filter = request.args.get('bank', '')
     paid_filter = request.args.get('paid', '')
     date_from = request.args.get('date_from', '')
     date_to = request.args.get('date_to', '')
