@@ -55,11 +55,12 @@
       <span class="d-none d-md-inline">Adicionar Investimento</span>
     </a>
     {% elif _ep.startswith('goals.') %}
-    <a href="{{ url_for('goals.index') }}"
-       class="btn btn-primary btn-sm fw-semibold topbar-new-btn">
+    <button type="button"
+            class="btn btn-primary btn-sm fw-semibold topbar-new-btn"
+            data-bs-toggle="modal" data-bs-target="#modalAddGoal">
       <i class="bi bi-plus-lg"></i>
       <span class="d-none d-md-inline">Nova Meta</span>
-    </a>
+    </button>
     {% elif _ep.startswith('cards.') %}
     <button type="button"
             class="btn btn-primary btn-sm fw-semibold topbar-new-btn"
@@ -67,12 +68,6 @@
       <i class="bi bi-plus-lg"></i>
       <span class="d-none d-md-inline">Novo Cartão</span>
     </button>
-    {% elif _ep.startswith('alerts.') %}
-    <a href="{{ url_for('alerts.index') }}"
-       class="btn btn-primary btn-sm fw-semibold topbar-new-btn">
-      <i class="bi bi-plus-lg"></i>
-      <span class="d-none d-md-inline">Novo Alerta</span>
-    </a>
     {% endif %}
 
     {# ── Sino de alertas ──────────────────────────────────────── #}
