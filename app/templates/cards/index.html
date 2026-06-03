@@ -80,9 +80,24 @@
         <div class="modal-body">
           <div class="row g-3">
             <div class="col-12">
-              {{ form.card_type.label(class='form-label fw-semibold') }}
-              {{ form.card_type(class='form-select', id='addCardType',
+              <label class="form-label fw-semibold">Funções do Cartão</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  {{ form.supports_credit(class='form-check-input', id='addCardCredit',
+                     onchange='toggleAddCardFields()') }}
+                  {{ form.supports_credit.label(class='form-check-label') }}
+                </div>
+                <div class="form-check">
+                  {{ form.supports_debit(class='form-check-input', id='addCardDebit') }}
+                  {{ form.supports_debit.label(class='form-check-label') }}
+                </div>
+              </div>
+            </div>
+            <div class="col-12">
+              {{ form.special_type.label(class='form-label fw-semibold') }}
+              {{ form.special_type(class='form-select', id='addCardType',
                  onchange='toggleAddCardFields()') }}
+              <div class="form-text">VR/VA desativa os checkboxes acima.</div>
             </div>
             <div class="col-md-6">
               {{ form.nickname.label(class='form-label fw-semibold') }}
