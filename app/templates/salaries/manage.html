@@ -16,8 +16,12 @@
 </div>
 
 <!-- Projeção do mês -->
-{% set fixed_received   = fixed_items   | selectattr('received') | map(attribute='amount') | map('float') | sum %}
-{% set variable_received = variable_items | selectattr('received') | map(attribute='amount') | map('float') | sum %}
+{% set fixed_received_ns = namespace(v=0) %}
+{% for s in fixed_items %}{% if s.received %}{% set fixed_received_ns.v = fixed_received_ns.v + s.amount|float %}{% endif %}{% endfor %}
+{% set variable_received_ns = namespace(v=0) %}
+{% for s in variable_items %}{% if s.received %}{% set variable_received_ns.v = variable_received_ns.v + s.amount|float %}{% endif %}{% endfor %}
+{% set fixed_received   = fixed_received_ns.v %}
+{% set variable_received = variable_received_ns.v %}
 {% set total_projected  = fixed_total + variable_total %}
 {% set total_received   = fixed_received + variable_received %}
 
