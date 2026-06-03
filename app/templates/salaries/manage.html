@@ -2,175 +2,16 @@
 
 {% block title %}Rendas — FinFam{% endblock %}
 
-{% macro income_table(groups, totals, tab) %}
-  {% if groups %}
-    {% for (year, month), items in groups.items() %}
-    <div class="card mb-3">
-      <div class="card-header d-flex justify-content-between align-items-center"
-           role="button" data-bs-toggle="collapse"
-           data-bs-target="#mes-{{ tab }}-{{ year }}-{{ month }}"
-           aria-expanded="{{ 'true' if loop.first else 'false' }}">
-        <span class="fw-bold">
-          <i class="bi bi-calendar3 text-primary me-1"></i>
-          {{ month|mes_nome }} / {{ year }}
-        </span>
-        <div class="d-flex align-items-center gap-3">
-          <span class="text-muted small">{{ items|length }} entrada{{ 's' if items|length > 1 }}</span>
-          <span class="badge bg-success fs-6">{{ totals[(year, month)]|brl }}</span>
-          <i class="bi bi-chevron-down text-muted"></i>
-        </div>
-      </div>
-      <div class="collapse {{ 'show' if loop.first }}" id="mes-{{ tab }}-{{ year }}-{{ month }}">
-        <div class="card-body p-0">
-          <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Pessoa</th>
-                <th>{{ 'Empresa' if tab == 'fixa' else 'Fonte' }}</th>
-                <th>Dia pag.</th>
-                <th class="text-center">Status</th>
-                <th class="text-end">Valor</th>
-                <th class="text-center">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for s in items %}
-              <tr>
-                <td>
-                  <span class="badge {{ user_colors[s.user_id].badge_class }}">
-                    {{ s.user.name }}
-                  </span>
-                </td>
-                <td class="text-muted small">{{ s.company or '—' }}</td>
-                <td class="text-muted small">
-                  {% if s.payment_day and s.payment_day_type %}
-                    {% if s.payment_day_type == 'util' %}
-                      {{ s.payment_day }}º dia útil
-                    {% else %}
-                      Dia {{ s.payment_day }}
-                    {% endif %}
-                    {% set expected = s.expected_payment_date() %}
-                    {% if expected %}
-                      <br><span class="text-primary fw-semibold">{{ expected.strftime('%d/%m/%Y') }}</span>
-                    {% endif %}
-                  {% else %}
-                    —
-                  {% endif %}
-                </td>
-                <td class="text-center">
-                  <form method="POST"
-                        action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
-                        style="display:inline">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="tab" value="{{ tab }}">
-                    <button type="submit"
-                            class="badge border-0 {{ 'badge-pago' if s.received else 'badge-pendente' }}"
-                            title="{{ 'Clique para marcar como Pendente' if s.received else 'Clique para marcar como Recebido' }}">
-                      {% if s.received %}
-                        <i class="bi bi-check-circle-fill"></i> Recebido
-                      {% else %}
-                        <i class="bi bi-clock-fill"></i> Pendente
-                      {% endif %}
-                    </button>
-                  </form>
-                </td>
-                <td class="text-end fw-semibold {{ 'text-muted text-decoration-line-through' if not s.received else '' }}">
-                  {{ s.amount|brl }}
-                </td>
-                <td class="text-center">
-                  <form method="POST"
-                        action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
-                        style="display:inline">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="tab" value="{{ tab }}">
-                    {% if s.received %}
-                      <button type="submit" class="btn btn-sm btn-outline-secondary"
-                              title="Marcar como Pendente">
-                        <i class="bi bi-x-lg"></i>
-                      </button>
-                    {% else %}
-                      <button type="submit" class="btn btn-sm btn-outline-success"
-                              title="Marcar como Recebido">
-                        <i class="bi bi-check-lg"></i>
-                      </button>
-                    {% endif %}
-                  </form>
-                  <button class="btn btn-sm btn-outline-secondary"
-                          onclick="openEditSalary(this)"
-                          data-id="{{ s.id }}"
-                          data-amount="{{ s.amount }}"
-                          data-company="{{ s.company or '' }}"
-                          data-pay-day-type="{{ s.payment_day_type or '' }}"
-                          data-pay-day="{{ s.payment_day or '' }}"
-                          data-has-group="{{ '1' if s.salary_group_id else '' }}"
-                          data-month="{{ s.month }}"
-                          data-year="{{ s.year }}"
-                          title="Editar">
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
-                          data-bs-target="#modalDeleteSalary{{ s.id }}" title="Remover">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </td>
-              </tr>
-
-              <!-- Modal delete -->
-              <div class="modal fade" id="modalDeleteSalary{{ s.id }}" tabindex="-1">
-                <div class="modal-dialog modal-sm">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h6 class="modal-title">Confirmar exclusão</h6>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body small">
-                      Eliminar renda de {{ s.amount|brl }} ({{ s.month|mes_nome }}/{{ s.year }})?
-                      {% if s.salary_group_id %}
-                      <br><span class="text-muted">Apenas esta entrada da série.</span>
-                      {% endif %}
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                      <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="tab" value="{{ tab }}">
-                        <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {% endfor %}
-            </tbody>
-            {% if items|length > 1 %}
-            <tfoot class="table-light">
-              <tr>
-                <td colspan="4" class="fw-semibold text-end text-muted small">Total combinado:</td>
-                <td class="text-end fw-bold text-success">{{ totals[(year, month)]|brl }}</td>
-                <td></td>
-              </tr>
-            </tfoot>
-            {% endif %}
-          </table>
-        </div>
-      </div>
-    </div>
-    {% endfor %}
-  {% else %}
-    <div class="card">
-      <div class="card-body text-center text-muted py-5">
-        <i class="bi bi-inbox fs-1"></i>
-        <p class="mt-2">Nenhuma renda registada ainda.</p>
-      </div>
-    </div>
-  {% endif %}
-{% endmacro %}
-
 {% block content %}
-<div class="row mb-4">
+<div class="row mb-3 align-items-center">
   <div class="col">
     <h2 class="fw-bold"><i class="bi bi-cash-coin text-primary"></i> Rendas</h2>
-    <p class="text-muted">Registe rendas fixas (salários) e variáveis (freelance, dividendos, etc.).</p>
+  </div>
+  <div class="col-auto">
+    <button type="button" class="btn btn-primary btn-sm fw-semibold" id="btnAddRenda"
+            data-bs-toggle="modal" data-bs-target="#addSalaryModal">
+      <i class="bi bi-plus-lg"></i> Adicionar Renda
+    </button>
   </div>
 </div>
 
@@ -178,38 +19,188 @@
 <ul class="nav nav-tabs mb-4" id="rendaTab" role="tablist">
   <li class="nav-item" role="presentation">
     <a class="nav-link {{ 'active' if active_tab == 'fixa' }}"
-       href="{{ url_for('salaries.manage', tab='fixa') }}" role="tab">
+       href="{{ url_for('salaries.manage', tab='fixa', month=cur_month, year=cur_year) }}" role="tab">
       <i class="bi bi-building"></i> Renda Fixa
     </a>
   </li>
   <li class="nav-item" role="presentation">
     <a class="nav-link {{ 'active' if active_tab == 'variavel' }}"
-       href="{{ url_for('salaries.manage', tab='variavel') }}" role="tab">
+       href="{{ url_for('salaries.manage', tab='variavel', month=cur_month, year=cur_year) }}" role="tab">
       <i class="bi bi-graph-up-arrow"></i> Renda Variável
     </a>
   </li>
 </ul>
 
-<div class="row g-4">
+{% set items = fixed_items if active_tab == 'fixa' else variable_items %}
+{% set total = fixed_total if active_tab == 'fixa' else variable_total %}
 
-  <!-- Formulário -->
-  <div class="col-lg-4">
-    <div class="card">
-      <div class="card-header bg-primary text-white fw-semibold">
-        <i class="bi bi-plus-circle"></i>
-        {{ 'Adicionar Renda Fixa' if active_tab == 'fixa' else 'Adicionar Renda Variável' }}
+<div class="card">
+  {% if items %}
+  <div class="card-body p-0">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Pessoa</th>
+          <th>{{ 'Empresa' if active_tab == 'fixa' else 'Fonte' }}</th>
+          <th>Dia pag.</th>
+          <th class="text-center">Status</th>
+          <th class="text-end">Valor</th>
+          <th class="text-center">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in items %}
+        <tr>
+          <td>
+            <span class="badge {{ user_colors[s.user_id].badge_class }}">{{ s.user.name }}</span>
+          </td>
+          <td class="text-muted small">{{ s.company or '—' }}</td>
+          <td class="text-muted small">
+            {% if s.payment_day and s.payment_day_type %}
+              {% if s.payment_day_type == 'util' %}
+                {{ s.payment_day }}º dia útil
+              {% else %}
+                Dia {{ s.payment_day }}
+              {% endif %}
+              {% set expected = s.expected_payment_date() %}
+              {% if expected %}
+                <br><span class="text-primary fw-semibold">{{ expected.strftime('%d/%m/%Y') }}</span>
+              {% endif %}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <form method="POST"
+                  action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
+                  style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="tab" value="{{ active_tab }}">
+              <input type="hidden" name="month" value="{{ cur_month }}">
+              <input type="hidden" name="year" value="{{ cur_year }}">
+              <button type="submit"
+                      class="badge border-0 {{ 'badge-pago' if s.received else 'badge-pendente' }}"
+                      title="{{ 'Clique para marcar como Pendente' if s.received else 'Clique para marcar como Recebido' }}">
+                {% if s.received %}
+                  <i class="bi bi-check-circle-fill"></i> Recebido
+                {% else %}
+                  <i class="bi bi-clock-fill"></i> Pendente
+                {% endif %}
+              </button>
+            </form>
+          </td>
+          <td class="text-end fw-semibold {{ 'text-muted text-decoration-line-through' if not s.received else '' }}">
+            {{ s.amount|brl }}
+          </td>
+          <td class="text-center">
+            <form method="POST"
+                  action="{{ url_for('salaries.toggle_received', salary_id=s.id) }}"
+                  style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="tab" value="{{ active_tab }}">
+              <input type="hidden" name="month" value="{{ cur_month }}">
+              <input type="hidden" name="year" value="{{ cur_year }}">
+              {% if s.received %}
+                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Marcar como Pendente">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              {% else %}
+                <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como Recebido">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              {% endif %}
+            </form>
+            <button class="btn btn-sm btn-outline-secondary"
+                    onclick="openEditSalary(this)"
+                    data-id="{{ s.id }}"
+                    data-amount="{{ s.amount }}"
+                    data-company="{{ s.company or '' }}"
+                    data-pay-day-type="{{ s.payment_day_type or '' }}"
+                    data-pay-day="{{ s.payment_day or '' }}"
+                    data-has-group="{{ '1' if s.salary_group_id else '' }}"
+                    data-month="{{ cur_month }}"
+                    data-year="{{ cur_year }}"
+                    title="Editar">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                    data-bs-target="#modalDeleteSalary{{ s.id }}" title="Remover">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+
+        <!-- Modal delete -->
+        <div class="modal fade" id="modalDeleteSalary{{ s.id }}" tabindex="-1">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h6 class="modal-title">Confirmar exclusão</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body small">
+                Eliminar renda de {{ s.amount|brl }}?
+                {% if s.salary_group_id %}
+                <br><span class="text-muted">Apenas esta entrada da série.</span>
+                {% endif %}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('salaries.delete', salary_id=s.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="tab" value="{{ active_tab }}">
+                  <input type="hidden" name="month" value="{{ cur_month }}">
+                  <input type="hidden" name="year" value="{{ cur_year }}">
+                  <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+      {% if items|length > 1 %}
+      <tfoot class="table-light">
+        <tr>
+          <td colspan="4" class="fw-semibold text-end text-muted small">Total do mês:</td>
+          <td class="text-end fw-bold text-success">{{ total|brl }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body text-center text-muted py-5">
+    <i class="bi bi-inbox fs-1"></i>
+    <p class="mt-2">Nenhuma renda registada para este mês.</p>
+    <button type="button" class="btn btn-primary btn-sm"
+            data-bs-toggle="modal" data-bs-target="#addSalaryModal">
+      <i class="bi bi-plus-lg"></i> Adicionar Renda
+    </button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Modal de adição -->
+<div class="modal fade" id="addSalaryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title">
+          <i class="bi bi-plus-circle text-primary"></i>
+          <span id="addModalTitle">Adicionar Renda</span>
+        </h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="card-body">
-        <form method="POST" novalidate>
-          {{ form.hidden_tag() }}
-          <input type="hidden" name="income_type" value="{{ active_tab }}">
+      <form method="POST" novalidate>
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="income_type" id="addIncomeType" value="{{ active_tab }}">
+        <div class="modal-body">
 
           <div class="mb-3">
             {{ form.user_id.label(class='form-label fw-semibold') }}
             {{ form.user_id(class='form-select' + (' is-invalid' if form.user_id.errors else '')) }}
-            {% for e in form.user_id.errors %}
-              <div class="invalid-feedback">{{ e }}</div>
-            {% endfor %}
           </div>
 
           <div class="row g-2 mb-3">
@@ -234,16 +225,11 @@
             {% endfor %}
           </div>
 
-          {% if active_tab == 'fixa' %}
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Empresa</label>
-            {{ form.company(class='form-control', placeholder='Ex: Empresa ABC') }}
-          </div>
-          {% else %}
-          <div class="mb-3">
-            <label class="form-label fw-semibold">Fonte</label>
+          <div class="mb-3" id="addCompanyField">
+            <label class="form-label fw-semibold" id="addCompanyLabel">Empresa</label>
             <input list="sourceList" name="company" class="form-control"
-                   placeholder="Ex: Freelance, Dividendos…"
+                   id="addCompanyInput"
+                   placeholder="Ex: Empresa ABC"
                    value="{{ form.company.data or '' }}">
             <datalist id="sourceList">
               {% for src in variable_sources %}
@@ -251,9 +237,8 @@
               {% endfor %}
             </datalist>
           </div>
-          {% endif %}
 
-          <!-- Dia de pagamento (ambas as abas) -->
+          <!-- Dia de pagamento -->
           <div class="row g-2 mb-2">
             <div class="col-7">
               <label class="form-label fw-semibold">Dia de pagamento</label>
@@ -268,36 +253,30 @@
             <small id="addPayDatePreview" class="text-primary fw-semibold"></small>
           </div>
 
-          {% if active_tab == 'fixa' %}
-          <div class="mb-3">
-            <div class="form-check">
-              {{ form.is_recurring(class='form-check-input', id='isRecurring') }}
-              <label class="form-check-label fw-semibold" for="isRecurring">
-                Repetir nos próximos meses
-              </label>
+          <!-- Campos só para renda fixa -->
+          <div id="fixaFields">
+            <div class="mb-3">
+              <div class="form-check">
+                {{ form.is_recurring(class='form-check-input', id='isRecurring') }}
+                <label class="form-check-label fw-semibold" for="isRecurring">
+                  Repetir nos próximos meses
+                </label>
+              </div>
+            </div>
+            <div class="mb-3" id="recurringMonthsField" style="display:none">
+              <label class="form-label fw-semibold">Repetir por</label>
+              {{ form.recurring_months(class='form-select') }}
             </div>
           </div>
-          <div class="mb-3" id="recurringMonthsField" style="display:none">
-            <label class="form-label fw-semibold">Repetir por</label>
-            {{ form.recurring_months(class='form-select') }}
-          </div>
-          {% endif %}
 
-          {{ form.submit(class='btn btn-primary w-100') }}
-        </form>
-      </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          {{ form.submit(class='btn btn-primary') }}
+        </div>
+      </form>
     </div>
   </div>
-
-  <!-- Histórico -->
-  <div class="col-lg-8">
-    {% if active_tab == 'fixa' %}
-      {{ income_table(fixed_groups, fixed_totals, 'fixa') }}
-    {% else %}
-      {{ income_table(variable_groups, variable_totals, 'variavel') }}
-    {% endif %}
-  </div>
-
 </div>
 
 <!-- Modal de edição -->
@@ -310,6 +289,8 @@
       </div>
       <form method="POST" id="editSalaryForm" action="">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="month" id="editMonth" value="{{ cur_month }}">
+        <input type="hidden" name="year"  id="editYear"  value="{{ cur_year }}">
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label fw-semibold">Valor (R$)</label>
@@ -363,6 +344,32 @@
 
 {% block scripts %}
 <script>
+  const _activeTab = {{ active_tab | tojson }};
+
+  // Configura modal de adição de acordo com a aba ativa
+  function setupAddModal() {
+    const title = document.getElementById('addModalTitle');
+    const incomeType = document.getElementById('addIncomeType');
+    const fixaFields = document.getElementById('fixaFields');
+    const companyLabel = document.getElementById('addCompanyLabel');
+    const companyInput = document.getElementById('addCompanyInput');
+
+    if (_activeTab === 'fixa') {
+      title.textContent = 'Adicionar Renda Fixa';
+      incomeType.value = 'fixa';
+      companyLabel.textContent = 'Empresa';
+      companyInput.placeholder = 'Ex: Empresa ABC';
+      if (fixaFields) fixaFields.style.display = '';
+    } else {
+      title.textContent = 'Adicionar Renda Variável';
+      incomeType.value = 'variavel';
+      companyLabel.textContent = 'Fonte';
+      companyInput.placeholder = 'Ex: Freelance, Dividendos…';
+      if (fixaFields) fixaFields.style.display = 'none';
+    }
+  }
+  setupAddModal();
+
   // Algoritmo de Butcher: retorna Date da Páscoa para o ano
   function calcEaster(y) {
     const a = y % 19, b = Math.floor(y / 100), c = y % 100;
@@ -377,7 +384,6 @@
     return new Date(y, month - 1, day);
   }
 
-  // Feriados nacionais brasileiros (fixos + móveis via Páscoa)
   function getBrHolidays(year) {
     const easter = calcEaster(year);
     const addDays = (d, n) => new Date(d.getTime() + n * 864e5);
@@ -392,7 +398,6 @@
     return h;
   }
 
-  // Calcula dia de pagamento (exclui fins de semana e feriados nacionais)
   function calcPayDate(month, year, type, day) {
     const m = parseInt(month), y = parseInt(year), n = parseInt(day);
     if (!type || !n || isNaN(m) || isNaN(y) || isNaN(n) || n < 1) return '';
@@ -425,12 +430,12 @@
   }
 
   // Preview no formulário de criação
-  const addPayDayType  = document.getElementById('addPayDayType');
-  const addPayDayField = document.getElementById('addPayDayField');
-  const addPayDayInput = document.getElementById('addPayDay');
-  const addPayDayLabel = document.getElementById('addPayDayLabel');
+  const addPayDayType    = document.getElementById('addPayDayType');
+  const addPayDayField   = document.getElementById('addPayDayField');
+  const addPayDayInput   = document.getElementById('addPayDay');
+  const addPayDayLabel   = document.getElementById('addPayDayLabel');
   const addPayDatePreview = document.getElementById('addPayDatePreview');
-  const addMonthSel = document.querySelector('select[name="month"]');
+  const addMonthSel  = document.querySelector('select[name="month"]');
   const addYearInput = document.querySelector('input[name="year"]');
 
   function updateAddPreview() {
@@ -458,10 +463,10 @@
   }
 
   // Modal de edição
-  const editPayDayType  = document.getElementById('editPayDayType');
-  const editPayDayField = document.getElementById('editPayDayField');
-  const editPayDayInput = document.getElementById('editPayDay');
-  const editPayDayLabel = document.getElementById('editPayDayLabel');
+  const editPayDayType    = document.getElementById('editPayDayType');
+  const editPayDayField   = document.getElementById('editPayDayField');
+  const editPayDayInput   = document.getElementById('editPayDay');
+  const editPayDayLabel   = document.getElementById('editPayDayLabel');
   const editPayDatePreview = document.getElementById('editPayDatePreview');
   let _editMonth = null, _editYear = null;
 
@@ -486,6 +491,8 @@
   function openEditSalary(btn) {
     _editMonth = btn.dataset.month;
     _editYear  = btn.dataset.year;
+    document.getElementById('editMonth').value = _editMonth;
+    document.getElementById('editYear').value  = _editYear;
 
     document.getElementById('editSalaryForm').action = '/salaries/edit/' + btn.dataset.id;
     document.getElementById('editAmount').value  = parseFloat(btn.dataset.amount).toFixed(2);
@@ -500,5 +507,10 @@
 
     new bootstrap.Modal(document.getElementById('editSalaryModal')).show();
   }
+
+  // Abrir modal de adição se houver erros de validação do form
+  {% if form.errors %}
+  new bootstrap.Modal(document.getElementById('addSalaryModal')).show();
+  {% endif %}
 </script>
 {% endblock %}
