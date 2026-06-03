@@ -84,6 +84,15 @@
         </select>
       </div>
       <div class="col-md-2">
+        <label class="form-label small fw-semibold">Banco</label>
+        <select name="bank" class="form-select form-select-sm auto-filter">
+          <option value="">Todos</option>
+          {% for b in banks %}
+          <option value="{{ b }}" {{ 'selected' if filters.bank == b }}>{{ b }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
         <label class="form-label small fw-semibold">Status</label>
         <select name="paid" class="form-select form-select-sm auto-filter">
           <option value="" {{ 'selected' if filters.paid == '' }}>Todos</option>
