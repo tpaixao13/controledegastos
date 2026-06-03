@@ -103,14 +103,27 @@ def invoice_status(card: CreditCard, month: int, year: int) -> str:
     return 'fechada'
 
 
-def invoice_total(card_id: int, month: int, year: int) -> float:
-    """Soma de todas as despesas do cartão no mês."""
-    total = (db.session.query(func.sum(Expense.amount))
-             .filter(Expense.card_id == card_id,
-                     Expense.month == month,
-                     Expense.year == year)
-             .scalar() or 0)
-    return float(total)
+def invoice_total(card_id: int, month: int, year: int,
+                  payment_method: str | None = None) -> float:
+    """
+    Soma despesas do cartão no mês.
+    payment_method=None → todas; 'Cartão de Crédito' → só crédito; etc.
+    """
+    q = (db.session.query(func.sum(Expense.amount))
+         .filter(Expense.card_id == card_id,
+                 Expense.month == month,
+                 Expense.year == year))
+    if payment_method:
+        q = q.filter(Expense.payment_method == payment_method)
+    return float(q.scalar() or 0)
+
+
+def credit_invoice_total(card_id: int, month: int, year: int) -> float:
+    return invoice_total(card_id, month, year, 'Cartão de Crédito')
+
+
+def debit_total(card_id: int, month: int, year: int) -> float:
+    return invoice_total(card_id, month, year, 'Cartão de Débito')
 
 
 def future_installments_total(card_id: int, month: int, year: int) -> float:
