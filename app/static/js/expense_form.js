@@ -22,28 +22,47 @@ document.addEventListener('DOMContentLoaded', function () {
     'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
   ];
 
+  const _CARD_FILTER = {
+    'Cartão de Crédito': c => c.supports_credit === true,
+    'Cartão de Débito':  c => c.supports_debit  === true,
+    'VR':                c => c.card_type === 'vr',
+    'VA':                c => c.card_type === 'va',
+  };
+
+  function filterCardOptions(method) {
+    if (!cardSelect) return;
+    const fn = _CARD_FILTER[method] || (() => false);
+    Array.from(cardSelect.options).forEach(opt => {
+      if (opt.value === '0') { opt.style.display = ''; return; }
+      const card = cardData[parseInt(opt.value)];
+      opt.style.display = (card && fn(card)) ? '' : 'none';
+    });
+    const v = parseInt(cardSelect.value, 10);
+    if (v > 0 && (!cardData[v] || !fn(cardData[v]))) cardSelect.value = '0';
+  }
+
   // ── Visibilidade dos campos ────────────────────────────────────
   function updateForm() {
-    const method = paymentSelect ? paymentSelect.value : '';
+    const method      = paymentSelect ? paymentSelect.value : '';
+    const isCredit    = method === 'Cartão de Crédito';
+    const hasBank     = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'VR', 'VA'].includes(method);
+    const isCardMethod = !!_CARD_FILTER[method];
 
-    if (['Cartão de Débito', 'PIX', 'VR', 'VA'].includes(method)) {
-      if (bankRow)            bankRow.style.display = '';
-      if (cardRow)            cardRow.style.display = 'none';
-      if (installmentSection) installmentSection.style.display = 'none';
-      if (numInstallmentsRow) numInstallmentsRow.style.display = 'none';
-      if (billingHint)        billingHint.style.display = 'none';
-    } else if (method === 'Cartão de Crédito') {
-      if (bankRow)            bankRow.style.display = '';
-      if (cardRow)            cardRow.style.display = '';
-      if (installmentSection) installmentSection.style.display = '';
+    if (bankRow)            bankRow.style.display      = hasBank ? '' : 'none';
+    if (installmentSection) installmentSection.style.display = isCredit ? '' : 'none';
+    if (numInstallmentsRow && !isCredit) numInstallmentsRow.style.display = 'none';
+    if (!isCredit && billingHint)        billingHint.style.display = 'none';
+
+    if (isCardMethod) {
+      filterCardOptions(method);
+      if (cardRow) cardRow.style.display = '';
+    } else {
+      if (cardRow) cardRow.style.display = 'none';
+    }
+
+    if (isCredit) {
       updateInstallments();
       updateBillingHint();
-    } else {
-      if (bankRow)            bankRow.style.display = 'none';
-      if (cardRow)            cardRow.style.display = 'none';
-      if (installmentSection) installmentSection.style.display = 'none';
-      if (numInstallmentsRow) numInstallmentsRow.style.display = 'none';
-      if (billingHint)        billingHint.style.display = 'none';
     }
   }
 
