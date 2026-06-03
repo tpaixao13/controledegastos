@@ -199,9 +199,16 @@
 {% block scripts %}
 <script>
 function toggleAddCardFields() {
-  const ct = document.getElementById('addCardType')?.value || 'credit';
-  document.getElementById('addCreditFields')?.classList.toggle('d-none', ct !== 'credit');
-  document.getElementById('addVrvaFields')?.classList.toggle('d-none', ct !== 'vr' && ct !== 'va');
+  const st = document.getElementById('addCardType')?.value || '';
+  const sc = document.getElementById('addCardCredit')?.checked;
+  const isVrva = st === 'vr' || st === 'va';
+  document.getElementById('addCreditFields')?.classList.toggle('d-none', !sc || isVrva);
+  document.getElementById('addVrvaFields')?.classList.toggle('d-none', !isVrva);
+  // VR/VA desabilita checkboxes
+  const cbCredit = document.getElementById('addCardCredit');
+  const cbDebit  = document.getElementById('addCardDebit');
+  if (cbCredit) cbCredit.disabled = isVrva;
+  if (cbDebit)  cbDebit.disabled  = isVrva;
 }
 </script>
 {% if history_chart %}
