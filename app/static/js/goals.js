@@ -4,10 +4,9 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   async function goalAction(form) {
-    // Verificação defensiva: action deve incluir /goals/ e não pode ser a página atual
+    // Verificação defensiva: action deve apontar para endpoint específico de meta
     const action = form.action || '';
-    const validAction = action.includes('/goals/') && !action.endsWith('/goals/');
-    if (!validAction) {
+    if (!/\/goals\/(edit|complete|delete|add)/.test(action)) {
       console.error('[goals.js] form.action inválido:', action);
       window.showToast?.('Erro: ação não configurada. Tente novamente.', 'danger');
       return;
