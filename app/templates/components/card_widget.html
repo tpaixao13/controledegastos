@@ -85,7 +85,14 @@
     </div>
     <div class="ccw-limit-info">
       <span>{{ pct }}% utilizado</span>
-      <span>Limite {{ d.limit | brl }}</span>
+      <span>
+        Limite {{ d.limit | brl }}
+        {% if d.account_cards and d.account_cards > 1 %}
+        <span class="opacity-75" style="font-size:.7rem">
+          · {{ d.account_cards }} cartões
+        </span>
+        {% endif %}
+      </span>
     </div>
   </div>
   {% endif %}
