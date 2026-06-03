@@ -269,6 +269,9 @@ def _run_migrations():
         # Migração de dados: converter card_type legado para supports_*
         "UPDATE credit_cards SET supports_credit = 1 WHERE card_type = 'credit' AND supports_credit = 0",
         "UPDATE credit_cards SET supports_debit = 1 WHERE card_type = 'debit' AND supports_debit = 0",
+        # CreditAccount — linha de crédito compartilhada
+        "CREATE TABLE IF NOT EXISTS credit_accounts (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), bank TEXT, label TEXT, credit_limit NUMERIC(12,2), created_at DATETIME)",
+        "ALTER TABLE credit_cards ADD COLUMN account_id INTEGER REFERENCES credit_accounts(id)",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
