@@ -373,4 +373,60 @@ def _run_migrations():
         except Exception:
             pass
 
+        # Migração de dados: criar CreditAccount para cartões sem conta
+        _migrate_credit_accounts(conn)
+
+
+def _migrate_credit_accounts(conn):
+    """
+    Agrupa cartões de crédito pelo (user_id, bank) e cria CreditAccount
+    para cada grupo. Move o maior credit_limit para a conta.
+    Idempotente: não recria contas já existentes.
+    """
+    try:
+        # Cartões de crédito ainda não vinculados a uma conta
+        unlinked = conn.execute(text(
+            "SELECT DISTINCT user_id, bank "
+            "FROM credit_cards "
+            "WHERE account_id IS NULL AND supports_credit = 1 AND bank IS NOT NULL"
+        )).fetchall()
+
+        for row in unlinked:
+            uid, bank = row[0], row[1]
+
+            # Verificar se já existe conta para (user_id, bank)
+            existing = conn.execute(text(
+                "SELECT id FROM credit_accounts WHERE user_id = :uid AND bank = :bank"
+            ), {'uid': uid, 'bank': bank}).fetchone()
+
+            if existing:
+                account_id = existing[0]
+            else:
+                # Herdar o maior limite dentre os cartões do grupo
+                max_limit = conn.execute(text(
+                    "SELECT MAX(credit_limit) FROM credit_cards "
+                    "WHERE user_id = :uid AND bank = :bank AND supports_credit = 1"
+                ), {'uid': uid, 'bank': bank}).scalar()
+
+                conn.execute(text(
+                    "INSERT INTO credit_accounts (user_id, bank, credit_limit, created_at) "
+                    "VALUES (:uid, :bank, :lim, CURRENT_TIMESTAMP)"
+                ), {'uid': uid, 'bank': bank, 'lim': max_limit})
+                conn.commit()
+
+                account_id = conn.execute(text(
+                    "SELECT id FROM credit_accounts WHERE user_id = :uid AND bank = :bank"
+                ), {'uid': uid, 'bank': bank}).scalar()
+
+            # Vincular todos os cartões do grupo à conta
+            conn.execute(text(
+                "UPDATE credit_cards SET account_id = :aid "
+                "WHERE user_id = :uid AND bank = :bank "
+                "AND supports_credit = 1 AND account_id IS NULL"
+            ), {'aid': account_id, 'uid': uid, 'bank': bank})
+            conn.commit()
+
+    except Exception:
+        pass
+
 
