@@ -129,6 +129,8 @@ def index():
         query = query.filter(Expense.category == category)
     if payment_method:
         query = query.filter(Expense.payment_method == payment_method)
+    if bank_filter:
+        query = query.filter(Expense.bank == bank_filter)
     if paid_filter == 'pago':
         query = query.filter(Expense.paid == True)
     elif paid_filter == 'pendente':
