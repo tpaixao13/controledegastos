@@ -6,7 +6,7 @@ import calendar as _calendar
 from datetime import datetime, date as _date
 from sqlalchemy import func, or_, and_
 from app import db
-from app.models import Expense, InstallmentGroup, CreditCard
+from app.models import Expense, InstallmentGroup, CreditCard, CreditAccount
 from app.utils import month_offset
 
 _PT_MONTHS = [
