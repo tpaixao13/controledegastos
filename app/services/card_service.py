@@ -167,14 +167,15 @@ def vr_va_balance(card: CreditCard, month: int, year: int) -> dict | None:
 
 def get_invoice(card: CreditCard, month: int, year: int) -> dict:
     """
-    Retorna estrutura completa de uma fatura.
+    Retorna estrutura completa de uma fatura de crédito.
+    Para cartões que suportam débito também, apenas despesas de crédito entram aqui.
     """
-    expenses = (Expense.query
-                .filter(Expense.card_id == card.id,
-                        Expense.month == month,
-                        Expense.year == year)
-                .order_by(Expense.day, Expense.created_at)
-                .all())
+    q = Expense.query.filter(Expense.card_id == card.id,
+                             Expense.month == month,
+                             Expense.year == year)
+    if bool(card.supports_credit):
+        q = q.filter(Expense.payment_method == 'Cartão de Crédito')
+    expenses = q.order_by(Expense.day, Expense.created_at).all()
 
     total = sum(float(e.amount) for e in expenses)
     paid_total = sum(float(e.amount) for e in expenses if e.paid)
