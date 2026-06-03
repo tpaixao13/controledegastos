@@ -64,25 +64,25 @@
 
   // ── Lógica condicional de campos ───────────────────────────────
   const _BANK_METHODS  = ['PIX', 'Cartão de Débito', 'Cartão de Crédito', 'VR', 'VA'];
-  const _METHOD_TO_TYPE = {
-    'Cartão de Crédito': 'credit',
-    'Cartão de Débito':  'debit',
-    'VR': 'vr',
-    'VA': 'va',
+  const _METHOD_FILTER = {
+    'Cartão de Crédito': c => c.supports_credit === true,
+    'Cartão de Débito':  c => c.supports_debit  === true,
+    'VR':                c => c.card_type === 'vr',
+    'VA':                c => c.card_type === 'va',
   };
 
   function updateCardOptions(method) {
     if (!cardSelect) return;
-    const targetType = _METHOD_TO_TYPE[method];
+    const filterFn = _METHOD_FILTER[method] || (() => false);
     Array.from(cardSelect.options).forEach(opt => {
       if (opt.value === '0') { opt.style.display = ''; return; }
-      const optType = opt.dataset.type || 'credit';
-      opt.style.display = (targetType && optType === targetType) ? '' : 'none';
+      const card = cardData[parseInt(opt.value)];
+      opt.style.display = (card && filterFn(card)) ? '' : 'none';
     });
     const selVal = parseInt(cardSelect.value, 10);
     if (selVal > 0) {
-      const selOpt = cardSelect.querySelector(`option[value="${selVal}"]`);
-      if (selOpt && selOpt.style.display === 'none') cardSelect.value = '0';
+      const card = cardData[selVal];
+      if (!card || !filterFn(card)) cardSelect.value = '0';
     }
   }
 
