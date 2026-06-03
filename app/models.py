@@ -301,6 +301,13 @@ class CreditCard(db.Model):
                                foreign_keys='Expense.card_id')
 
     @property
+    def effective_limit(self) -> float | None:
+        """Limite real: da conta (compartilhado) se vinculado, senão do próprio cartão."""
+        if self.account_id and self.account and self.account.credit_limit:
+            return float(self.account.credit_limit)
+        return float(self.credit_limit) if self.credit_limit else None
+
+    @property
     def is_vr_va(self) -> bool:
         return (self.card_type or '') in ('vr', 'va')
 
