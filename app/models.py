@@ -253,13 +253,6 @@ class Expense(db.Model):
 class CreditCard(db.Model):
     __tablename__ = 'credit_cards'
 
-    _TYPE_LABELS = {
-        'credit': 'Crédito',
-        'debit':  'Débito',
-        'vr':     'VR',
-        'va':     'VA',
-    }
-
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     nickname = db.Column(db.Text, nullable=True)
@@ -268,7 +261,10 @@ class CreditCard(db.Model):
     due_day = db.Column(db.Integer, nullable=False)
     best_buy_day = db.Column(db.Integer, nullable=False)
     credit_limit = db.Column(db.Numeric(12, 2), nullable=True)
+    # card_type mantido para VR/VA; crédito/débito usam supports_*
     card_type = db.Column(db.String(10), nullable=False, default='credit')
+    supports_credit = db.Column(db.Boolean, default=False, nullable=False)
+    supports_debit  = db.Column(db.Boolean, default=False, nullable=False)
     is_virtual = db.Column(db.Boolean, default=False, nullable=False)
     is_additional = db.Column(db.Boolean, default=False, nullable=False)
     monthly_amount = db.Column(db.Numeric(12, 2), nullable=True)
@@ -279,13 +275,25 @@ class CreditCard(db.Model):
                                foreign_keys='Expense.card_id')
 
     @property
-    def type_label(self):
-        return self._TYPE_LABELS.get(self.card_type or 'credit', 'Crédito')
+    def is_vr_va(self) -> bool:
+        return (self.card_type or '') in ('vr', 'va')
 
     @property
-    def label(self):
+    def type_label(self) -> str:
+        ct = self.card_type or ''
+        if ct in ('vr', 'va'):
+            return ct.upper()
+        sc = bool(self.supports_credit)
+        sd = bool(self.supports_debit)
+        if sc and sd:
+            return 'Crédito/Débito'
+        if sd:
+            return 'Débito'
+        return 'Crédito'
+
+    @property
+    def label(self) -> str:
         name = self.nickname or self.bank or 'Cartão'
-        ct = self.card_type or 'credit'
         if self.is_virtual:
             suffix = '(Virtual)'
         elif self.is_additional:
