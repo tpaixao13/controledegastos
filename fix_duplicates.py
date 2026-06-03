@@ -82,7 +82,7 @@ def fix():
 
         if moved:
             db.session.commit()
-            print(f"\n✅ {moved} despesa(s) movidas para o mês seguinte.")
+            print(f"\nOK: {moved} despesa(s) movidas para o mes seguinte.")
         else:
             print("Nenhuma duplicata encontrada.")
 
