@@ -97,7 +97,8 @@
 
   <div class="col-md-6 col-xl-4">
     <div class="card h-100 goal-card goal-card-{{ d.status_color }}
-      {% if d.status == 'completed' %} border-success border-opacity-50{% endif %}">
+      {% if d.status == 'completed' %} border-success border-opacity-50{% endif %}"
+      id="goal-card-{{ g.id }}">
 
       {# ── Header do card ── #}
       <div class="card-header d-flex align-items-start justify-content-between gap-2 pb-2">
