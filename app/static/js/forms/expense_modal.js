@@ -258,7 +258,8 @@
   }
 
   // Listeners de atualização
-  fPayment?.addEventListener('change', updateFields);
+  fPayment?.addEventListener('change', () => { updateFields(); });
+  bankSelect?.addEventListener('change', () => { updateFields(); });
   form.querySelectorAll('input[name="credit_type"]').forEach(r =>
     r.addEventListener('change', () => { updateFields(); updateInstallmentHint(); })
   );
