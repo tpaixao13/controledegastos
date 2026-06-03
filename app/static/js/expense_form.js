@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const paymentSelect      = document.getElementById('payment_method');
   const bankRow            = document.getElementById('bank-row');
+  const bankSelect         = bankRow ? bankRow.querySelector('select') : null;
   const cardRow            = document.getElementById('card-row');
   const cardSelect         = document.getElementById('card_id');
   const billingHint        = document.getElementById('billing-hint');
