@@ -183,18 +183,23 @@ def edit(card_id):
             flash('O melhor dia de compra deve ser anterior ao dia de vencimento.', 'warning')
             return redirect(url_for('cards.index'))
 
-        ct = form.card_type.data or 'credit'
-        card.nickname      = form.nickname.data or None
-        card.last_digits   = form.last_digits.data
-        card.bank          = form.bank.data or None
-        card.due_day       = form.due_day.data or 1
-        card.best_buy_day  = form.best_buy_day.data or 1
-        card.credit_limit  = form.credit_limit.data or None
-        card.card_type     = ct
-        card.is_virtual    = bool(form.is_virtual.data)
-        card.is_additional = bool(form.is_additional.data)
-        card.monthly_amount = form.monthly_amount.data if ct in ('vr', 'va') else None
-        card.renewal_day   = form.renewal_day.data if ct in ('vr', 'va') else None
+        st = form.special_type.data or ''
+        sc = bool(form.supports_credit.data) if st not in ('vr', 'va') else False
+        sd = bool(form.supports_debit.data)  if st not in ('vr', 'va') else False
+        ct = st if st in ('vr', 'va') else ('credit' if sc else 'debit')
+        card.nickname       = form.nickname.data or None
+        card.last_digits    = form.last_digits.data
+        card.bank           = form.bank.data or None
+        card.due_day        = form.due_day.data or 1
+        card.best_buy_day   = form.best_buy_day.data or 1
+        card.credit_limit   = form.credit_limit.data or None
+        card.card_type      = ct
+        card.supports_credit = sc
+        card.supports_debit  = sd
+        card.is_virtual     = bool(form.is_virtual.data)
+        card.is_additional  = bool(form.is_additional.data)
+        card.monthly_amount = form.monthly_amount.data if st in ('vr', 'va') else None
+        card.renewal_day    = form.renewal_day.data if st in ('vr', 'va') else None
         db.session.commit()
         flash('Cartão atualizado com sucesso!', 'success')
     else:
