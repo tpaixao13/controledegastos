@@ -310,6 +310,7 @@ def generate_insights(uids: list, month: int, year: int,
             'message': (f'Você possui {rec_count} '
                         f'{_plur(rec_count, "despesa recorrente ativa", "despesas recorrentes ativas")} no sistema.'),
             'value': str(rec_count),
+            'link': _exp_url(month, year),
         })
 
     # ── 8. Tendência de 3 meses ──────────────────────────────────────
