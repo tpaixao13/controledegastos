@@ -73,8 +73,12 @@
       <div class="{{ vbar }}" style="width:{{ [vb.pct_used, 100]|min }}%"></div>
     </div>
     <div class="ccw-limit-info">
-      <span>{{ vb.remaining | brl }} restantes</span>
-      <span>Total {{ vb.monthly | brl }}</span>
+      <span>Gasto {{ vb.spent | brl }} de {{ vb.available | brl }}</span>
+      {% if vb.carry_over > 0 %}
+      <span class="opacity-75" style="font-size:.7rem">+{{ vb.carry_over | brl }} acumulado</span>
+      {% else %}
+      <span>Mensal {{ vb.monthly | brl }}</span>
+      {% endif %}
     </div>
   </div>
   {# ── Barra de limite (crédito) ──────────────────────────────── #}
