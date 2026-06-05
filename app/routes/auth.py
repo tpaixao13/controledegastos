@@ -295,8 +295,8 @@ def telegram_settings():
         flash('Configurações do Telegram salvas!', 'success')
         return redirect(url_for('auth.telegram_settings'))
     return render_template('auth/telegram_settings.html', form=form, tenant=tenant,
-                           token_masked=_mask(tenant.telegram_token),
-                           chat_masked=_mask(tenant.telegram_chat_id))
+                           token_masked=_mask(decrypt_field(tenant.telegram_token)),
+                           chat_masked=_mask(decrypt_field(tenant.telegram_chat_id)))
 
 
 @auth_bp.route('/settings/telegram/test', methods=['POST'])
