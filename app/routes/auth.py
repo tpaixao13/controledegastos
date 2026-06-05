@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from app import db
 from app.models import User, Tenant
 from app.forms import LoginForm, ChangePasswordForm, AvatarForm, RegisterTenantForm, AddMemberForm, EditMemberForm, TelegramConfigForm, RenameGroupForm
-from app.utils import build_daily_reminder, send_telegram_message
+from app.utils import build_daily_reminder, send_telegram_message, encrypt_field, decrypt_field
 
 auth_bp = Blueprint('auth', __name__)
 
