@@ -163,13 +163,49 @@ def future_installments_total(card_id: int, month: int, year: int) -> float:
 
 def vr_va_balance(card: CreditCard, month: int, year: int) -> dict | None:
     """
-    Retorna saldo atual de um cartão VR ou VA.
-    Retorna None se o cartão não for VR/VA ou não tiver monthly_amount.
+    Retorna saldo de um cartão VR/VA com carry-over: saldo não usado
+    de meses anteriores acumula no mês atual.
     """
     ct = card.card_type or 'credit'
     if ct not in ('vr', 'va') or not card.monthly_amount:
         return None
+
     monthly = float(card.monthly_amount)
+
+    # Ponto de partida: mês de criação do cartão
+    from datetime import datetime as _dt
+    created = card.created_at or _dt.utcnow()
+    start_m, start_y = created.month, created.year
+
+    carry_over = 0.0
+    if (start_y, start_m) < (year, month):
+        # Busca todos os gastos anteriores ao mês atual (numa só query)
+        hist = (
+            db.session.query(
+                Expense.year, Expense.month,
+                func.sum(Expense.amount).label('total')
+            )
+            .filter(
+                Expense.card_id == card.id,
+                or_(
+                    Expense.year < year,
+                    and_(Expense.year == year, Expense.month < month),
+                )
+            )
+            .group_by(Expense.year, Expense.month)
+            .all()
+        )
+        spent_by_month = {(r.year, r.month): float(r.total) for r in hist}
+
+        # Calcula carry-over acumulado mês a mês
+        cur_m, cur_y = start_m, start_y
+        while (cur_y, cur_m) < (year, month):
+            spent_m   = spent_by_month.get((cur_y, cur_m), 0.0)
+            available = monthly + carry_over
+            carry_over = max(0.0, available - spent_m)
+            cur_m, cur_y = month_offset(cur_m, cur_y, 1)
+
+    # Mês atual
     spent = float(
         db.session.query(func.sum(Expense.amount))
         .filter(Expense.card_id == card.id,
@@ -177,13 +213,17 @@ def vr_va_balance(card: CreditCard, month: int, year: int) -> dict | None:
                 Expense.year == year)
         .scalar() or 0
     )
-    remaining = max(monthly - spent, 0)
-    pct_used  = min(spent / monthly * 100, 100) if monthly > 0 else 0
+    available = monthly + carry_over
+    remaining = max(0.0, available - spent)
+    pct_used  = min(spent / available * 100, 100) if available > 0 else 0
+
     return {
-        'monthly':   monthly,
-        'spent':     spent,
-        'remaining': remaining,
-        'pct_used':  round(pct_used, 1),
+        'monthly':    round(monthly, 2),
+        'carry_over': round(carry_over, 2),
+        'available':  round(available, 2),
+        'spent':      round(spent, 2),
+        'remaining':  round(remaining, 2),
+        'pct_used':   round(pct_used, 1),
     }
 
 
