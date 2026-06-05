@@ -164,7 +164,20 @@ def invoice(card_id):
     month = request.args.get('month', now.month, type=int)
     year  = request.args.get('year',  now.year,  type=int)
 
-    inv = get_invoice(card, month, year)
+    # Buscar cartões irmãos (mesma conta de crédito) para fatura consolidada
+    sibling_cards = None
+    if card.account_id and card.supports_credit:
+        siblings = (CreditCard.query
+                    .filter(CreditCard.account_id == card.account_id,
+                            CreditCard.user_id.in_(uids),
+                            CreditCard.supports_credit == True)
+                    .order_by(CreditCard.is_virtual, CreditCard.is_additional,
+                              CreditCard.last_digits)
+                    .all())
+        if len(siblings) > 1:
+            sibling_cards = siblings
+
+    inv = get_invoice(card, month, year, sibling_cards=sibling_cards)
     gradient, text_color = card_gradient(card)
 
     return render_template('cards/invoice.html',
