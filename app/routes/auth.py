@@ -286,9 +286,9 @@ def telegram_settings():
         new_token = form.telegram_token.data.strip()
         new_chat = form.telegram_chat_id.data.strip()
         if new_token:
-            tenant.telegram_token = new_token
+            tenant.telegram_token = encrypt_field(new_token)
         if new_chat:
-            tenant.telegram_chat_id = new_chat
+            tenant.telegram_chat_id = encrypt_field(new_chat)
         tenant.telegram_hour = form.telegram_hour.data
         tenant.telegram_minute = form.telegram_minute.data
         db.session.commit()
