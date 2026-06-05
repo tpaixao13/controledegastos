@@ -56,10 +56,17 @@ def add():
     due_date_raw  = request.form.get('due_date', '').strip()
     start_date_raw= request.form.get('start_date', '').strip()
 
+    _VALID_GOAL_TYPES = {'saving', 'spending_limit', 'debt_reduction'}
     if not title or not gtype or not target_raw:
         if _is_ajax():
             return jsonify({'status': 'error', 'message': 'Preencha título, tipo e valor.'}), 422
         flash('Preencha título, tipo e valor.', 'danger')
+        return redirect(url_for('goals.index'))
+
+    if gtype not in _VALID_GOAL_TYPES:
+        if _is_ajax():
+            return jsonify({'status': 'error', 'message': 'Tipo de meta inválido.'}), 422
+        flash('Tipo de meta inválido.', 'danger')
         return redirect(url_for('goals.index'))
 
     try:
