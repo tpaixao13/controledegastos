@@ -74,11 +74,8 @@ _PARSERS = {
 
 
 def _safe_next(url, fallback):
-    """Valida URL de redirect: bloqueia domínios externos e esquemas não-HTTP."""
-    if not url:
-        return fallback
-    p = urlparse(url)
-    if p.netloc or p.scheme not in ('', 'http', 'https'):
+    """Valida URL de redirect: permite apenas URLs relativas sem esquema ou domínio."""
+    if not url or not url.startswith('/') or url.startswith('//'):
         return fallback
     return url
 
