@@ -263,7 +263,8 @@ def send_daily_reminders(app) -> None:
                 print(f'[Telegram] Alertas erro tenant {tenant.id}: {e}')
 
             if msg:
-                ok, err = send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
+                ok, err = send_telegram_message(decrypt_field(tenant.telegram_token),
+                                                decrypt_field(tenant.telegram_chat_id), msg)
                 if not ok:
                     # Libera para nova tentativa no próximo minuto
                     db.session.execute(
