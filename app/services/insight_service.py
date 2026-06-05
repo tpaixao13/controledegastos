@@ -267,7 +267,13 @@ def generate_insights(uids: list, month: int, year: int,
     pending_total = sum(float(e.amount) for e in pending_exps)
     for e in pending_exps:
         try:
-            if _date(e.year, e.month, e.day) < today:
+            if e.payment_method == 'Cartão de Crédito':
+                # Crédito: vencido só quando o mês da fatura ficou no passado
+                is_overdue = (e.year < today.year or
+                              (e.year == today.year and e.month < today.month))
+            else:
+                is_overdue = _date(e.year, e.month, e.day) < today
+            if is_overdue:
                 overdue_n     += 1
                 overdue_total += float(e.amount)
         except (ValueError, TypeError):
