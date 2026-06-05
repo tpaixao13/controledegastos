@@ -157,7 +157,8 @@ def invoice(card_id):
                            gradient=gradient,
                            text_color=text_color,
                            category_icons=CATEGORY_ICONS,
-                           chart_json=json.dumps(inv['chart']) if inv['chart'] else None)
+                           chart_json=json.dumps(inv['chart']) if inv['chart'] else None,
+                           debit_chart_json=json.dumps(inv['debit_chart']) if inv['debit_chart'] else None)
 
 
 # ── CRUD de cartões ─────────────────────────────────────────────────
