@@ -85,6 +85,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Seus gastos totais aumentaram {exp_delta:.0f}% '
                             f'em relação ao mês passado ({_brl(prev_exp)} → {_brl(cur_exp)}).'),
                 'value': f'+{exp_delta:.0f}%',
+                'link': _exp_url(month, year),
             })
         elif exp_delta >= _TH['exp_warning']:
             insights.append({
@@ -94,6 +95,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Seus gastos aumentaram {exp_delta:.0f}% '
                             f'em relação ao mês passado ({_brl(prev_exp)} → {_brl(cur_exp)}).'),
                 'value': f'+{exp_delta:.0f}%',
+                'link': _exp_url(month, year),
             })
         elif exp_delta <= _TH['exp_success']:
             insights.append({
@@ -103,6 +105,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Ótimo! Seus gastos caíram {abs(exp_delta):.0f}% '
                             f'em relação ao mês passado.'),
                 'value': f'{exp_delta:.0f}%',
+                'link': _exp_url(month, year),
             })
 
     # ── 2. Tendência de saldo ────────────────────────────────────────
