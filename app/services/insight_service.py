@@ -17,7 +17,7 @@ from urllib.parse import urlencode
 from sqlalchemy import func, or_, and_
 from app import db
 from app.models import Expense, RecurringGroup, Goal
-from app.utils import sum_expenses_month, sum_salaries_month, month_offset, _brl
+from app.utils import sum_expenses_month, sum_salaries_month, sum_salaries_month_projected, month_offset, _brl
 
 
 def _exp_url(month: int, year: int, **kwargs) -> str:
