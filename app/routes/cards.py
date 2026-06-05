@@ -300,6 +300,33 @@ def delete(card_id):
     return redirect(url_for('cards.index'))
 
 
+@cards_bp.route('/<int:card_id>/invoice/pay', methods=['POST'])
+def invoice_pay(card_id):
+    uids = tenant_user_ids()
+    card = CreditCard.query.filter(CreditCard.id == card_id,
+                                   CreditCard.user_id.in_(uids)).first_or_404()
+    month = request.form.get('month', type=int)
+    year  = request.form.get('year',  type=int)
+    if not month or not year:
+        flash('Parâmetros inválidos.', 'danger')
+        return redirect(url_for('cards.index'))
+
+    updated = (Expense.query
+               .filter(Expense.card_id == card.id,
+                       Expense.month == month,
+                       Expense.year == year,
+                       Expense.payment_method == 'Cartão de Crédito',
+                       Expense.paid.isnot(True))
+               .update({'paid': True}, synchronize_session=False))
+    db.session.commit()
+
+    if updated:
+        flash(f'{updated} despesa(s) marcada(s) como paga(s).', 'success')
+    else:
+        flash('Nenhuma despesa pendente nesta fatura.', 'info')
+    return redirect(url_for('cards.invoice', card_id=card.id, month=month, year=year))
+
+
 @cards_bp.route('/api/info/<int:card_id>')
 def api_card_info(card_id):
     uids = tenant_user_ids()
