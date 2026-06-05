@@ -358,6 +358,7 @@ def generate_insights(uids: list, month: int, year: int,
             'title': 'Parcelas futuras comprometidas',
             'message': f'Você tem {_brl(future)} em parcelas já comprometidas para faturas futuras.',
             'value': _brl(future),
+            'link': f'/expenses?month=0&year={year}',
         })
 
     # ── 10. Insights de metas ────────────────────────────────────────
