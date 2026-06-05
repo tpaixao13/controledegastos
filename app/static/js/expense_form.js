@@ -105,6 +105,11 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function updateBillingHint() {
+    const _method = paymentSelect ? paymentSelect.value : '';
+    if (_method !== 'Cartão de Crédito') {
+      if (billingHint) billingHint.style.display = 'none';
+      return;
+    }
     if (!billingHint || !cardSelect || !dayInput || !monthSelect) {
       if (billingHint) billingHint.style.display = 'none';
       return;
