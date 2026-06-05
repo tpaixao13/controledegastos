@@ -152,6 +152,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Seus gastos comprometem {ratio:.0f}% da sua renda '
                             f'este mês. Você tem apenas {_brl(cur_bal)} de sobra.'),
                 'value': f'{ratio:.0f}%',
+                'link': _exp_url(month, year),
             })
         elif ratio >= _TH['ratio_warning']:
             insights.append({
@@ -160,6 +161,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'title': 'Alta taxa de comprometimento',
                 'message': (f'Seus gastos comprometem {ratio:.0f}% da sua renda este mês.'),
                 'value': f'{ratio:.0f}%',
+                'link': _exp_url(month, year),
             })
         elif ratio <= _TH['ratio_success']:
             insights.append({
@@ -169,6 +171,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Seus gastos representam apenas {ratio:.0f}% da sua renda. '
                             f'Você está economizando {_brl(cur_bal)}!'),
                 'value': f'{ratio:.0f}%',
+                'link': _exp_url(month, year),
             })
 
     # ── 4. Spike por categoria ──────────────────────────────────────
