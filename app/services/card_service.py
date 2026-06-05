@@ -227,33 +227,44 @@ def vr_va_balance(card: CreditCard, month: int, year: int) -> dict | None:
     }
 
 
-def get_invoice(card: CreditCard, month: int, year: int) -> dict:
+def get_invoice(card: CreditCard, month: int, year: int,
+                sibling_cards: list | None = None) -> dict:
     """
     Retorna estrutura completa de uma fatura.
-    Para cartões com crédito+débito, separa as despesas por tipo.
+    sibling_cards: lista de todos os cartões do mesmo account (incluindo o principal).
+    Quando fornecido, as despesas de crédito de todos os cartões são consolidadas.
     """
     sc = bool(card.supports_credit)
     sd = bool(card.supports_debit)
 
-    base_q = Expense.query.filter(
+    # IDs de crédito: todos os cartões do grupo (ou só o atual)
+    credit_cards = sibling_cards if sibling_cards else [card]
+    credit_ids   = [c.id for c in credit_cards]
+
+    credit_q = Expense.query.filter(
+        Expense.card_id.in_(credit_ids),
+        Expense.month == month,
+        Expense.year == year,
+    )
+    debit_q = Expense.query.filter(
         Expense.card_id == card.id,
         Expense.month == month,
         Expense.year == year,
     )
 
-    # Despesas de crédito
+    # Despesas de crédito (todos os cartões do grupo)
     if sc:
-        credit_expenses = (base_q
+        credit_expenses = (credit_q
             .filter(Expense.payment_method == 'Cartão de Crédito')
             .order_by(Expense.day, Expense.created_at).all())
     elif not sd:
         # Cartão sem flags (legado) — trata tudo como crédito
-        credit_expenses = base_q.order_by(Expense.day, Expense.created_at).all()
+        credit_expenses = credit_q.order_by(Expense.day, Expense.created_at).all()
     else:
         credit_expenses = []
 
-    # Despesas de débito
-    debit_expenses = (base_q
+    # Despesas de débito (apenas cartão principal — débito é por cartão físico)
+    debit_expenses = (debit_q
         .filter(Expense.payment_method == 'Cartão de Débito')
         .order_by(Expense.day, Expense.created_at).all()) if sd else []
 
@@ -263,7 +274,7 @@ def get_invoice(card: CreditCard, month: int, year: int) -> dict:
     paid_total  = sum(float(e.amount) for e in credit_expenses if e.paid)
     debit_total = sum(float(e.amount) for e in debit_expenses)
 
-    # Agrupar por dia
+    # Agrupar por dia (visão unificada)
     by_day: dict[int, list] = {}
     for e in credit_expenses:
         by_day.setdefault(e.day, []).append(e)
@@ -272,7 +283,7 @@ def get_invoice(card: CreditCard, month: int, year: int) -> dict:
     for e in debit_expenses:
         debit_by_day.setdefault(e.day, []).append(e)
 
-    # Totais por categoria — apenas crédito (para gráfico de categorias)
+    # Totais por categoria — crédito
     cat_totals: dict[str, float] = {}
     for e in credit_expenses:
         cat_totals[e.category] = cat_totals.get(e.category, 0) + float(e.amount)
@@ -283,7 +294,7 @@ def get_invoice(card: CreditCard, month: int, year: int) -> dict:
         'colors': [CATEGORY_COLORS.get(c, '#C9CBCF') for c in cat_totals],
     } if cat_totals else None
 
-    # Totais por categoria — débito (para gráfico de débito)
+    # Totais por categoria — débito
     debit_cat_totals: dict[str, float] = {}
     for e in debit_expenses:
         debit_cat_totals[e.category] = debit_cat_totals.get(e.category, 0) + float(e.amount)
@@ -294,27 +305,52 @@ def get_invoice(card: CreditCard, month: int, year: int) -> dict:
         'colors': [CATEGORY_COLORS.get(c, '#C9CBCF') for c in debit_cat_totals],
     } if debit_cat_totals else None
 
-    future_total = future_installments_total(card.id, month, year)
+    # Parcelas futuras somadas de todos os cartões do grupo
+    future_total = sum(future_installments_total(cid, month, year) for cid in credit_ids)
+
     prev_m, prev_y = month_offset(month, year, -1)
     next_m, next_y = month_offset(month, year,  1)
 
+    # Agrupamento por cartão (quando há múltiplos cartões no grupo)
+    expenses_by_card = []
+    if len(credit_cards) > 1:
+        for c in credit_cards:
+            card_exps = [e for e in credit_expenses if e.card_id == c.id]
+            if not card_exps:
+                continue
+            c_by_day: dict[int, list] = {}
+            for e in card_exps:
+                c_by_day.setdefault(e.day, []).append(e)
+            c_total = sum(float(e.amount) for e in card_exps)
+            c_paid  = sum(float(e.amount) for e in card_exps if e.paid)
+            expenses_by_card.append({
+                'card':       c,
+                'expenses':   card_exps,
+                'by_day':     c_by_day,
+                'total':      c_total,
+                'paid_total': c_paid,
+                'pending':    c_total - c_paid,
+            })
+
     return {
-        'expenses':        credit_expenses,
-        'by_day':          by_day,
-        'total':           total,
-        'credit_total':    total,
-        'paid_total':      paid_total,
-        'pending_total':   total - paid_total,
-        'cat_totals':      cat_totals,
-        'chart':           chart,
-        'future_total':    future_total,
-        'status':          invoice_status(card, month, year),
+        'expenses':          credit_expenses,
+        'by_day':            by_day,
+        'total':             total,
+        'credit_total':      total,
+        'paid_total':        paid_total,
+        'pending_total':     total - paid_total,
+        'cat_totals':        cat_totals,
+        'chart':             chart,
+        'future_total':      future_total,
+        'status':            invoice_status(card, month, year),
         'prev_month': prev_m, 'prev_year': prev_y,
         'next_month': next_m, 'next_year': next_y,
         # débito
-        'debit_expenses':  debit_expenses,
-        'debit_total':     debit_total,
-        'debit_by_day':    debit_by_day,
-        'debit_cat_totals': debit_cat_totals,
-        'debit_chart':     debit_chart,
+        'debit_expenses':    debit_expenses,
+        'debit_total':       debit_total,
+        'debit_by_day':      debit_by_day,
+        'debit_cat_totals':  debit_cat_totals,
+        'debit_chart':       debit_chart,
+        # agrupamento por cartão (não vazio apenas quando múltiplos cartões)
+        'expenses_by_card':  expenses_by_card,
     }
