@@ -232,6 +232,7 @@ def generate_insights(uids: list, month: int, year: int,
             limit = float(card.credit_limit)
             used  = _inv_total(card.id, month, year)
             pct   = used / limit * 100 if limit > 0 else 0
+            card_link = f'/cards/{card.id}/invoice?month={month}&year={year}'
             if pct >= _TH['card_danger']:
                 insights.append({
                     'type': 'danger', 'priority': 8,
@@ -240,6 +241,7 @@ def generate_insights(uids: list, month: int, year: int,
                     'message': (f'Seu cartão atingiu {pct:.0f}% do limite '
                                 f'({_brl(used)} de {_brl(limit)}).'),
                     'value': f'{pct:.0f}%',
+                    'link': card_link,
                 })
             elif pct >= _TH['card_warning']:
                 insights.append({
@@ -249,6 +251,7 @@ def generate_insights(uids: list, month: int, year: int,
                     'message': (f'Seu cartão está em {pct:.0f}% do limite '
                                 f'({_brl(used)} de {_brl(limit)}).'),
                     'value': f'{pct:.0f}%',
+                    'link': card_link,
                 })
 
     # ── 6. Despesas vencidas ─────────────────────────────────────────
