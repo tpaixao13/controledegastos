@@ -343,3 +343,19 @@ def sum_salaries_month(uids: list, year: int, month: int) -> float:
                 Salary.received == True)
         .scalar() or 0
     )
+
+
+def sum_salaries_month_projected(uids: list, year: int, month: int) -> float:
+    """Soma todos os salários do mês (recebidos + pendentes).
+    Usado em insights para evitar falso positivo quando o salário ainda não foi
+    marcado como recebido mas já está lançado no sistema."""
+    from app import db
+    from app.models import Salary
+    from sqlalchemy import func
+    total = float(
+        db.session.query(func.sum(Salary.amount))
+        .filter(Salary.user_id.in_(uids), Salary.year == year, Salary.month == month)
+        .scalar() or 0
+    )
+    # Fallback para apenas recebidos (se não houver nenhum lançado)
+    return total if total > 0 else sum_salaries_month(uids, year, month)
