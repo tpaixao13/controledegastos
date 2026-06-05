@@ -334,27 +334,35 @@ def _run_migrations():
         except Exception:
             pass
 
-        # Seed known emails for existing users (safe — no-op if already set or user absent)
+        # Seed known emails for existing users (lidos do .env — sem PII no código)
         try:
-            conn.execute(text(
-                "UPDATE users SET email='tiagopedro376@hotmail.com' "
-                "WHERE name='Tiago' AND (email IS NULL OR email='')"
-            ))
-            conn.execute(text(
-                "UPDATE users SET email='jovemgreyce@hotmail.com' "
-                "WHERE name='Greyce' AND (email IS NULL OR email='')"
-            ))
+            tiago_email  = os.environ.get('SEED_EMAIL_TIAGO', '')
+            greyce_email = os.environ.get('SEED_EMAIL_GREYCE', '')
+            if tiago_email:
+                conn.execute(text(
+                    "UPDATE users SET email=:e WHERE name='Tiago' AND (email IS NULL OR email='')"
+                ), {'e': tiago_email})
+            if greyce_email:
+                conn.execute(text(
+                    "UPDATE users SET email=:e WHERE name='Greyce' AND (email IS NULL OR email='')"
+                ), {'e': greyce_email})
             conn.commit()
         except Exception:
             pass
 
-        # Seed admin user (INSERT OR IGNORE is idempotent)
+        # Seed admin user (INSERT OR IGNORE é idempotente — não sobrescreve senha existente)
         try:
+            import secrets as _secrets
             from werkzeug.security import generate_password_hash
+            admin_pw = os.environ.get('ADMIN_INITIAL_PASSWORD')
+            if not admin_pw:
+                admin_pw = _secrets.token_urlsafe(16)
+                print(f'[FinFam] AVISO: ADMIN_INITIAL_PASSWORD não definida. '
+                      f'Senha gerada para admin@finfam.app: {admin_pw}')
             conn.execute(text(
                 "INSERT OR IGNORE INTO users (name, email, password_hash, is_admin) "
                 "VALUES ('Admin', 'admin@finfam.app', :pw, 1)"
-            ), {'pw': generate_password_hash('FinFam@Admin2025')})
+            ), {'pw': generate_password_hash(admin_pw)})
             conn.execute(text(
                 "UPDATE users SET is_admin=1 WHERE email='admin@finfam.app'"
             ))
