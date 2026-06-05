@@ -49,8 +49,12 @@
     {% else %}
     <div class="insight-list">
       {% for ins in insights %}
-      <div class="insight-item insight-item-{{ ins.type }}"
-           title="{{ ins.message }}">
+      {% set has_link = ins.get('link') %}
+      {% set tag = 'a' if has_link else 'div' %}
+      <{{ tag }}
+        class="insight-item insight-item-{{ ins.type }}{% if has_link %} insight-clickable{% endif %}"
+        {% if has_link %}href="{{ ins.link }}"{% endif %}
+        title="{{ ins.message }}">
 
         {# Ícone #}
         <div class="insight-icon insight-icon-{{ ins.type }}">
@@ -70,7 +74,12 @@
         </div>
         {% endif %}
 
-      </div>
+        {# Seta de navegação (só se clicável) #}
+        {% if has_link %}
+        <i class="bi bi-chevron-right insight-chevron"></i>
+        {% endif %}
+
+      </{{ tag }}>
       {% endfor %}
     </div>
     {% endif %}
