@@ -312,7 +312,8 @@ def telegram_test():
     msg = build_daily_reminder(users)
     if not msg:
         msg = '✅ <b>FinFam</b>\n\nNenhuma despesa pendente ou em atraso hoje! 🎉'
-    ok, err = send_telegram_message(tenant.telegram_token, tenant.telegram_chat_id, msg)
+    ok, err = send_telegram_message(decrypt_field(tenant.telegram_token),
+                                    decrypt_field(tenant.telegram_chat_id), msg)
     if ok:
         flash('Mensagem de teste enviada com sucesso!', 'success')
     else:
