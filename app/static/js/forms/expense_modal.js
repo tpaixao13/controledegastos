@@ -367,11 +367,30 @@
   });
 
   // ── Inicializar data com hoje quando modal abre ────────────────
-  modalEl.addEventListener('show.bs.modal', () => {
+  modalEl.addEventListener('show.bs.modal', (event) => {
     const today = new Date();
     if (fDay)   fDay.value   = today.getDate();
     if (fMonth) fMonth.value = today.getMonth() + 1;
     if (fYear)  fYear.value  = today.getFullYear();
+
+    // Pre-selecionar cartão quando aberto a partir de uma fatura
+    const trigger   = event.relatedTarget;
+    const preCardId = trigger?.dataset?.cardId;
+    const preBank   = trigger?.dataset?.bank;
+    const prePayment = trigger?.dataset?.payment;
+
+    if (preCardId && prePayment) {
+      if (fPayment)    fPayment.value    = prePayment;
+      if (bankSelect && preBank) bankSelect.value = preBank;
+      openAdvanced();
+      updateFields();
+      // Força seleção do cartão específico após updateFields limpar/auto-selecionar
+      if (cardSelect && parseInt(preCardId, 10) > 0) {
+        cardSelect.value = preCardId;
+        updateInvoicePreview();
+      }
+    }
+
     setTimeout(() => fDescription?.focus(), 200);
   });
 
