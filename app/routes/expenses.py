@@ -391,7 +391,7 @@ def add():
         if is_parcelado:
             _create_installments(form, bank, card_id=card_id)
         elif is_recurring:
-            _create_recurring(form, bank, payment)
+            _create_recurring(form, bank, payment, card_id=card_id)
         else:
             dup = is_duplicate(
                 form.user_id.data,
