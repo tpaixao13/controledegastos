@@ -7,8 +7,8 @@
 {% block content %}
 
 {# ── Breadcrumb ──────────────────────────────────────────────────── #}
-<nav aria-label="breadcrumb" class="mb-3">
-  <ol class="breadcrumb small">
+<nav aria-label="breadcrumb" class="mb-3 d-flex align-items-center gap-2">
+  <ol class="breadcrumb small mb-0 flex-grow-1">
     <li class="breadcrumb-item">
       <a href="{{ url_for('cards.index') }}" class="text-decoration-none">
         <i class="bi bi-credit-card-2-front me-1"></i>Cartões
@@ -16,6 +16,15 @@
     </li>
     <li class="breadcrumb-item active">{{ card.label }}</li>
   </ol>
+  {% if card.supports_credit %}
+  <button type="button" class="btn btn-sm btn-primary flex-shrink-0"
+          data-bs-toggle="modal" data-bs-target="#expenseModal"
+          data-card-id="{{ card.id }}"
+          data-bank="{{ card.bank or '' }}"
+          data-payment="Cartão de Crédito">
+    <i class="bi bi-plus-lg me-1"></i>Nova Despesa
+  </button>
+  {% endif %}
 </nav>
 
 {# ── Hero: visual do cartão ──────────────────────────────────────── #}
