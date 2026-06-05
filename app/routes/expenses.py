@@ -504,6 +504,7 @@ def edit(expense_id):
                 siblings = Expense.query.filter(
                     Expense.installment_group_id == expense.installment_group_id,
                     Expense.id != expense.id,
+                    Expense.user_id.in_(uids),
                 ).all()
                 for s in siblings:
                     for field, val in shared.items():
