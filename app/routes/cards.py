@@ -52,14 +52,33 @@ def _history_chart(cards, invoice_month, invoice_year):
     months = [month_offset(invoice_month, invoice_year, -i) for i in range(5, -1, -1)]
     labels = [f'{MONTH_NAMES_SHORT[m-1]}/{y}' for m, y in months]
     datasets = []
-    for i, card in enumerate(cards):
-        totals = [invoice_total(card.id, m, y) for m, y in months]
-        datasets.append({
-            'label':           card.label,
-            'data':            totals,
-            'backgroundColor': _CHART_COLORS[i % len(_CHART_COLORS)],
-            'borderRadius':    4,
-        })
+    color_idx = 0
+    for card in cards:
+        sc = bool(card.supports_credit)
+        sd = bool(card.supports_debit)
+        if sc and sd:
+            # Cartão misto: dois datasets separados
+            datasets.append({
+                'label':           f'{card.label} — Crédito',
+                'data':            [credit_invoice_total(card.id, m, y) for m, y in months],
+                'backgroundColor': _CHART_COLORS[color_idx % len(_CHART_COLORS)],
+                'borderRadius':    4,
+            })
+            color_idx += 1
+            datasets.append({
+                'label':           f'{card.label} — Débito',
+                'data':            [debit_total(card.id, m, y) for m, y in months],
+                'backgroundColor': _CHART_COLORS[color_idx % len(_CHART_COLORS)],
+                'borderRadius':    4,
+            })
+        else:
+            datasets.append({
+                'label':           card.label,
+                'data':            [invoice_total(card.id, m, y) for m, y in months],
+                'backgroundColor': _CHART_COLORS[color_idx % len(_CHART_COLORS)],
+                'borderRadius':    4,
+            })
+        color_idx += 1
     return {'labels': labels, 'datasets': datasets}
 
 
