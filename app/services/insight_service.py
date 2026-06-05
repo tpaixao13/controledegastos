@@ -281,7 +281,7 @@ def generate_insights(uids: list, month: int, year: int,
             'message': (f'Você tem {overdue_n} {_plur(overdue_n, "despesa não paga", "despesas não pagas")} '
                         f'vencida{"s" if overdue_n > 1 else ""}, totalizando {_brl(overdue_total)}.'),
             'value': _brl(overdue_total),
-            'link': _exp_url(month, year, paid='false'),
+            'link': _exp_url(month, year, paid='pendente'),
         })
 
     # Pendentes não vencidas
@@ -295,7 +295,7 @@ def generate_insights(uids: list, month: int, year: int,
                         f'{_plur(len(pending_exps), "despesa a pagar", "despesas a pagar")} '
                         f'no total de {_brl(pending_total)}.'),
             'value': _brl(pending_total),
-            'link': _exp_url(month, year, paid='false'),
+            'link': _exp_url(month, year, paid='pendente'),
         })
 
     # ── 7. Despesas recorrentes ──────────────────────────────────────
