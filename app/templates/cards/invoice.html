@@ -36,13 +36,31 @@
       <span class="badge {{ s_class }} fs-7">{{ s_label }}</span>
     </div>
 
+    {% set has_debit = card.supports_debit and inv.debit_total > 0 %}
+    {% set has_credit = inv.total > 0 %}
+
+    {% if card.supports_credit and card.supports_debit %}
+    {# Cartão misto: exibe crédito como fatura principal + débito abaixo #}
     <div class="invoice-hero-label">Fatura de {{ month_name }} {{ year }}</div>
     <div class="invoice-hero-total">{{ inv.total | brl }}</div>
+    {% if has_debit %}
+    <div class="d-flex align-items-center gap-2 mt-2 opacity-75" style="font-size:.85rem">
+      <i class="bi bi-wallet2"></i>
+      <span>Débito {{ month_name }}: <strong>{{ inv.debit_total | brl }}</strong></span>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="invoice-hero-label">{{ 'Débito' if card.supports_debit else 'Fatura' }} de {{ month_name }} {{ year }}</div>
+    <div class="invoice-hero-total">{{ (inv.debit_total if card.supports_debit and not card.supports_credit else inv.total) | brl }}</div>
+    {% endif %}
 
     <div class="invoice-hero-meta mt-2">
-      <span><i class="bi bi-receipt me-1 opacity-75"></i>{{ inv.expenses | length }} transaç{{ 'ão' if inv.expenses | length == 1 else 'ões' }}</span>
+      {% set total_txn = (inv.expenses | length) + (inv.debit_expenses | length) %}
+      <span><i class="bi bi-receipt me-1 opacity-75"></i>{{ total_txn }} transaç{{ 'ão' if total_txn == 1 else 'ões' }}</span>
+      {% if card.supports_credit %}
       <span class="mx-2 opacity-40">·</span>
       <span><i class="bi bi-calendar-check me-1 opacity-75"></i>Vence dia {{ card.due_day }}</span>
+      {% endif %}
     </div>
   </div>
 
@@ -62,7 +80,9 @@
   </div>
 </div>
 
-{% if not inv.expenses %}
+{% set has_any = inv.expenses or inv.debit_expenses %}
+
+{% if not has_any %}
 {# ── Empty state ─────────────────────────────────────────────────── #}
 <div class="text-center py-5 text-muted">
   <i class="bi bi-inbox fs-1 d-block mb-3 opacity-30"></i>
@@ -72,15 +92,20 @@
 
 {% else %}
 
-{# ── Grid: gráfico + resumo rápido ──────────────────────────────── #}
+{# ── Grid: gráficos + resumo ─────────────────────────────────────── #}
+{% set show_credit_chart = chart_json and inv.expenses %}
+{% set show_debit_chart  = debit_chart_json and inv.debit_expenses %}
+{% set show_both_charts  = show_credit_chart and show_debit_chart %}
+
 <div class="row g-4 mb-4">
 
-  {# Doughnut de categorias #}
-  {% if chart_json %}
-  <div class="col-md-5">
+  {# Gráfico de categorias — Crédito #}
+  {% if show_credit_chart %}
+  <div class="{{ 'col-md-4' if show_both_charts else 'col-md-5' }}">
     <div class="card h-100">
       <div class="card-header fw-semibold">
-        <i class="bi bi-pie-chart text-primary me-1"></i>Por Categoria
+        <i class="bi bi-pie-chart text-primary me-1"></i>
+        {% if show_both_charts %}Crédito — Por Categoria{% else %}Por Categoria{% endif %}
       </div>
       <div class="card-body d-flex align-items-center justify-content-center">
         <div style="height:220px; width:100%">
@@ -91,28 +116,66 @@
   </div>
   {% endif %}
 
-  {# Resumo da fatura #}
-  <div class="{{ 'col-md-7' if chart_json else 'col-12' }}">
+  {# Gráfico de categorias — Débito #}
+  {% if show_debit_chart %}
+  <div class="{{ 'col-md-4' if show_both_charts else 'col-md-5' }}">
     <div class="card h-100">
       <div class="card-header fw-semibold">
-        <i class="bi bi-list-check text-success me-1"></i>Resumo da Fatura
+        <i class="bi bi-pie-chart text-warning me-1"></i>Débito — Por Categoria
+      </div>
+      <div class="card-body d-flex align-items-center justify-content-center">
+        <div style="height:220px; width:100%">
+          <canvas id="chartInvoiceDebit"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Resumo da fatura #}
+  <div class="{{ 'col-md-4' if show_both_charts else ('col-md-7' if show_credit_chart or show_debit_chart else 'col-12') }}">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-list-check text-success me-1"></i>Resumo
       </div>
       <div class="card-body">
+
+        {# Cartão misto: mostrar crédito e débito separados #}
+        {% if card.supports_credit and card.supports_debit %}
         <div class="invoice-summary-row">
-          <span>Total da fatura</span>
+          <span><i class="bi bi-credit-card me-1 text-primary"></i>Crédito (fatura)</span>
           <span class="fw-bold text-danger">{{ inv.total | brl }}</span>
         </div>
+        <div class="invoice-summary-row">
+          <span><i class="bi bi-wallet2 me-1 text-warning"></i>Débito</span>
+          <span class="fw-semibold text-warning">{{ inv.debit_total | brl }}</span>
+        </div>
+        {% if inv.total > 0 or inv.debit_total > 0 %}
+        {# Mini barra crédito vs débito #}
+        {% set grand_total = inv.total + inv.debit_total %}
+        {% set credit_pct = (inv.total / grand_total * 100) | round(1) if grand_total > 0 else 0 %}
+        <div class="progress my-2" style="height:6px; border-radius:3px">
+          <div class="progress-bar bg-primary" style="width:{{ credit_pct }}%" title="Crédito"></div>
+          <div class="progress-bar bg-warning" style="width:{{ 100 - credit_pct }}%" title="Débito"></div>
+        </div>
+        <div class="d-flex justify-content-between" style="font-size:.72rem; color:#888">
+          <span>Crédito {{ credit_pct }}%</span>
+          <span>Débito {{ (100 - credit_pct) | round(1) }}%</span>
+        </div>
+        {% endif %}
+
+        {% if inv.total > 0 %}
+        <hr class="my-3">
         <div class="invoice-summary-row">
           <span>Pagamentos realizados</span>
           <span class="fw-semibold text-success">{{ inv.paid_total | brl }}</span>
         </div>
         <div class="invoice-summary-row">
-          <span>A pagar</span>
+          <span>A pagar (crédito)</span>
           <span class="fw-semibold {{ 'text-danger' if inv.pending_total > 0 else 'text-muted' }}">
             {{ inv.pending_total | brl }}
           </span>
         </div>
-
         {% if inv.total > 0 %}
         <div class="mt-3">
           <div class="d-flex justify-content-between small text-muted mb-1">
@@ -124,6 +187,38 @@
           </div>
         </div>
         {% endif %}
+        {% endif %}
+
+        {% else %}
+        {# Cartão simples (só crédito ou só débito) #}
+        <div class="invoice-summary-row">
+          <span>Total</span>
+          <span class="fw-bold text-danger">{{ (inv.total or inv.debit_total) | brl }}</span>
+        </div>
+        {% if inv.total > 0 %}
+        <div class="invoice-summary-row">
+          <span>Pagamentos realizados</span>
+          <span class="fw-semibold text-success">{{ inv.paid_total | brl }}</span>
+        </div>
+        <div class="invoice-summary-row">
+          <span>A pagar</span>
+          <span class="fw-semibold {{ 'text-danger' if inv.pending_total > 0 else 'text-muted' }}">
+            {{ inv.pending_total | brl }}
+          </span>
+        </div>
+        {% if inv.total > 0 %}
+        <div class="mt-3">
+          <div class="d-flex justify-content-between small text-muted mb-1">
+            <span>Pago</span>
+            <span>{{ '%.0f'|format(inv.paid_total / inv.total * 100) }}%</span>
+          </div>
+          <div class="progress" style="height:8px; border-radius:4px">
+            <div class="progress-bar bg-success" style="width:{{ inv.paid_total / inv.total * 100 }}%"></div>
+          </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% endif %}
 
         {% if inv.future_total > 0 %}
         <hr class="my-3">
@@ -133,12 +228,12 @@
         </div>
         {% endif %}
 
+        {% set _cat = inv.cat_totals if inv.cat_totals else {} %}
+        {% if _cat %}
         <hr class="my-3">
-        {# Top categorias #}
-        {% if inv.cat_totals %}
-        <div class="small fw-semibold text-muted mb-2">Por Categoria</div>
-        {% set _max = inv.cat_totals.values() | max %}
-        {% for cat, val in inv.cat_totals.items() | sort(attribute='1', reverse=True) %}
+        <div class="small fw-semibold text-muted mb-2">Por Categoria (Crédito)</div>
+        {% set _max = _cat.values() | max %}
+        {% for cat, val in _cat.items() | sort(attribute='1', reverse=True) %}
         <div class="mb-2">
           <div class="d-flex justify-content-between small mb-1">
             <span>{{ cat }}</span>
@@ -151,41 +246,61 @@
         </div>
         {% endfor %}
         {% endif %}
+
       </div>
     </div>
   </div>
 
 </div>
 
-{# ── Timeline de transações ──────────────────────────────────────── #}
-<div class="card">
+{# ── Timeline: Crédito ───────────────────────────────────────────── #}
+{% if inv.expenses %}
+<div class="card {{ 'mb-4' if inv.debit_expenses else 'mb-0' }}">
   <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-    <span><i class="bi bi-clock-history me-1"></i>Transações</span>
+    <span>
+      <i class="bi bi-credit-card me-1 text-primary"></i>
+      {% if card.supports_debit %}Compras no Crédito{% else %}Transações{% endif %}
+    </span>
     <span class="badge bg-light text-dark border">{{ inv.expenses | length }}</span>
   </div>
   <div class="card-body p-0">
-
     {% set month_names_short = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'] %}
-
     {% for day in inv.by_day.keys() | sort %}
-    {# ── Separador de dia ──────────────────────────────────────── #}
     <div class="txn-day-separator">
-      <span class="txn-day-label">
-        {{ '%02d' | format(day) }} {{ month_names_short[month - 1] }}
-      </span>
+      <span class="txn-day-label">{{ '%02d' | format(day) }} {{ month_names_short[month - 1] }}</span>
     </div>
-
-    {# ── Transações do dia ────────────────────────────────────── #}
     {% for e in inv.by_day[day] %}
     {{ transaction_item(e, category_icons) }}
     {% endfor %}
-
     {% endfor %}
-
   </div>
 </div>
+{% endif %}
 
-{% endif %}{# /if expenses #}
+{# ── Timeline: Débito ────────────────────────────────────────────── #}
+{% if inv.debit_expenses %}
+<div class="card">
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    <span>
+      <i class="bi bi-wallet2 me-1 text-warning"></i>Compras no Débito
+    </span>
+    <span class="badge bg-light text-dark border">{{ inv.debit_expenses | length }}</span>
+  </div>
+  <div class="card-body p-0">
+    {% set month_names_short = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'] %}
+    {% for day in inv.debit_by_day.keys() | sort %}
+    <div class="txn-day-separator">
+      <span class="txn-day-label">{{ '%02d' | format(day) }} {{ month_names_short[month - 1] }}</span>
+    </div>
+    {% for e in inv.debit_by_day[day] %}
+    {{ transaction_item(e, category_icons) }}
+    {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endif %}{# /if has_any #}
 
 {% endblock %}
 
@@ -200,6 +315,43 @@
   const ctx = document.getElementById('chartInvoiceCategory');
   if (!ctx) return;
   const data = {{ chart_json | safe }};
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels:   data.labels,
+      datasets: [{ data: data.data, backgroundColor: data.colors, borderWidth: 2 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const total = data.data.reduce((a,b) => a+b, 0);
+              const pct = (ctx.parsed / total * 100).toFixed(1);
+              return `${brl(ctx.parsed)} (${pct}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+})();
+</script>
+{% endif %}
+
+{% if debit_chart_json %}
+<script>
+(() => {
+  function brl(v) {
+    return 'R$ ' + parseFloat(v).toLocaleString('pt-BR',
+      {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  const ctx = document.getElementById('chartInvoiceDebit');
+  if (!ctx) return;
+  const data = {{ debit_chart_json | safe }};
   new Chart(ctx, {
     type: 'doughnut',
     data: {
