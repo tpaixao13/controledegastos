@@ -13,10 +13,18 @@ prioridade. Cada insight tem:
 """
 
 from datetime import datetime, date as _date
+from urllib.parse import urlencode
 from sqlalchemy import func, or_, and_
 from app import db
 from app.models import Expense, RecurringGroup, Goal
 from app.utils import sum_expenses_month, sum_salaries_month, month_offset, _brl
+
+
+def _exp_url(month: int, year: int, **kwargs) -> str:
+    """Monta URL para a página de despesas com filtros opcionais."""
+    params = {'month': month, 'year': year}
+    params.update({k: v for k, v in kwargs.items() if v is not None})
+    return '/expenses?' + urlencode(params)
 
 
 # ── Limites e thresholds ────────────────────────────────────────────
