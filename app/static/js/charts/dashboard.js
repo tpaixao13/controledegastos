@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   }
 
-  // ── 4. Formas de Pagamento (Bar empilhado) ───────────────────
+  // ── 4. Formas de Pagamento (Doughnut) ────────────────────────
   let _paymentChart = null;
   function initPaymentChart(months = 1) {
     fetch(`/api/chart/payment-methods?months=${months}&month=${month}&year=${year}`)
@@ -174,15 +174,54 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!ctx) return;
         if (_paymentChart) _paymentChart.destroy();
 
+        // Agrega totais por método ao longo do período
+        const agg = d.datasets
+          .map(ds => ({
+            label: ds.label,
+            total: ds.data.reduce((a, b) => a + b, 0),
+            color: ds.backgroundColor,
+          }))
+          .filter(x => x.total > 0);
+
+        const grandTotal = agg.reduce((a, x) => a + x.total, 0);
+
         _paymentChart = new Chart(ctx, {
-          type: 'bar',
-          data: { labels: d.labels, datasets: d.datasets },
+          type: 'doughnut',
+          data: {
+            labels: agg.map(x => x.label),
+            datasets: [{
+              data:            agg.map(x => x.total),
+              backgroundColor: agg.map(x => x.color),
+              borderWidth: 2,
+            }],
+          },
           options: {
             ...BASE_OPTIONS,
-            ...moneyTooltip(),
-            scales: {
-              x: { stacked: true, grid: { display: false } },
-              y: { stacked: true, ticks: { callback: v => 'R$ ' + v.toLocaleString('pt-BR') } },
+            cutout: '62%',
+            plugins: {
+              legend: {
+                position: 'right',
+                labels: {
+                  font: FONT,
+                  boxWidth: 12,
+                  generateLabels: chart => agg.map((x, i) => ({
+                    text:        `${x.label} — ${brl(x.total)}`,
+                    fillStyle:   x.color,
+                    strokeStyle: x.color,
+                    lineWidth:   0,
+                    hidden:      false,
+                    index:       i,
+                  })),
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: ctx => {
+                    const pct = grandTotal > 0 ? (ctx.parsed / grandTotal * 100).toFixed(1) : 0;
+                    return `${brl(ctx.parsed)} (${pct}%)`;
+                  },
+                },
+              },
             },
           },
         });
