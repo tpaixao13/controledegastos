@@ -41,8 +41,8 @@
 
   {# ── Mês + valor principal ──────────────────────────────────── #}
   {% if is_vr_va %}
-  <div class="ccw-invoice-label">Saldo em {{ month_name }}</div>
-  <div class="ccw-total">{{ d.total | brl }}</div>
+  <div class="ccw-invoice-label">Disponível em {{ month_name }}</div>
+  <div class="ccw-total">{{ (d.vr_balance.remaining if d.vr_balance else d.total) | brl }}</div>
   {% elif sc and sd %}
   {# Cartão com ambas as funções: exibir crédito como principal #}
   <div class="ccw-invoice-label">Fatura de {{ month_name }}</div>
