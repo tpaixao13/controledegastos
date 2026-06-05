@@ -287,6 +287,42 @@
 
 {# ── Timeline: Crédito ───────────────────────────────────────────── #}
 {% if inv.expenses %}
+{% set month_names_short = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'] %}
+
+{% if inv.expenses_by_card %}
+{# Múltiplos cartões na mesma conta: seção por cartão #}
+{% for section in inv.expenses_by_card %}
+<div class="card {{ 'mb-3' if not loop.last or inv.debit_expenses else 'mb-0' }}">
+  <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+    <span>
+      <i class="bi bi-credit-card me-1 text-primary"></i>
+      •••• {{ section.card.last_digits }}
+      {% if section.card.is_virtual %}
+      <span class="badge bg-secondary fw-normal ms-1" style="font-size:.7rem">Virtual</span>
+      {% elif section.card.is_additional %}
+      <span class="badge bg-secondary fw-normal ms-1" style="font-size:.7rem">Adicional</span>
+      {% endif %}
+    </span>
+    <span class="d-flex align-items-center gap-2">
+      <span class="text-muted small">{{ section.expenses | length }} compra{{ 's' if section.expenses | length != 1 }}</span>
+      <span class="fw-bold text-danger">{{ section.total | brl }}</span>
+    </span>
+  </div>
+  <div class="card-body p-0">
+    {% for day in section.by_day.keys() | sort %}
+    <div class="txn-day-separator">
+      <span class="txn-day-label">{{ '%02d' | format(day) }} {{ month_names_short[month - 1] }}</span>
+    </div>
+    {% for e in section.by_day[day] %}
+    {{ transaction_item(e, category_icons) }}
+    {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+
+{% else %}
+{# Cartão único: timeline unificada #}
 <div class="card {{ 'mb-4' if inv.debit_expenses else 'mb-0' }}">
   <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
     <span>
@@ -296,7 +332,6 @@
     <span class="badge bg-light text-dark border">{{ inv.expenses | length }}</span>
   </div>
   <div class="card-body p-0">
-    {% set month_names_short = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'] %}
     {% for day in inv.by_day.keys() | sort %}
     <div class="txn-day-separator">
       <span class="txn-day-label">{{ '%02d' | format(day) }} {{ month_names_short[month - 1] }}</span>
@@ -307,6 +342,8 @@
     {% endfor %}
   </div>
 </div>
+{% endif %}
+
 {% endif %}
 
 {# ── Timeline: Débito ────────────────────────────────────────────── #}
