@@ -292,6 +292,7 @@ def goals_for_insights(goals_data: list[dict]) -> list[dict]:
                 'title': f'Meta concluída!',
                 'message': f'Você atingiu a meta "{g.title}". Excelente disciplina!',
                 'value': '100%',
+                'link': '/goals/',
             })
         elif d['status'] in ('behind', 'at_risk', 'over_limit'):
             insights.append({
@@ -301,6 +302,7 @@ def goals_for_insights(goals_data: list[dict]) -> list[dict]:
                 'title': g.title,
                 'message': d['coaching'],
                 'value': f'{d["pct"]:.0f}%',
+                'link': '/goals/',
             })
         elif d['status'] == 'ahead':
             insights.append({
@@ -309,6 +311,7 @@ def goals_for_insights(goals_data: list[dict]) -> list[dict]:
                 'title': f'{g.title} — adiantado!',
                 'message': d['coaching'],
                 'value': f'{d["pct"]:.0f}%',
+                'link': '/goals/',
             })
 
     return insights
