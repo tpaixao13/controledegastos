@@ -164,25 +164,43 @@ def build_daily_reminder(tenant_users_list: list, today=None) -> str | None:
     uids = [u.id for u in tenant_users_list]
     user_names = {u.id: u.name for u in tenant_users_list}
 
+    _is_credit = Expense.payment_method == 'Cartão de Crédito'
+
+    # Vencimentos de hoje: exclui crédito (vencimento real é o due_day da fatura, não a compra)
     today_pending = (Expense.query
                      .filter(Expense.user_id.in_(uids),
                              Expense.year == today.year,
                              Expense.month == today.month,
                              Expense.day == today.day,
-                             Expense.paid.isnot(True))
+                             Expense.paid.isnot(True),
+                             ~_is_credit)
                      .order_by(Expense.user_id, Expense.description)
                      .all())
 
+    # Em atraso:
+    #   - Não-crédito: data da despesa < hoje
+    #   - Crédito: mês da fatura < mês atual (compras do mês corrente nunca são "atrasadas")
+    _non_credit_overdue = and_(
+        ~_is_credit,
+        or_(
+            Expense.year < today.year,
+            and_(Expense.year == today.year, Expense.month < today.month),
+            and_(Expense.year == today.year,
+                 Expense.month == today.month,
+                 Expense.day < today.day),
+        )
+    )
+    _credit_overdue = and_(
+        _is_credit,
+        or_(
+            Expense.year < today.year,
+            and_(Expense.year == today.year, Expense.month < today.month),
+        )
+    )
     overdue = (Expense.query
                .filter(Expense.user_id.in_(uids),
                        Expense.paid.isnot(True),
-                       or_(
-                           Expense.year < today.year,
-                           and_(Expense.year == today.year, Expense.month < today.month),
-                           and_(Expense.year == today.year,
-                                Expense.month == today.month,
-                                Expense.day < today.day),
-                       ))
+                       or_(_non_credit_overdue, _credit_overdue))
                .order_by(Expense.year, Expense.month, Expense.day)
                .all())
 
