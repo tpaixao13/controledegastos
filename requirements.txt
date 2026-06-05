@@ -13,3 +13,4 @@ fpdf2==2.8.3
 APScheduler==3.10.4
 gunicorn==23.0.0
 Flask-Limiter==3.9.0
+cryptography>=42.0
