@@ -274,6 +274,32 @@ def send_daily_reminders(app) -> None:
                     print(f'[Telegram] Tenant {tenant.id}: {err}')
 
 
+# ── Criptografia de campos sensíveis ────────────────────────────────────────
+
+def _make_fernet():
+    from cryptography.fernet import Fernet
+    from flask import current_app
+    raw_key = hashlib.sha256(current_app.config['SECRET_KEY'].encode()).digest()
+    return Fernet(base64.urlsafe_b64encode(raw_key))
+
+
+def encrypt_field(value: str) -> str:
+    """Cifra um campo de texto para armazenamento seguro no banco."""
+    if not value:
+        return value
+    return _make_fernet().encrypt(value.encode()).decode()
+
+
+def decrypt_field(value: str) -> str:
+    """Decifra um campo do banco. Se não estiver cifrado (legado), retorna o original."""
+    if not value:
+        return value
+    try:
+        return _make_fernet().decrypt(value.encode()).decode()
+    except Exception:
+        return value  # texto plano legado — será cifrado no próximo save
+
+
 def get_month_year():
     """Lê ?month=&year= da request atual e valida os valores."""
     from flask import request as _req
