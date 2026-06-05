@@ -356,6 +356,7 @@
     <span class="badge bg-light text-dark border">{{ inv.debit_expenses | length }}</span>
   </div>
   <div class="card-body p-0">
+    {% set month_names_short = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'] %}
     {% for day in inv.debit_by_day.keys() | sort %}
     <div class="txn-day-separator">
       <span class="txn-day-label">{{ '%02d' | format(day) }} {{ month_names_short[month - 1] }}</span>
