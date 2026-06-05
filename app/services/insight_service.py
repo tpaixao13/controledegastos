@@ -204,6 +204,7 @@ def generate_insights(uids: list, month: int, year: int,
             'title': f'{cat} em alta',
             'message': f'Seus gastos com {cat} aumentaram {d:.0f}% em relação ao mês passado.',
             'value': f'+{d:.0f}%',
+            'link': _exp_url(month, year, category=cat),
         })
 
     # Categoria dominante (> 40% do total)
@@ -219,6 +220,7 @@ def generate_insights(uids: list, month: int, year: int,
                     'message': (f'{top[0]} representa {pct_dom:.0f}% '
                                 f'de todos os seus gastos este mês ({_brl(float(top[1]))}).'),
                     'value': f'{pct_dom:.0f}%',
+                    'link': _exp_url(month, year, category=top[0]),
                 })
 
     # ── 5. Limite dos cartões ────────────────────────────────────────
