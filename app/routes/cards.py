@@ -324,8 +324,20 @@ def invoice_pay(card_id):
         flash('Parâmetros inválidos.', 'danger')
         return redirect(url_for('cards.index'))
 
+    # Incluir cartões irmãos (mesma conta) no pagamento
+    if card.account_id:
+        sibling_ids = [
+            row[0] for row in
+            db.session.query(CreditCard.id)
+            .filter(CreditCard.account_id == card.account_id,
+                    CreditCard.user_id.in_(uids))
+            .all()
+        ]
+    else:
+        sibling_ids = [card.id]
+
     updated = (Expense.query
-               .filter(Expense.card_id == card.id,
+               .filter(Expense.card_id.in_(sibling_ids),
                        Expense.month == month,
                        Expense.year == year,
                        Expense.payment_method == 'Cartão de Crédito',
