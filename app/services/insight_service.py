@@ -328,6 +328,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Seus gastos estão {d3:.0f}% acima '
                             f'da sua média dos últimos 3 meses ({_brl(avg_3m)}/mês).'),
                 'value': f'+{d3:.0f}%',
+                'link': _exp_url(month, year),
             })
         elif d3 and d3 <= _TH['trend_3m_good']:
             insights.append({
@@ -337,6 +338,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Seus gastos estão {abs(d3):.0f}% abaixo '
                             f'da sua média dos últimos 3 meses ({_brl(avg_3m)}/mês). Excelente!'),
                 'value': f'{d3:.0f}%',
+                'link': _exp_url(month, year),
             })
 
     # ── 9. Parcelas futuras ──────────────────────────────────────────
