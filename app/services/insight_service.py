@@ -67,11 +67,13 @@ def generate_insights(uids: list, month: int, year: int,
 
     # ── Totais base ──────────────────────────────────────────────────
     cur_exp  = sum_expenses_month(uids, year, month)
-    cur_sal  = sum_salaries_month(uids, year, month)
+    # Usa renda projetada (recebida + pendente) para evitar falso positivo quando
+    # o salário do mês corrente ainda não foi marcado como recebido
+    cur_sal  = sum_salaries_month_projected(uids, year, month)
     cur_bal  = cur_sal - cur_exp
 
     prev_exp = sum_expenses_month(uids, prev_y, prev_m)
-    prev_sal = sum_salaries_month(uids, prev_y, prev_m)
+    prev_sal = sum_salaries_month_projected(uids, prev_y, prev_m)
     prev_bal = prev_sal - prev_exp
 
     # ── 1. Tendência de gastos vs mês anterior ───────────────────────
