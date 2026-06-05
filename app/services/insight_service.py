@@ -119,6 +119,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Seu saldo livre caiu {abs(bal_delta):.0f}% '
                             f'em relação ao mês passado.'),
                 'value': f'{bal_delta:.0f}%',
+                'link': _exp_url(month, year),
             })
         elif bal_delta <= _TH['bal_warning']:
             insights.append({
@@ -128,6 +129,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'message': (f'Seu saldo livre caiu {abs(bal_delta):.0f}% '
                             f'em relação ao mês passado.'),
                 'value': f'{bal_delta:.0f}%',
+                'link': _exp_url(month, year),
             })
         elif bal_delta >= _TH['bal_success']:
             insights.append({
@@ -136,6 +138,7 @@ def generate_insights(uids: list, month: int, year: int,
                 'title': 'Saldo melhorou',
                 'message': f'Seu saldo livre subiu {bal_delta:.0f}% em relação ao mês passado.',
                 'value': f'+{bal_delta:.0f}%',
+                'link': _exp_url(month, year),
             })
 
     # ── 3. Comprometimento da renda ──────────────────────────────────
