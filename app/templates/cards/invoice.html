@@ -96,7 +96,16 @@
 <div class="text-center py-5 text-muted">
   <i class="bi bi-inbox fs-1 d-block mb-3 opacity-30"></i>
   <h5 class="fw-semibold mb-1">Nenhuma compra nessa fatura</h5>
-  <p class="small">Use o botão "+ Nova Despesa" e selecione este cartão para registrar uma compra.</p>
+  <p class="small mb-3">Clique no botão abaixo para registrar uma despesa já neste cartão.</p>
+  {% if card.supports_credit %}
+  <button type="button" class="btn btn-primary"
+          data-bs-toggle="modal" data-bs-target="#expenseModal"
+          data-card-id="{{ card.id }}"
+          data-bank="{{ card.bank or '' }}"
+          data-payment="Cartão de Crédito">
+    <i class="bi bi-plus-lg me-1"></i>Nova Despesa nesta Fatura
+  </button>
+  {% endif %}
 </div>
 
 {% else %}
