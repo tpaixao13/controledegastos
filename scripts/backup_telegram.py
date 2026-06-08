@@ -19,19 +19,13 @@ from datetime import datetime
 from pathlib import Path
 
 # ── Configuração ─────────────────────────────────────────────────────
-TOKEN   = os.environ.get('TG_TOKEN', '').strip()
-CHAT_ID = os.environ.get('TG_CHAT_ID', '').strip()
+TOKEN   = '8271417059:AAEKQtqUh-1y-hhDrDXiJzEespsZaHIQdKY'
+CHAT_ID = '-5124720802'
 
 _script_dir = Path(__file__).resolve().parent
-DB_PATH = os.environ.get(
-    'DB_PATH',
-    str(_script_dir.parent / 'instance' / 'gastos.db'),
-)
+DB_PATH = str(_script_dir.parent / 'instance' / 'gastos.db')
 
-CAPTION = os.environ.get(
-    'TG_CAPTION',
-    f'📦 Backup FinFam — {datetime.now().strftime("%d/%m/%Y %H:%M")}',
-)
+CAPTION = f'📦 Backup FinFam — {datetime.now().strftime("%d/%m/%Y %H:%M")}'
 
 # ── SSL (compatível com ambientes sem certificados atualizados) ───────
 _ssl_ctx = ssl.create_default_context()
