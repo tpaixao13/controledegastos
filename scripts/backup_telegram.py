@@ -3,18 +3,10 @@
 Envia o arquivo gastos.db como backup para um chat do Telegram.
 
 Uso:
-    python3 telegram_backup.py
+    python3 backup_telegram.py
 
-Variáveis de ambiente obrigatórias:
-    TG_TOKEN    — token do bot (ex: 123456:ABCdef...)
-    TG_CHAT_ID  — chat ID destino (ex: -1001234567890)
-
-Variáveis opcionais:
-    DB_PATH     — caminho do banco (padrão: ../instance/gastos.db relativo ao script)
-    TG_CAPTION  — legenda da mensagem (padrão: mensagem com data/hora)
-
-Exemplo de cron (todo dia às 03:00):
-    0 3 * * * TG_TOKEN=xxx TG_CHAT_ID=yyy /usr/bin/python3 /opt/finfam/scripts/telegram_backup.py >> /var/log/finfam_backup.log 2>&1
+Cron (todo dia às 07:00):
+    0 7 * * * python3 /home/finfam/Documents/Controledegastos/scripts/backup_telegram.py >> /tmp/finfam_backup.log 2>&1
 """
 
 import os
