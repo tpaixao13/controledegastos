@@ -19,8 +19,8 @@ from datetime import datetime
 from pathlib import Path
 
 # ── Configuração ─────────────────────────────────────────────────────
-TOKEN   = '8271417059:AAEKQtqUh-1y-hhDrDXiJzEespsZaHIQdKY'
-CHAT_ID = '-5124720802'
+TOKEN   = ''
+CHAT_ID = ''
 
 _script_dir = Path(__file__).resolve().parent
 DB_PATH = str(_script_dir.parent / 'instance' / 'gastos.db')
