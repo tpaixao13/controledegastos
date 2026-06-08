@@ -75,10 +75,6 @@ def send_document(token: str, chat_id: str, file_path: str, caption: str) -> Non
 def main() -> None:
     ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    if not TOKEN or not CHAT_ID:
-        print(f'[{ts}] ERRO: defina TG_TOKEN e TG_CHAT_ID como variáveis de ambiente.')
-        sys.exit(1)
-
     if not os.path.exists(DB_PATH):
         print(f'[{ts}] ERRO: banco não encontrado em {DB_PATH}')
         sys.exit(1)
