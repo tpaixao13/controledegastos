@@ -268,6 +268,9 @@ def _run_migrations():
         # CreditAccount — linha de crédito compartilhada
         "CREATE TABLE IF NOT EXISTS credit_accounts (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id), bank TEXT, label TEXT, credit_limit NUMERIC(12,2), created_at DATETIME)",
         "ALTER TABLE credit_cards ADD COLUMN account_id INTEGER REFERENCES credit_accounts(id)",
+        # Data real da compra, separada do mês/ano da fatura (quando o cartão fecha antes)
+        "ALTER TABLE expenses ADD COLUMN purchase_month INTEGER",
+        "ALTER TABLE expenses ADD COLUMN purchase_year INTEGER",
     ]
     with db.engine.connect() as conn:
         for sql in migrations:
