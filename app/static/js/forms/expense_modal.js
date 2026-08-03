@@ -390,8 +390,13 @@
         updateInvoicePreview();
       }
     }
+  });
 
-    setTimeout(() => fDescription?.focus(), 200);
+  // Foca a descrição só depois que o modal termina de abrir — o próprio
+  // Bootstrap rouba o foco para o container do modal nesse momento (focus
+  // trap), então focar antes disso é sobrescrito assim que a transição acaba.
+  modalEl.addEventListener('shown.bs.modal', () => {
+    fDescription?.focus();
   });
 
   // Estado inicial
