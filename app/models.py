@@ -238,6 +238,10 @@ class Expense(db.Model):
     year = db.Column(db.Integer, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     day = db.Column(db.Integer, nullable=False)
+    # Mês/ano da compra em si (quando diferem do mês/ano da fatura por causa do
+    # fechamento do cartão). Nulo em registros antigos ou quando não há desvio.
+    purchase_month = db.Column(db.Integer, nullable=True)
+    purchase_year = db.Column(db.Integer, nullable=True)
     installment_group_id = db.Column(db.Integer, db.ForeignKey('installment_groups.id'), nullable=True)
     installment_number = db.Column(db.Integer, nullable=True)
     recurring_group_id = db.Column(db.Integer, db.ForeignKey('recurring_groups.id'), nullable=True)
@@ -245,6 +249,16 @@ class Expense(db.Model):
     card_id = db.Column(db.Integer, db.ForeignKey('credit_cards.id'), nullable=True)
     paid = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    @property
+    def display_month(self):
+        """Mês real da compra (fallback para o mês da fatura em registros antigos)."""
+        return self.purchase_month or self.month
+
+    @property
+    def display_year(self):
+        """Ano real da compra (fallback para o ano da fatura em registros antigos)."""
+        return self.purchase_year or self.year
 
     def __repr__(self):
         return f'<Expense {self.description} R${self.amount} {self.month}/{self.year}>'
