@@ -156,7 +156,7 @@
               </span>
             </td>
             <td class="text-muted small">
-              {{ '%02d'|format(e.day) }}/{{ '%02d'|format(e.month) }}{% if filters.month == 0 %}/{{ e.year }}{% endif %}
+              {{ '%02d'|format(e.day) }}/{{ '%02d'|format(e.display_month) }}{% if filters.month == 0 %}/{{ e.display_year }}{% endif %}
             </td>
             <td>
               {{ e.description }}
