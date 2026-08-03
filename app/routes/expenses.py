@@ -475,21 +475,33 @@ def edit(expense_id):
     if request.method == 'GET':
         form.credit_type.data = 'avista'
         form.card_id.data = expense.card_id or 0
+        # Mostra a data real da compra (não o mês/ano da fatura, que pode ter
+        # sido deslocado pelo fechamento do cartão).
+        form.month.data = expense.display_month
+        form.year.data = expense.display_year
 
     if form.validate_on_submit():
-        payment     = form.payment_method.data
-        card_id_val = form.card_id.data
-        new_card_id = card_id_val if (card_id_val and card_id_val > 0) else None
+        payment = form.payment_method.data
+        purchase_month, purchase_year = form.month.data, form.year.data
+
+        card, new_card_id, billing_month, billing_year = _resolve_card(form, payment, uids)
+        if card:
+            expense.bank = card.bank or _bank_from_form(form, payment)
+            final_month, final_year = billing_month, billing_year
+        else:
+            expense.bank = _bank_from_form(form, payment)
+            final_month, final_year = purchase_month, purchase_year
 
         expense.user_id        = form.user_id.data
         expense.description    = form.description.data
         expense.amount         = form.amount.data
         expense.category       = form.category.data
         expense.payment_method = payment
-        expense.bank           = _bank_from_form(form, payment)
-        expense.year           = form.year.data
-        expense.month          = form.month.data
+        expense.year           = final_year
+        expense.month          = final_month
         expense.day            = form.day.data
+        expense.purchase_month = purchase_month
+        expense.purchase_year  = purchase_year
         expense.paid           = form.paid.data
         expense.card_id        = new_card_id
 
