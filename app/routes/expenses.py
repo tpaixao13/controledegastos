@@ -901,7 +901,7 @@ def _create_installments(form, bank, card_id=None, purchase_month=None, purchase
     )
 
 
-def _create_recurring(form, bank, payment, card_id=None):
+def _create_recurring(form, bank, payment, card_id=None, purchase_month=None, purchase_year=None):
     n = form.recurring_times.data
     amount = Decimal(str(form.amount.data))
 
@@ -916,7 +916,8 @@ def _create_recurring(form, bank, payment, card_id=None):
 
     _write_expense_series(form, bank, payment,
                           group.id, 'recurring_group_id', 'recurring_number', [amount] * n,
-                          card_id=card_id)
+                          card_id=card_id,
+                          purchase_month=purchase_month, purchase_year=purchase_year)
 
     db.session.commit()
 
