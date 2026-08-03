@@ -844,7 +844,8 @@ def import_bank_confirm():
     return redirect(url_for('expenses.index'))
 
 
-def _write_expense_series(form, bank, payment, group_id, group_field, number_field, amounts, card_id=None):
+def _write_expense_series(form, bank, payment, group_id, group_field, number_field, amounts,
+                          card_id=None, purchase_month=None, purchase_year=None):
     """Persiste N Expense rows mensais para um grupo já criado e flushado."""
     mes_inicio, ano_inicio = form.month.data, form.year.data
     for i, amount in enumerate(amounts):
@@ -859,12 +860,16 @@ def _write_expense_series(form, bank, payment, group_id, group_field, number_fie
             year=ano,
             month=mes,
             day=form.day.data,
+            # A data real da compra só diverge do mês/ano da parcela na 1ª
+            # (a compra foi feita uma única vez; as demais são parcelas futuras).
+            purchase_month=purchase_month if i == 0 else mes,
+            purchase_year=purchase_year if i == 0 else ano,
             card_id=card_id,
             **{group_field: group_id, number_field: i + 1},
         ))
 
 
-def _create_installments(form, bank, card_id=None):
+def _create_installments(form, bank, card_id=None, purchase_month=None, purchase_year=None):
     n = form.num_installments.data
     total = Decimal(str(form.amount.data))
     parcela = (total / n).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
@@ -882,7 +887,8 @@ def _create_installments(form, bank, card_id=None):
 
     _write_expense_series(form, bank, 'Cartão de Crédito',
                           group.id, 'installment_group_id', 'installment_number', amounts,
-                          card_id=card_id)
+                          card_id=card_id,
+                          purchase_month=purchase_month, purchase_year=purchase_year)
     db.session.commit()
 
     mes_inicio, ano_inicio = form.month.data, form.year.data
