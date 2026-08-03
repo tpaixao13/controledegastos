@@ -182,7 +182,7 @@ def _expense_rows(expenses):
         elif e.recurring_group_id:
             parcela = f'Recorrente {e.recurring_number}/{e.recurring_group.num_recurrences}'
         rows.append([
-            e.user.name, e.day, e.month, e.year,
+            e.user.name, e.day, e.display_month, e.display_year,
             e.description, e.category, e.payment_method, e.bank or '',
             float(e.amount), parcela,
             'Sim' if e.recurring_group_id else 'Não',
