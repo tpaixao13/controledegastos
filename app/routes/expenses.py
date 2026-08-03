@@ -378,6 +378,8 @@ def add():
         payment = form.payment_method.data
         bank = _bank_from_form(form, payment)
 
+        purchase_month, purchase_year = form.month.data, form.year.data
+
         card, card_id, billing_month, billing_year = _resolve_card(form, payment, uids)
         if card:
             bank = card.bank or bank
@@ -389,9 +391,11 @@ def add():
         is_recurring = form.is_recurring.data
 
         if is_parcelado:
-            _create_installments(form, bank, card_id=card_id)
+            _create_installments(form, bank, card_id=card_id,
+                                 purchase_month=purchase_month, purchase_year=purchase_year)
         elif is_recurring:
-            _create_recurring(form, bank, payment, card_id=card_id)
+            _create_recurring(form, bank, payment, card_id=card_id,
+                              purchase_month=purchase_month, purchase_year=purchase_year)
         else:
             dup = is_duplicate(
                 form.user_id.data,
@@ -408,6 +412,8 @@ def add():
                 year=form.year.data,
                 month=form.month.data,
                 day=form.day.data,
+                purchase_month=purchase_month,
+                purchase_year=purchase_year,
                 card_id=card_id,
                 paid=bool(form.paid.data),
             )
