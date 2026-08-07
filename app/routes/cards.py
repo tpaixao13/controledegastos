@@ -125,16 +125,17 @@ def index():
         account_cards = card.account.cards.count() if card.account_id else 1
 
         card_data.append({
-            'card':          card,
-            'total':         total,
-            'credit_total':  cr_total,
-            'debit_total':   db_total,
-            'gradient':      gradient,
-            'text_color':    text_color,
-            'limit':         limit,
-            'pct':           pct,
-            'vr_balance':    vr_bal,
-            'account_cards': account_cards,
+            'card':            card,
+            'total':           total,
+            'credit_total':    cr_total,
+            'debit_total':     db_total,
+            'gradient':        gradient,
+            'text_color':      text_color,
+            'limit':           limit,
+            'pct':             pct,
+            'vr_balance':      vr_bal,
+            'account_cards':   account_cards,
+            'payment_status':  credit_invoice_status(card, invoice_month, invoice_year),
         })
 
     prev_month, prev_year = month_offset(invoice_month, invoice_year, -1)
