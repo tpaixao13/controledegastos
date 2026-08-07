@@ -129,6 +129,18 @@
   {% endif %}
 
   {# ── Ações ──────────────────────────────────────────────────── #}
+  {% if d.payment_status and d.payment_status.status in ('pendente', 'parcial') %}
+  <form method="POST" action="{{ url_for('cards.invoice_pay', card_id=card.id) }}"
+        onsubmit="return confirm('Marcar a fatura de {{ month_name }} como paga?')" class="mb-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="month" value="{{ invoice_month }}">
+    <input type="hidden" name="year" value="{{ invoice_year }}">
+    <input type="hidden" name="next" value="{{ url_for('cards.index', month=invoice_month, year=invoice_year) }}">
+    <button type="submit" class="ccw-btn-pay w-100">
+      <i class="bi bi-check-circle me-1"></i>Marcar fatura como paga
+    </button>
+  </form>
+  {% endif %}
   <div class="ccw-actions">
     <a href="{{ url_for('cards.invoice', card_id=card.id, month=invoice_month, year=invoice_year) }}"
        class="ccw-btn-invoice">
