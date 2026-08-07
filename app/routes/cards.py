@@ -358,7 +358,9 @@ def invoice_pay(card_id):
         flash(f'{updated} despesa(s) marcada(s) como paga(s).', 'success')
     else:
         flash('Nenhuma despesa pendente nesta fatura.', 'info')
-    return redirect(url_for('cards.invoice', card_id=card.id, month=month, year=year))
+
+    fallback = url_for('cards.invoice', card_id=card.id, month=month, year=year)
+    return redirect(_safe_next(request.form.get('next'), fallback))
 
 
 @cards_bp.route('/api/info/<int:card_id>')
