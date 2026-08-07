@@ -8,6 +8,7 @@ from app.services.card_service import (
     card_gradient, invoice_total, get_invoice, CATEGORY_ICONS,
     get_invoice_reference, get_invoice_label, vr_va_balance,
     credit_invoice_total, debit_total, account_credit_usage,
+    credit_invoice_status,
 )
 from datetime import datetime
 
