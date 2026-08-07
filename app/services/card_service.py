@@ -126,6 +126,53 @@ def debit_total(card_id: int, month: int, year: int) -> float:
     return invoice_total(card_id, month, year, 'Cartão de Débito')
 
 
+def credit_invoice_status(card: CreditCard, month: int, year: int) -> dict | None:
+    """
+    Retorna o status de pagamento da fatura de crédito do mês: quanto já foi
+    pago, quanto falta, e um status resumido ('pago', 'pendente', 'parcial',
+    'sem_despesas'). Considera cartões irmãos da mesma conta (limite
+    compartilhado). None se o cartão não tem função de crédito.
+    """
+    if not card.supports_credit:
+        return None
+
+    if card.account_id:
+        card_ids = [
+            row[0] for row in
+            db.session.query(CreditCard.id).filter(CreditCard.account_id == card.account_id).all()
+        ]
+    else:
+        card_ids = [card.id]
+
+    rows = (db.session.query(Expense.paid, func.sum(Expense.amount))
+            .filter(Expense.card_id.in_(card_ids),
+                    Expense.month == month,
+                    Expense.year == year,
+                    Expense.payment_method == 'Cartão de Crédito')
+            .group_by(Expense.paid)
+            .all())
+
+    paid_total = pending_total = 0.0
+    for is_paid, total in rows:
+        if is_paid:
+            paid_total = float(total)
+        else:
+            pending_total = float(total)
+
+    total = paid_total + pending_total
+    if total == 0:
+        status = 'sem_despesas'
+    elif pending_total == 0:
+        status = 'pago'
+    elif paid_total == 0:
+        status = 'pendente'
+    else:
+        status = 'parcial'
+
+    return {'paid_total': paid_total, 'pending_total': pending_total,
+            'total': total, 'status': status}
+
+
 def account_credit_usage(account_id: int, month: int, year: int) -> float:
     """
     Soma despesas de crédito de TODOS os cartões da conta no mês.
