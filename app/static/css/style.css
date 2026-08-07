@@ -842,6 +842,27 @@ a.insight-item:hover .insight-chevron {
 }
 .ccw-dot { opacity: .4; }
 
+/* Status de pagamento da fatura */
+.ccw-payment-status { margin-top: .35rem; }
+.ccw-payment-status .badge { font-size: .7rem; font-weight: 600; padding: .35rem .6rem; }
+
+/* Botão "marcar como paga" */
+.ccw-btn-pay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 8px;
+  padding: .4rem .6rem;
+  font-size: .78rem;
+  font-weight: 600;
+  color: inherit;
+  transition: background .15s;
+  backdrop-filter: blur(4px);
+}
+.ccw-btn-pay:hover { background: rgba(255,255,255,.25); color: inherit; }
+
 /* Ações */
 .ccw-actions {
   display: flex;
