@@ -14,6 +14,13 @@ from datetime import datetime
 
 cards_bp = Blueprint('cards', __name__, url_prefix='/cards')
 
+
+def _safe_next(url, fallback):
+    """Valida URL de redirect: permite apenas URLs relativas sem esquema ou domínio."""
+    if not url or not url.startswith('/') or url.startswith('//'):
+        return fallback
+    return url
+
 MONTH_NAMES       = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
                      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 MONTH_NAMES_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun',
