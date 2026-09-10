@@ -73,13 +73,25 @@ def manage():
     fixed_investments = [i for i in investments if not i.crypto_coin]
     crypto_investments = [i for i in investments if i.crypto_coin]
 
-    selic = get_selic_rate()
+    today = now.date()
+    for inv in fixed_investments:
+        if not inv.annual_rate:
+            continue
+        applied_on = inv.created_at.date() if inv.created_at else today
+        days_elapsed = max(0, (today - applied_on).days)
+        inv.yield_info = daily_yield(float(inv.amount), float(inv.annual_rate),
+                                      inv.investment_type, days_elapsed)
+
+    selic_info = get_selic_info()
+    selic = selic_info['rate']
 
     return render_template('investments/manage.html',
                            form=form, investments=investments, users=users,
                            fixed_investments=fixed_investments,
                            crypto_investments=crypto_investments,
                            selic=selic,
+                           selic_date=selic_info['date'],
+                           selic_is_live=selic_info['is_live'],
                            rate_suggestions=rate_suggestions(selic),
                            user_colors=user_color_map(users))
 
