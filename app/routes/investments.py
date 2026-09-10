@@ -84,12 +84,14 @@ def manage():
 
     selic_info = get_selic_info()
     selic = selic_info['rate']
+    cdi = get_cdi_rate(selic)
 
     return render_template('investments/manage.html',
                            form=form, investments=investments, users=users,
                            fixed_investments=fixed_investments,
                            crypto_investments=crypto_investments,
                            selic=selic,
+                           cdi=cdi,
                            selic_date=selic_info['date'],
                            selic_is_live=selic_info['is_live'],
                            rate_suggestions=rate_suggestions(selic),
