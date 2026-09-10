@@ -1,6 +1,6 @@
 import calendar
 import re
-from datetime import datetime, timezone
+from datetime import datetime, date, timezone
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 from app import db
