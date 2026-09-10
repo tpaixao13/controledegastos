@@ -73,3 +73,17 @@ def daily_yield(amount: float, annual_rate: float, investment_type: str, days_el
         'ir_rate': ir,
         'exempt': False,
     }
+
+
+def net_of_taxes(gross_gain: float, investment_type: str, days_held: int) -> float:
+    """Aplica IOF e IR regressivos sobre um ganho total acumulado, conforme o nº de dias
+    corridos entre a aplicação e o resgate — é assim que o imposto incide de fato na prática
+    (uma única alíquota sobre todo o ganho, definida pelo prazo total de permanência)."""
+    if gross_gain <= 0:
+        return gross_gain
+    if investment_type in IR_EXEMPT_TYPES or investment_type in NOT_FIXED_INCOME_TYPES:
+        return gross_gain
+
+    days = max(0, days_held)
+    after_iof = gross_gain * (1 - iof_rate(days))
+    return after_iof * (1 - ir_rate(days))
