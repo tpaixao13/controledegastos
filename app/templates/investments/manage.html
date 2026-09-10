@@ -261,11 +261,18 @@
                          data-qty="{{ '%.8f'|format(coins_held) }}">
                       Buscando cotação...
                     </div>
-                  {% elif not inv.crypto_coin and inv.annual_rate %}
-                    {% set monthly_rate = (1 + inv.annual_rate | float / 100) ** (1/12) - 1 %}
-                    {% set monthly_return = inv.amount | float * monthly_rate %}
-                    <div class="text-success fw-semibold">+{{ monthly_return | brl }} / mês</div>
-                    <small class="text-muted">{{ '%.4f'|format(monthly_rate * 100) }}% a.m.</small>
+                  {% elif not inv.crypto_coin and inv.annual_rate and inv.yield_info %}
+                    {% set y = inv.yield_info %}
+                    <div class="text-success fw-semibold">+{{ y.gross | brl }} <small class="text-muted fw-normal">bruto/dia</small></div>
+                    <div class="text-success">+{{ y.net | brl }} <small class="text-muted">líquido/dia</small></div>
+                    <small class="text-muted">
+                      {{ '%.4f'|format(y.daily_rate * 100) }}% a.d.
+                      {% if y.exempt %}
+                        · isento de IR
+                      {% else %}
+                        · IR {{ (y.ir_rate * 100) | round(1) }}%{% if y.iof_rate > 0 %} · IOF {{ (y.iof_rate * 100) | round(1) }}%{% endif %}
+                      {% endif %}
+                    </small>
                   {% else %}—{% endif %}
                 </td>
                 <td class="text-center">
