@@ -263,10 +263,10 @@
                     </div>
                   {% elif not inv.crypto_coin and inv.annual_rate and inv.yield_info %}
                     {% set y = inv.yield_info %}
-                    <div class="text-success fw-semibold">+{{ y.gross | brl }} <small class="text-muted fw-normal">bruto/dia</small></div>
-                    <div class="text-success">+{{ y.net | brl }} <small class="text-muted">líquido/dia</small></div>
+                    <div class="text-success fw-semibold">+{{ y.gross | brl }} <small class="text-muted fw-normal">bruto/dia útil</small></div>
+                    <div class="text-success">+{{ y.net | brl }} <small class="text-muted">líquido/dia útil</small></div>
                     <small class="text-muted">
-                      {{ '%.4f'|format(y.daily_rate * 100) }}% a.d.
+                      {{ '%.4f'|format(y.daily_rate * 100) }}% a.d.u. (252 du/ano)
                       {% if y.exempt %}
                         · isento de IR
                       {% else %}
