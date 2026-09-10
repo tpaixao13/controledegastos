@@ -89,6 +89,13 @@
                 <i class="bi bi-info-circle text-success"></i>
                 CDI/Selic atual: <strong>{{ selic }}% a.a.</strong>
               </div>
+              <div class="form-text">
+                {% if selic_is_live %}
+                  <span class="text-muted" style="font-size:.75rem">Fonte: BCB, referência {{ selic_date }}</span>
+                {% else %}
+                  <span class="text-warning" style="font-size:.75rem"><i class="bi bi-exclamation-triangle"></i> Não foi possível buscar a Selic no Banco Central agora — usando valor estimado.</span>
+                {% endif %}
+              </div>
               {% for e in form.annual_rate.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
             </div>
 
