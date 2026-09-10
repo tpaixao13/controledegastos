@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from app import db
 from app.models import User, Investment
 from app.forms import InvestmentForm
-from app.utils import tenant_users, tenant_user_ids, _fetch_json, get_selic_rate, rate_suggestions, user_color_map
+from app.utils import tenant_users, tenant_user_ids, _fetch_json, get_selic_info, rate_suggestions, user_color_map
+from app.services.investment_tax import daily_yield
 from datetime import datetime
 
 investments_bp = Blueprint('investments', __name__, url_prefix='/investments')
