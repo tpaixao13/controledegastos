@@ -75,7 +75,8 @@
                 <span class="input-group-text">% CDI</span>
               </div>
               <div class="form-text text-muted">
-                Selic: <strong>{{ selic }}%</strong> &times; <span id="cdiPctDisplay">—</span>% = <strong id="cdiCalcResult">—</strong> a.a.
+                CDI: <strong>{{ cdi }}%</strong> &times; <span id="cdiPctDisplay">—</span>% = <strong id="cdiCalcResult">—</strong> a.a.
+                <span style="font-size:.7rem">(Selic {{ selic }}% − {{ '%.2f'|format(selic - cdi) }} p.p.)</span>
               </div>
             </div>
 
@@ -87,7 +88,7 @@
               </div>
               <div class="form-text" id="rateHint">
                 <i class="bi bi-info-circle text-success"></i>
-                CDI/Selic atual: <strong>{{ selic }}% a.a.</strong>
+                CDI atual: <strong>{{ cdi }}% a.a.</strong> <span class="text-muted">(Selic-meta {{ selic }}%)</span>
               </div>
               <div class="form-text">
                 {% if selic_is_live %}
