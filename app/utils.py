@@ -80,17 +80,31 @@ def _fetch_json(url: str, cache_key: str, ttl: int = 3600):
         return None
 
 
-def get_selic_rate() -> float:
+def get_selic_info() -> dict:
+    """Busca a taxa Selic-meta (série 432 do BCB) e a data de referência do último valor.
+    Se a busca falhar (rede indisponível, API fora do ar), usa SELIC_FALLBACK e sinaliza
+    is_live=False para que a UI deixe claro que o valor pode estar desatualizado."""
     data = _fetch_json(_SELIC_URL, 'selic')
     if data:
         try:
-            return float(data[0]['valor'].replace(',', '.'))
-        except Exception:
-            pass
-    return SELIC_FALLBACK
+            return {
+                'rate': float(data[0]['valor'].replace(',', '.')),
+                'date': data[0]['data'],
+                'is_live': True,
+            }
+        except Exception as e:
+            print(f'[get_selic_info] Resposta inesperada do BCB: {e}')
+    return {'rate': SELIC_FALLBACK, 'date': None, 'is_live': False}
+
+
+def get_selic_rate() -> float:
+    return get_selic_info()['rate']
 
 
 def rate_suggestions(selic: float) -> dict:
+    # Poupança segue regra própria (Lei 12.703/2012): quando a Selic-meta é maior que 8,5% a.a.,
+    # o rendimento é travado em 0,5% a.m. (~6,17% a.a.) + TR, e NÃO acompanha a Selic proporcionalmente.
+    poupanca = round(((1.005 ** 12) - 1) * 100, 2) if selic > 8.5 else round(selic * 0.70, 2)
     return {
         'Tesouro Selic':       round(selic, 2),
         'CDB':                 round(selic, 2),
@@ -103,7 +117,7 @@ def rate_suggestions(selic: float) -> dict:
         'Fundo Multimercado':  round(selic * 1.10, 2),
         'Tesouro IPCA+':       round(selic * 0.60, 2),
         'Tesouro Prefixado':   round(selic * 0.95, 2),
-        'Poupança':            round(selic * 0.70, 2),
+        'Poupança':            poupanca,
         'Ações':               0,
         'FIIs':                0,
         'Criptomoedas':        0,
