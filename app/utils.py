@@ -101,23 +101,35 @@ def get_selic_rate() -> float:
     return get_selic_info()['rate']
 
 
+# O CDI (DI) efetivo negociado no mercado interbancário fica, na prática, cerca de 0,10 p.p.
+# abaixo da Selic-meta definida pelo Copom — não são a mesma taxa, ainda que andem juntas.
+CDI_SPREAD_PP = 0.10
+
+
+def get_cdi_rate(selic: float) -> float:
+    return max(round(selic - CDI_SPREAD_PP, 2), 0)
+
+
 def rate_suggestions(selic: float) -> dict:
+    cdi = get_cdi_rate(selic)
     # Poupança segue regra própria (Lei 12.703/2012): quando a Selic-meta é maior que 8,5% a.a.,
     # o rendimento é travado em 0,5% a.m. (~6,17% a.a.) + TR, e NÃO acompanha a Selic proporcionalmente.
     poupanca = round(((1.005 ** 12) - 1) * 100, 2) if selic > 8.5 else round(selic * 0.70, 2)
     return {
+        # Tesouro Selic e prefixados seguem a Selic-meta/curva de juros diretamente, não o CDI.
         'Tesouro Selic':       round(selic, 2),
-        'CDB':                 round(selic, 2),
-        'LCI':                 round(selic * 0.87, 2),
-        'LCA':                 round(selic * 0.87, 2),
-        'CRI/CRA':             round(selic * 0.95, 2),
-        'Debêntures':          round(selic * 1.05, 2),
-        'COE':                 round(selic * 0.90, 2),
-        'Fundo de Renda Fixa': round(selic * 0.95, 2),
-        'Fundo Multimercado':  round(selic * 1.10, 2),
         'Tesouro IPCA+':       round(selic * 0.60, 2),
         'Tesouro Prefixado':   round(selic * 0.95, 2),
         'Poupança':            poupanca,
+        # Produtos indexados ao CDI (% do CDI é a forma como o mercado os cota).
+        'CDB':                 round(cdi, 2),
+        'LCI':                 round(cdi * 0.87, 2),
+        'LCA':                 round(cdi * 0.87, 2),
+        'CRI/CRA':             round(cdi * 0.95, 2),
+        'Debêntures':          round(cdi * 1.05, 2),
+        'COE':                 round(cdi * 0.90, 2),
+        'Fundo de Renda Fixa': round(cdi * 0.95, 2),
+        'Fundo Multimercado':  round(cdi * 1.10, 2),
         'Ações':               0,
         'FIIs':                0,
         'Criptomoedas':        0,
