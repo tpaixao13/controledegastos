@@ -342,8 +342,10 @@ document.addEventListener('DOMContentLoaded', function () {
         data: {
           labels: d.labels,
           datasets: [
-            { label: 'Valor Projetado', data: d.projected, borderColor: '#198754',
+            { label: 'Valor Projetado (Bruto)', data: d.projected, borderColor: '#198754',
               backgroundColor: 'rgba(25,135,84,0.1)', fill: true, tension: 0.4, pointRadius: 4, borderWidth: 2 },
+            { label: 'Valor Projetado (Líquido)', data: d.projected_net, borderColor: '#20c997',
+              backgroundColor: 'transparent', tension: 0.4, pointRadius: 3, borderWidth: 2, borderDash: [3,3] },
             { label: 'Total Investido', data: d.invested, borderColor: '#0d6efd',
               backgroundColor: 'transparent', borderDash: [5,5], pointRadius: 0, borderWidth: 1.5 }
           ]
