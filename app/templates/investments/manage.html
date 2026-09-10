@@ -463,21 +463,21 @@ document.addEventListener('DOMContentLoaded', function () {
     cdiPctRow.style.display = (isCdiType && type !== 'Criptomoedas') ? '' : 'none';
 
     if (isCdiType) {
-      // Calcula taxa a partir do % CDI (padrão 100%)
+      // Calcula taxa a partir do % CDI (padrão 100%) — usa o CDI real (Selic-meta − spread), não a Selic bruta
       const pct = parseFloat(cdiPct.value) || 100;
-      const rate = parseFloat((SELIC * pct / 100).toFixed(2));
+      const rate = parseFloat((CDI * pct / 100).toFixed(2));
       invRate.value = rate.toFixed(2);
       cdiPct.value = cdiPct.value || '100';
       cdiPctDisplay.textContent = cdiPct.value || '100';
       cdiCalcResult.textContent = rate.toFixed(2) + '%';
-      rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Selic ${SELIC}% × ${cdiPct.value || 100}% CDI = <strong>${rate.toFixed(2)}% a.a.</strong>`;
+      rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> CDI ${CDI}% × ${cdiPct.value || 100}% = <strong>${rate.toFixed(2)}% a.a.</strong>`;
     } else if (suggested && suggested > 0) {
       invRate.value = suggested.toFixed(2);
       rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Taxa sugerida para <strong>${type}</strong>: <strong>${suggested.toFixed(2)}% a.a.</strong>`;
     } else if (type && type !== '') {
-      rateHint.innerHTML = `<i class="bi bi-info-circle text-warning"></i> CDI/Selic atual: <strong>${SELIC}% a.a.</strong> — informe a taxa manualmente`;
+      rateHint.innerHTML = `<i class="bi bi-info-circle text-warning"></i> CDI atual: <strong>${CDI}% a.a.</strong> (Selic-meta ${SELIC}%) — informe a taxa manualmente`;
     } else {
-      rateHint.innerHTML = `<i class="bi bi-info-circle text-success"></i> CDI/Selic atual: <strong>${SELIC}% a.a.</strong>`;
+      rateHint.innerHTML = `<i class="bi bi-info-circle text-success"></i> CDI atual: <strong>${CDI}% a.a.</strong> (Selic-meta ${SELIC}%)`;
     }
   }
 
@@ -486,11 +486,11 @@ document.addEventListener('DOMContentLoaded', function () {
     cdiPct.addEventListener('input', () => {
       const pct = parseFloat(cdiPct.value) || 0;
       if (pct > 0) {
-        const rate = parseFloat((SELIC * pct / 100).toFixed(2));
+        const rate = parseFloat((CDI * pct / 100).toFixed(2));
         invRate.value = rate.toFixed(2);
         cdiPctDisplay.textContent = pct;
         cdiCalcResult.textContent = rate.toFixed(2) + '%';
-        rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> Selic ${SELIC}% × ${pct}% CDI = <strong>${rate.toFixed(2)}% a.a.</strong>`;
+        rateHint.innerHTML = `<i class="bi bi-check-circle text-success"></i> CDI ${CDI}% × ${pct}% = <strong>${rate.toFixed(2)}% a.a.</strong>`;
       }
     });
   }
