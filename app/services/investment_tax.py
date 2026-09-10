@@ -33,13 +33,18 @@ def iof_rate(days: int) -> float:
     return _IOF_TABLE[days - 1] / 100
 
 
-def daily_yield(amount: float, annual_rate: float, investment_type: str, days_elapsed: int) -> dict:
-    """Projeta o rendimento de um dia (o próximo), bruto e líquido de IOF/IR.
+DIAS_UTEIS_ANO = 252  # convenção padrão do mercado para produtos atrelados a CDI/Selic
 
-    `days_elapsed` é o nº de dias corridos desde a aplicação até hoje; o imposto do dia
+
+def daily_yield(amount: float, annual_rate: float, investment_type: str, days_elapsed: int) -> dict:
+    """Projeta o rendimento de um dia útil (o próximo), bruto e líquido de IOF/IR.
+
+    A taxa diária usa a convenção de 252 dias úteis/ano (padrão de mercado para CDI/Selic),
+    não dias corridos. `days_elapsed` é o nº de dias CORRIDOS desde a aplicação até hoje —
+    as tabelas de IOF/IR são definidas em dias corridos pela legislação; o imposto do dia
     projetado usa days_elapsed + 1, já que é o rendimento do dia seguinte que está sendo estimado.
     """
-    daily_rate = (1 + annual_rate / 100) ** (1 / 365) - 1
+    daily_rate = (1 + annual_rate / 100) ** (1 / DIAS_UTEIS_ANO) - 1
     gross = amount * daily_rate
 
     exempt = investment_type in IR_EXEMPT_TYPES or investment_type in NOT_FIXED_INCOME_TYPES
