@@ -219,36 +219,52 @@ def crypto_history():
 
 @api_bp.route('/investments')
 def investments_chart():
-    """Retorna projeção de crescimento da carteira para os próximos 12 meses."""
+    """Retorna projeção de crescimento da carteira de renda fixa para os próximos 12 meses,
+    em valor bruto e líquido de IOF/IR."""
+    from app.services.investment_tax import net_of_taxes
     now = datetime.now()
     uids = tenant_user_ids()
-    all_investments = Investment.query.filter(Investment.user_id.in_(uids)).all()
+    # Só renda fixa — cripto/ações/FIIs não seguem esse regime de rendimento e têm seu próprio gráfico
+    fixed_investments = (Investment.query
+                         .filter(Investment.user_id.in_(uids), Investment.crypto_coin.is_(None))
+                         .all())
 
-    if not all_investments:
-        return jsonify({'labels': [], 'invested': [], 'projected': []})
+    if not fixed_investments:
+        return jsonify({'labels': [], 'invested': [], 'projected': [], 'projected_net': []})
 
     future_months = [month_offset(now.month, now.year, i) for i in range(12)]
 
     labels = [f'{MONTH_NAMES_SHORT[m-1]}/{y}' for m, y in future_months]
-    total_invested = sum(float(inv.amount) for inv in all_investments)
+    total_invested = sum(float(inv.amount) for inv in fixed_investments)
     invested_line = [round(total_invested, 2)] * 12
 
     projected = []
+    projected_net = []
     for i, (fm, fy) in enumerate(future_months):
-        total_value = 0.0
-        for inv in all_investments:
+        total_gross = 0.0
+        total_net = 0.0
+        future_date = date(fy, fm, 1)
+        for inv in fixed_investments:
             annual = float(inv.annual_rate) / 100.0
             monthly_rate = (1 + annual) ** (1 / 12) - 1
             # meses desde o investimento até este ponto
             months_elapsed = (fy - inv.year) * 12 + (fm - inv.month)
             if months_elapsed < 0:
                 months_elapsed = 0
-            value = float(inv.amount) * ((1 + monthly_rate) ** months_elapsed)
-            total_value += value
-        projected.append(round(total_value, 2))
+            amount = float(inv.amount)
+            value = amount * ((1 + monthly_rate) ** months_elapsed)
+            gain = value - amount
+            total_gross += value
+
+            applied_on = inv.created_at.date() if inv.created_at else future_date
+            days_held = max(0, (future_date - applied_on).days)
+            total_net += amount + net_of_taxes(gain, inv.investment_type, days_held)
+        projected.append(round(total_gross, 2))
+        projected_net.append(round(total_net, 2))
 
     return jsonify({
         'labels': labels,
         'invested': invested_line,
         'projected': projected,
+        'projected_net': projected_net,
     })
